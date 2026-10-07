@@ -12,3 +12,4 @@ Outputs are research artifacts, not legal advice.
 Source regulation text is public domain under Pasal 42 UU No. 28 Tahun 2014 tentang Hak Cipta.
 
 *Independent personal research. Not affiliated with or endorsed by any employer.*
+No any workplace materials are used in this repo, including documents, methodology, workflows, people, source, et cetera.

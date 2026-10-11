@@ -8,13 +8,24 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `experiments/` — one log file per experiment (`YYYY-MM-DD-short-name.md`)
 - `data/` — datasets built from public sources, each with a data dictionary
 - `scripts/` — small Python scripts (run from the repo root)
-- `site/` — generated web pages
+- `site/` — page templates (the map template and the lab home page)
+- `.github/workflows/pages.yml` — will publish the website at https://lab.statuta.id (not switched on yet)
 
 ## Experiments
 
-| Date | Experiment | Output |
-|---|---|---|
-| 2026-10-11 | [Legal Industry Map (pilot)](experiments/2026-10-11-legal-industry-map.md) | `data/legal_industry_map.csv`, `site/legal-industry-map.html` (rebuild with `python3 scripts/build_map.py`) |
+| Date | Experiment | View | Files |
+|---|---|---|---|
+| 2026-10-11 | [Legal Industry Map (pilot)](experiments/2026-10-11-legal-industry-map.md) | [Interactive map](https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw) | `data/legal_industry_map.csv`, `site/legal-industry-map.html` |
+
+The interactive views are hosted as claude.ai artifacts for now. They will move to https://lab.statuta.id later.
+
+## Website (planned)
+
+`python3 scripts/build_map.py` builds the site into `public/` (not committed).
+GitHub Actions runs the same script on every push to check that the build works.
+Publishing to GitHub Pages stays off until the repo variable `PAGES_ENABLED` is set to `true`
+(Settings → Secrets and variables → Actions → Variables). After that, every merge into the
+default branch goes live.
 
 Outputs are research artifacts, not legal advice.
 

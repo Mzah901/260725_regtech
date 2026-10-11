@@ -3,25 +3,37 @@
 How it works (plain language):
 1. Read every row of data/legal_industry_map.csv.
 2. Turn the number columns (funding, valuation) from text into numbers.
-3. Put the rows into site/template.html, where the placeholder __DATA__ sits,
-   and save the result as site/legal-industry-map.html.
-4. Print a small summary so you can sanity-check the numbers.
+3. Put the rows into site/template.html, where the placeholder __DATA__ sits.
+4. Save two versions of the page:
+   - site/legal-industry-map.html: page content only, for the claude.ai artifact
+     (the artifact service adds the <html>/<head> wrapper itself).
+   - public/legal-industry-map/index.html: a complete web page for the public
+     website (lab.statuta.id), plus public/index.html (the lab home page)
+     and public/CNAME (tells GitHub Pages which domain to use).
+5. Print a small summary so you can sanity-check the numbers.
 
 Run it from the repo root:  python3 scripts/build_map.py
 """
 
 import csv
 import json
+import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = ROOT / "data" / "legal_industry_map.csv"
 TEMPLATE_PATH = ROOT / "site" / "template.html"
-OUTPUT_PATH = ROOT / "site" / "legal-industry-map.html"
+HOME_PATH = ROOT / "site" / "home.html"
+ARTIFACT_OUTPUT = ROOT / "site" / "legal-industry-map.html"
+PUBLIC_DIR = ROOT / "public"
+CUSTOM_DOMAIN = "lab.statuta.id"
 
 # Columns that hold numbers (USD millions). An empty cell means "undisclosed".
 NUMBER_COLUMNS = ["total_funding_usd_m", "last_round_usd_m", "valuation_usd_m"]
+
+# The template is split here: everything before goes in <head>, the rest in <body>.
+BODY_MARKER = '<div class="wrap">'
 
 
 def read_rows():
@@ -34,6 +46,17 @@ def read_rows():
         row["id"] = int(row["id"])
         row["source_urls"] = row["source_urls"].split()
     return rows
+
+
+def full_document(fragment):
+    """Wrap page content in a complete HTML document for normal web hosting."""
+    head, body = fragment.split(BODY_MARKER, 1)
+    return (
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n"
+        "<meta charset=\"utf-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
+        f"{head}</head>\n<body>\n{BODY_MARKER}{body}</body>\n</html>\n"
+    )
 
 
 def print_summary(rows):
@@ -54,10 +77,21 @@ def print_summary(rows):
 def main():
     rows = read_rows()
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
-    data_json = json.dumps(rows, ensure_ascii=False)
-    OUTPUT_PATH.write_text(template.replace("__DATA__", data_json), encoding="utf-8")
+    fragment = template.replace("__DATA__", json.dumps(rows, ensure_ascii=False))
+
+    # 1. Artifact version (content only).
+    ARTIFACT_OUTPUT.write_text(fragment, encoding="utf-8")
+
+    # 2. Public website version. Start from an empty folder each time.
+    if PUBLIC_DIR.exists():
+        shutil.rmtree(PUBLIC_DIR)
+    (PUBLIC_DIR / "legal-industry-map").mkdir(parents=True)
+    (PUBLIC_DIR / "legal-industry-map" / "index.html").write_text(full_document(fragment), encoding="utf-8")
+    shutil.copy(HOME_PATH, PUBLIC_DIR / "index.html")
+    (PUBLIC_DIR / "CNAME").write_text(CUSTOM_DOMAIN + "\n", encoding="utf-8")
+
     print_summary(rows)
-    print(f"Wrote {OUTPUT_PATH.relative_to(ROOT)}")
+    print(f"Wrote {ARTIFACT_OUTPUT.relative_to(ROOT)} and {PUBLIC_DIR.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":

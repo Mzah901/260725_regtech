@@ -8,7 +8,14 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `experiments/` — one log file per experiment (`YYYY-MM-DD-short-name.md`)
 - `data/` — datasets built from public sources, each with a data dictionary
 - `scripts/` — small Python scripts (run from the repo root)
-- `site/` — generated web pages
+- `site/` — page templates (the map template and the lab home page)
+- `.github/workflows/pages.yml` — publishes the website at https://lab.statuta.id
+
+## Website
+
+`python3 scripts/build_map.py` builds the site into `public/` (not committed).
+GitHub Actions runs the same script and publishes `public/` with GitHub Pages
+on every push to the default branch. Merging into the default branch = going live.
 
 ## Experiments
 

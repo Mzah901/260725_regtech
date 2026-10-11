@@ -1,0 +1,331 @@
+<title>Legal Industry Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a register-style ledger. Header, a filter strip, then one sortable table whose rows open into source notes. */
+:root {
+  --bg: #F3F5F7;
+  --surface: #FFFFFF;
+  --ink: #17212B;
+  --muted: #5A6673;
+  --line: #D9DFE5;
+  --accent: #0E5A5E;
+  --accent-soft: #DCEDEC;
+  --id: #A3262E;
+  --id-soft: #F6E1E2;
+  --asean: #8A5A10;
+  --asean-soft: #F5EAD6;
+  --global: #3C4B5C;
+  --global-soft: #E3E8EE;
+  --warn: #8A5A10;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171D; --surface: #18212A; --ink: #E4E9EE; --muted: #9AA6B2; --line: #2B3843;
+    --accent: #6FC3C2; --accent-soft: #173538; --id: #F08A8F; --id-soft: #3A1C20;
+    --asean: #E2B567; --asean-soft: #362A15; --global: #B5C2CF; --global-soft: #25313C; --warn: #E2B567;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171D; --surface: #18212A; --ink: #E4E9EE; --muted: #9AA6B2; --line: #2B3843;
+  --accent: #6FC3C2; --accent-soft: #173538; --id: #F08A8F; --id-soft: #3A1C20;
+  --asean: #E2B567; --asean-soft: #362A15; --global: #B5C2CF; --global-soft: #25313C; --warn: #E2B567;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; gap: 22px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-weight: 650; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-top: 6px; }
+.stat { display: grid; }
+.stat b { font-family: var(--font-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.field { display: grid; gap: 4px; min-width: 0; flex: 1 1 150px; }
+.field.search { flex: 2 1 220px; }
+.field label { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.field input, .field select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; }
+.field input:focus-visible, .field select:focus-visible, button:focus-visible, th button:focus-visible, tr.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.reset { font: inherit; border: 1px solid var(--line); background: transparent; color: var(--accent); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.reset:hover { background: var(--accent-soft); }
+
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; min-width: 980px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { position: sticky; top: 0; background: var(--surface); font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 500; white-space: nowrap; }
+th button { all: unset; cursor: pointer; }
+th button::after { content: " ↕"; opacity: .35; }
+th button[data-dir="asc"]::after { content: " ↑"; opacity: 1; }
+th button[data-dir="desc"]::after { content: " ↓"; opacity: 1; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: var(--bg); }
+tr.row[aria-expanded="true"] td { background: var(--accent-soft); }
+.name { font-weight: 600; }
+.sub { display: block; color: var(--muted); font-size: 12.5px; }
+.chip { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.Indonesia { background: var(--id-soft); color: var(--id); }
+.chip.ASEAN { background: var(--asean-soft); color: var(--asean); }
+.chip.Global { background: var(--global-soft); color: var(--global); }
+.ai { font-family: var(--font-mono); font-size: 12px; }
+.ai.Yes { color: var(--accent); font-weight: 500; }
+.ai.No { color: var(--muted); }
+.undisclosed { color: var(--muted); font-family: var(--font-body); font-style: italic; font-size: 12.5px; }
+.status-Acquired, .status-Distressed, .status-Unknown { color: var(--warn); }
+.conf-Low { color: var(--warn); }
+
+tr.detail td { background: var(--bg); padding: 14px 16px 18px; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 28px; }
+.detail-grid div { min-width: 0; }
+.detail-grid h4 { margin: 0 0 3px; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.detail-grid p { margin: 0; overflow-wrap: anywhere; }
+.detail-grid ul { margin: 0; padding-left: 18px; }
+.detail-grid a { color: var(--accent); overflow-wrap: anywhere; }
+.empty { padding: 28px; text-align: center; color: var(--muted); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
+.notes section { min-width: 0; }
+.notes h2 { font-family: var(--font-display); font-weight: 650; font-size: 19px; margin: 0 0 8px; }
+.notes p, .notes li { color: var(--ink); max-width: 65ch; }
+.notes ul { padding-left: 18px; margin: 0; display: grid; gap: 6px; }
+.notes .tag { font-family: var(--font-mono); font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: .06em; }
+footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Regulatory AI Labs · Experiment 01 · Pilot dataset</div>
+    <h1>Legal Industry Map</h1>
+    <p class="lede">Legal-tech companies in Indonesia, the rest of ASEAN and the global market: what they sell, who they sell to, whether they are built on AI, and how much money they have disclosed. Click a row to see sources and caveats.</p>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><b id="s-count">–</b><span>companies shown</span></div>
+      <div class="stat"><b id="s-funding">–</b><span>disclosed funding, shown rows</span></div>
+      <div class="stat"><b id="s-undisclosed">–</b><span>with no disclosed funding</span></div>
+      <div class="stat"><b id="s-ai">–</b><span>AI-native</span></div>
+    </div>
+  </header>
+
+  <form class="filters" id="filters" autocomplete="off">
+    <div class="field search"><label for="f-q">Search</label><input id="f-q" type="search" placeholder="Name, product, investor…"></div>
+    <div class="field"><label for="f-region">Region</label><select id="f-region"></select></div>
+    <div class="field"><label for="f-country">HQ country</label><select id="f-country"></select></div>
+    <div class="field"><label for="f-category">Category</label><select id="f-category"></select></div>
+    <div class="field"><label for="f-ai">AI-native</label><select id="f-ai"></select></div>
+    <div class="field"><label for="f-funding">Disclosed funding</label>
+      <select id="f-funding">
+        <option value="">All</option>
+        <option value="none">Undisclosed</option>
+        <option value="lt10">Under $10M</option>
+        <option value="10to100">$10M – $100M</option>
+        <option value="100to1000">$100M – $1B</option>
+        <option value="gt1000">Over $1B</option>
+      </select>
+    </div>
+    <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
+    <button class="reset" type="reset" id="f-reset">Clear filters</button>
+  </form>
+
+  <div class="tablebox">
+    <table>
+      <thead>
+        <tr>
+          <th><button type="button" data-key="name">Company</button></th>
+          <th><button type="button" data-key="region">Region</button></th>
+          <th><button type="button" data-key="category">Category</button></th>
+          <th><button type="button" data-key="target_customer">Customers</button></th>
+          <th><button type="button" data-key="ai_native">AI-native</button></th>
+          <th class="num"><button type="button" data-key="founded">Founded</button></th>
+          <th class="num"><button type="button" data-key="total_funding_usd_m">Total funding</button></th>
+          <th><button type="button" data-key="last_round_date">Last round</button></th>
+          <th class="num"><button type="button" data-key="valuation_usd_m">Valuation</button></th>
+          <th><button type="button" data-key="status">Status</button></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="notes">
+    <section>
+      <h2>Early observations</h2>
+      <p class="tag">Preliminary · to be checked by the author</p>
+      <ul>
+        <li>The largest disclosed rounds in Indonesia are in <b>e-signature and digital identity</b> (Privy, VIDA). Demand there comes from banks and fintech KYC, not from lawyers.</li>
+        <li>No Indonesian company in legal research or AI legal assistance has a disclosed round in this sample. AI-native entrants (Justisio, Pasal.id) and the incumbent's AIlex all have no public funding data.</li>
+        <li>Global money is concentrated in <b>general AI assistants</b> (Harvey, Legora) and <b>single-vertical AI</b> (EvenUp for personal injury). Indonesia has no equivalent of either yet.</li>
+        <li>One company group (Hukumonline) owns three of the eleven Indonesian rows: research, a lawyer marketplace and company formation.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>How to read this</h2>
+      <ul>
+        <li><b>Funding</b> is total disclosed equity in USD. Blank means not disclosed, not zero. Some totals are lower bounds; the row notes say which.</li>
+        <li><b>Valuation</b> is shown only where a credible outlet reported it. For an acquisition it is the purchase price.</li>
+        <li><b>AI-native</b>: Yes = the product is built on AI; Partial = AI added to an existing product; No = not an AI product.</li>
+        <li><b>Confidence</b> reflects source quality. Rows marked Low rely on directories or aggregators only.</li>
+        <li>Pilot sample of 27 companies. It is not a complete census. Tracxn counted 44 legal-tech companies in Indonesia in July 2025.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <span>Independent personal research. Not affiliated with or endorsed by any employer.</span>
+    <span>Conflict of interest: the author works at Hukumonline. Its rows use public sources only. Pasal.id is also a data source for this lab.</span>
+    <span>Data collected from public web sources with AI assistance, October 2026. Figures change quickly; check the linked sources before relying on any number. Not investment or legal advice.</span>
+  </footer>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+const $ = (id) => document.getElementById(id);
+const state = { sortKey: "total_funding_usd_m", sortDir: "desc", open: new Set() };
+
+function money(m) {
+  if (m === null || m === undefined) return '<span class="undisclosed">Undisclosed</span>';
+  if (m >= 1000) return "$" + (m / 1000).toFixed(m >= 10000 ? 1 : 2).replace(/\.?0+$/, "") + "B";
+  return "$" + (m >= 100 ? Math.round(m) : m.toFixed(1).replace(/\.0$/, "")) + "M";
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function fillSelect(id, values) {
+  const sel = $(id);
+  sel.innerHTML = '<option value="">All</option>' + values.map((v) => `<option>${esc(v)}</option>`).join("");
+}
+const uniq = (key) => [...new Set(DATA.map((r) => r[key]).filter(Boolean))].sort();
+
+fillSelect("f-region", ["Indonesia", "ASEAN", "Global"]);
+fillSelect("f-country", uniq("hq_country"));
+fillSelect("f-category", [...new Set(DATA.flatMap((r) => [r.category, r.secondary_category]).filter(Boolean))].sort());
+fillSelect("f-ai", ["Yes", "Partial", "No"]);
+fillSelect("f-status", uniq("status"));
+
+function fundingBucket(m) {
+  if (m === null) return "none";
+  if (m < 10) return "lt10";
+  if (m < 100) return "10to100";
+  if (m < 1000) return "100to1000";
+  return "gt1000";
+}
+
+function filtered() {
+  const q = $("f-q").value.trim().toLowerCase();
+  const f = {
+    region: $("f-region").value, country: $("f-country").value, category: $("f-category").value,
+    ai: $("f-ai").value, funding: $("f-funding").value, status: $("f-status").value,
+  };
+  return DATA.filter((r) => {
+    if (f.region && r.region !== f.region) return false;
+    if (f.country && r.hq_country !== f.country) return false;
+    if (f.category && r.category !== f.category && r.secondary_category !== f.category) return false;
+    if (f.ai && r.ai_native !== f.ai) return false;
+    if (f.funding && fundingBucket(r.total_funding_usd_m) !== f.funding) return false;
+    if (f.status && r.status !== f.status) return false;
+    if (q) {
+      const hay = [r.name, r.products, r.key_investors, r.category, r.secondary_category, r.parent_or_acquirer, r.notes].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function sorted(rows) {
+  const { sortKey: k, sortDir: d } = state;
+  const sign = d === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const x = a[k], y = b[k];
+    const xe = x === null || x === "", ye = y === null || y === "";
+    if (xe && ye) return a.name.localeCompare(b.name);
+    if (xe) return 1;           // blanks always last
+    if (ye) return -1;
+    if (typeof x === "number") return (x - y) * sign;
+    return String(x).localeCompare(String(y), undefined, { numeric: true }) * sign;
+  });
+}
+
+function detailRow(r) {
+  const links = r.source_urls.map((u) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 70))}</a></li>`).join("");
+  const round = r.last_round ? `${esc(r.last_round)}${r.last_round_usd_m ? " · " + money(r.last_round_usd_m) : ""}${r.last_round_date ? " · " + esc(r.last_round_date) : ""}` : "—";
+  return `<tr class="detail"><td colspan="10"><div class="detail-grid">
+    <div><h4>Products</h4><p>${esc(r.products)}</p></div>
+    <div><h4>Business model · Indonesian-law coverage</h4><p>${esc(r.business_model)} · ${esc(r.indonesian_law_coverage)}</p></div>
+    <div><h4>Last round</h4><p>${round}</p></div>
+    <div><h4>Key investors</h4><p>${esc(r.key_investors) || "—"}</p></div>
+    <div><h4>Parent / acquirer</h4><p>${esc(r.parent_or_acquirer) || "—"}</p></div>
+    <div><h4>Confidence</h4><p class="conf-${esc(r.confidence)}">${esc(r.confidence)}</p></div>
+    <div><h4>Notes</h4><p>${esc(r.notes)}</p></div>
+    <div><h4>Sources</h4><ul>${links}</ul></div>
+  </div></td></tr>`;
+}
+
+function render() {
+  const rows = sorted(filtered());
+  const body = $("rows");
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="10" class="empty">No companies match these filters. Clear a filter to see more.</td></tr>';
+  } else {
+    body.innerHTML = rows.map((r) => {
+      const open = state.open.has(r.id);
+      const sub = r.secondary_category ? `<span class="sub">also ${esc(r.secondary_category)}</span>` : "";
+      const parent = r.parent_or_acquirer ? `<span class="sub">${r.status === "Acquired" ? "acquired by" : "part of"} ${esc(r.parent_or_acquirer)}</span>` : "";
+      return `<tr class="row" tabindex="0" data-id="${r.id}" aria-expanded="${open}">
+        <td><span class="name">${esc(r.name)}</span><span class="sub">${esc(r.hq_country)}</span>${parent}</td>
+        <td><span class="chip ${esc(r.region)}">${esc(r.region)}</span></td>
+        <td>${esc(r.category)}${sub}</td>
+        <td>${esc(r.target_customer).replaceAll(" | ", ", ")}</td>
+        <td><span class="ai ${esc(r.ai_native)}">${esc(r.ai_native)}</span></td>
+        <td class="num">${esc(r.founded) || "—"}</td>
+        <td class="num">${money(r.total_funding_usd_m)}</td>
+        <td>${esc(r.last_round) || "—"}<span class="sub">${esc(r.last_round_date)}</span></td>
+        <td class="num">${money(r.valuation_usd_m)}</td>
+        <td class="status-${esc(r.status)}">${esc(r.status)}</td>
+      </tr>` + (open ? detailRow(r) : "");
+    }).join("");
+  }
+  const funded = rows.filter((r) => r.total_funding_usd_m !== null);
+  $("s-count").textContent = `${rows.length} / ${DATA.length}`;
+  $("s-funding").innerHTML = funded.length ? money(funded.reduce((s, r) => s + r.total_funding_usd_m, 0)) : "$0";
+  $("s-undisclosed").textContent = rows.length - funded.length;
+  $("s-ai").textContent = rows.filter((r) => r.ai_native === "Yes").length;
+  document.querySelectorAll("th button").forEach((b) => {
+    b.dataset.dir = b.dataset.key === state.sortKey ? state.sortDir : "";
+  });
+}
+
+function toggle(id) {
+  state.open.has(id) ? state.open.delete(id) : state.open.add(id);
+  render();
+  document.querySelector(`tr.row[data-id="${id}"]`)?.focus();
+}
+
+$("filters").addEventListener("input", render);
+$("filters").addEventListener("submit", (e) => e.preventDefault());
+$("filters").addEventListener("reset", () => setTimeout(render, 0));
+$("rows").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr.row");
+  if (tr && !e.target.closest("a")) toggle(Number(tr.dataset.id));
+});
+$("rows").addEventListener("keydown", (e) => {
+  const tr = e.target.closest("tr.row");
+  if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(Number(tr.dataset.id)); }
+});
+document.querySelectorAll("th button").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.key;
+  if (state.sortKey === k) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+  else { state.sortKey = k; state.sortDir = /usd|founded|date/.test(k) ? "desc" : "asc"; }
+  render();
+}));
+
+render();
+</script>

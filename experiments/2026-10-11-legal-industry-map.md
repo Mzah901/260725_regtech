@@ -4,6 +4,8 @@
 **Status:** Pilot built. Waiting for owner review.
 **Merged with:** "Legal Startup Reverse Engineer" idea. This dataset is the base for later deep dives on 2–3 companies.
 
+**Interactive map:** https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw (claude.ai artifact; will move to https://lab.statuta.id)
+
 ## Question / hypothesis
 
 What does the legal-tech market look like in Indonesia compared with ASEAN and the global market?

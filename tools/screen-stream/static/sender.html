@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenStream — Mac</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f5f5f7; --card:#fff; --fg:#1d1d1f; --muted:#6e6e73; --accent:#0071e3; --ok:#1a7f37; --bad:#c62828; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --card:#1c1c1e; --fg:#f5f5f7; --muted:#a1a1a6; --accent:#2997ff; --ok:#3fb950; --bad:#ff6b6b; } }
+  body { margin:0; font:15px/1.5 -apple-system, system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:620px; margin:40px auto; padding:0 16px; }
+  .card { background:var(--card); border-radius:14px; padding:20px 22px; margin-bottom:16px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  p { margin:6px 0; }
+  .muted { color:var(--muted); font-size:13px; }
+  code { font:14px ui-monospace, Menlo, monospace; word-break:break-all; user-select:all; }
+  button, select { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--muted); background:transparent; color:var(--fg); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  #state.on { color:var(--ok); } #state.off { color:var(--bad); }
+  video { width:100%; border-radius:8px; background:#000; margin-top:12px; display:none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>ScreenStream</h1>
+    <p class="muted">View-only screen mirror to a browser on the same Wi-Fi.</p>
+  </div>
+
+  <div class="card">
+    <p><strong>1.</strong> On the tablet, open this address in Chrome:</p>
+    <p><code id="url">loading…</code></p>
+    <p class="muted">Bookmark it. The key at the end stops other devices on the network from watching.</p>
+  </div>
+
+  <div class="card">
+    <p><strong>2.</strong> Share your screen:</p>
+    <div class="row">
+      <button class="primary" id="start">Start sharing</button>
+      <button id="stop" disabled>Stop</button>
+      <span id="state" class="off">Not sharing</span>
+    </div>
+    <div class="row">
+      <label>Mode
+        <select id="mode">
+          <option value="text">Sharp text (docs, code)</option>
+          <option value="motion">Smooth motion (video, scrolling)</option>
+        </select>
+      </label>
+      <label>Max width
+        <select id="maxWidth">
+          <option value="1280">1280 px (lowest latency)</option>
+          <option value="1920" selected>1920 px</option>
+          <option value="2560">2560 px</option>
+          <option value="0">Native</option>
+        </select>
+      </label>
+    </div>
+    <p class="muted" id="viewers">0 tablets connected</p>
+    <video id="preview" autoplay muted playsinline></video>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button id="quit">Quit ScreenStream</button>
+      <span class="muted">Stops the server. Close this tab afterwards.</span>
+    </div>
+  </div>
+</main>
+
+<script>
+// ---------- settings for each mode ----------
+const MODES = {
+  // contentHint tells the encoder what matters: crisp detail or smooth frames.
+  text:   { hint: 'detail', fps: 30, bitrate: 10_000_000, degradation: 'maintain-resolution' },
+  motion: { hint: 'motion', fps: 60, bitrate: 12_000_000, degradation: 'maintain-framerate' },
+};
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let config = null;
+let stream = null;
+const peers = new Map(); // viewer id -> RTCPeerConnection
+
+async function loadConfig() {
+  config = await (await fetch('/api/sender/config')).json();
+  $('url').textContent = config.viewerUrl;
+}
+
+function currentMode() { return MODES[$('mode').value]; }
+
+// ---------- capture ----------
+async function startSharing() {
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 60, max: 60 }, cursor: 'always' },
+      audio: false, // view only
+      selfBrowserSurface: 'exclude',
+    });
+  } catch (err) {
+    alert('Screen capture was not allowed: ' + err.message +
+      '\n\nIf this keeps failing: System Settings → Privacy & Security → Screen Recording → enable your browser, then restart it.');
+    return;
+  }
+  const track = stream.getVideoTracks()[0];
+  track.contentHint = currentMode().hint;
+  track.addEventListener('ended', stopSharing); // user clicked the browser's own "Stop sharing"
+  $('preview').srcObject = stream;
+  $('preview').style.display = 'block';
+  $('start').disabled = true;
+  $('stop').disabled = false;
+  $('state').textContent = 'Sharing';
+  $('state').className = 'on';
+  pollViewers();
+}
+
+function stopSharing() {
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+  stream = null;
+  for (const pc of peers.values()) pc.close();
+  peers.clear();
+  updateViewerCount();
+  $('preview').style.display = 'none';
+  $('start').disabled = false;
+  $('stop').disabled = true;
+  $('state').textContent = 'Not sharing';
+  $('state').className = 'off';
+}
+
+// ---------- signaling: wait for tablets that want the stream ----------
+async function pollViewers() {
+  const myStream = stream;
+  while (stream && stream === myStream) {
+    try {
+      const { ids } = await (await fetch('/api/sender/next')).json();
+      for (const id of ids) if (stream) callViewer(id).catch((e) => console.warn('viewer', id, e));
+    } catch (e) {
+      await sleep(1000);
+    }
+  }
+}
+
+async function callViewer(id) {
+  const pc = new RTCPeerConnection({ iceServers: [] }); // same Wi-Fi: no STUN/TURN servers needed
+  peers.set(id, pc);
+  pc.addEventListener('connectionstatechange', () => {
+    if (['failed', 'closed'].includes(pc.connectionState)) { pc.close(); peers.delete(id); }
+    updateViewerCount();
+  });
+
+  const transceiver = pc.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendonly', streams: [stream] });
+  preferH264(transceiver);
+
+  await pc.setLocalDescription(await pc.createOffer());
+  await gatheringDone(pc);
+  const offer = { type: 'offer', sdp: addLanIpCandidates(pc.localDescription.sdp) };
+  await postJson('/api/sender/offer', { id, description: offer });
+
+  // Wait (up to ~75 s) for the tablet's answer.
+  for (let i = 0; i < 3 && peers.has(id); i++) {
+    const res = await fetch('/api/sender/answer?id=' + id);
+    if (res.status === 200) {
+      const answer = await res.json();
+      await pc.setRemoteDescription({ type: 'answer', sdp: fastStart(answer.sdp) });
+      await tuneSender(pc);
+      return;
+    }
+  }
+  pc.close();
+  peers.delete(id);
+}
+
+// ---------- the low-latency / quality knobs ----------
+
+// H.264 is hardware-decoded on almost every Android tablet: less CPU, less delay.
+function preferH264(transceiver) {
+  if (!transceiver.setCodecPreferences || !RTCRtpReceiver.getCapabilities) return;
+  const codecs = RTCRtpReceiver.getCapabilities('video').codecs;
+  const h264 = codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
+  const rest = codecs.filter((c) => c.mimeType.toLowerCase() !== 'video/h264');
+  try { if (h264.length) transceiver.setCodecPreferences([...h264, ...rest]); } catch (e) { console.warn(e); }
+}
+
+// Chrome normally starts at a low bitrate and ramps up, so the first seconds look blurry.
+// On a LAN we can safely start high. Other browsers ignore these x-google-* hints.
+function fastStart(sdp) {
+  return sdp.replace(/^(a=fmtp:\d+ .*)$/gm, (line) =>
+    line.includes('x-google-') ? line : line + ';x-google-start-bitrate=4000;x-google-min-bitrate=1000');
+}
+
+async function tuneSender(pc) {
+  const mode = currentMode();
+  const maxWidth = Number($('maxWidth').value);
+  for (const sender of pc.getSenders()) {
+    if (!sender.track) continue;
+    sender.track.contentHint = mode.hint;
+    const width = sender.track.getSettings().width || 0;
+    const params = sender.getParameters();
+    if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+    const enc = params.encodings[0];
+    enc.maxBitrate = mode.bitrate;
+    enc.maxFramerate = mode.fps;
+    // Retina screens are huge (e.g. 3024 px). Encoding fewer pixels = less delay.
+    enc.scaleResolutionDownBy = maxWidth && width > maxWidth ? width / maxWidth : 1;
+    params.degradationPreference = mode.degradation;
+    try { await sender.setParameters(params); } catch (e) { console.warn('setParameters', e); }
+  }
+}
+
+// Browsers hide the computer's real IP behind a random "xxxx.local" name for privacy.
+// Some Android browsers can't resolve those names, so we add a copy of each such
+// candidate with the Mac's real LAN IP. The original stays, so nothing is lost.
+function addLanIpCandidates(sdp) {
+  const mdns = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.local/i;
+  const out = [];
+  for (const line of sdp.split('\r\n')) {
+    out.push(line);
+    if (line.startsWith('a=candidate:') && mdns.test(line) && config.lanIp !== '127.0.0.1') {
+      out.push(line.replace(mdns, config.lanIp));
+    }
+  }
+  return out.join('\r\n');
+}
+
+// We send the full offer once, after all network candidates are collected. On a LAN this
+// takes well under a second and keeps the signaling dead simple.
+function gatheringDone(pc) {
+  if (pc.iceGatheringState === 'complete') return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => { if (pc.iceGatheringState === 'complete') resolve(); };
+    pc.addEventListener('icegatheringstatechange', done);
+    setTimeout(resolve, 2000); // don't wait forever
+  });
+}
+
+// ---------- misc ----------
+function updateViewerCount() {
+  const n = [...peers.values()].filter((pc) => pc.connectionState === 'connected').length;
+  $('viewers').textContent = n + (n === 1 ? ' tablet' : ' tablets') + ' connected';
+}
+
+async function postJson(url, data) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  if (!res.ok) throw new Error(url + ' → ' + res.status);
+  return res.json();
+}
+
+function retune() {
+  if (stream) stream.getVideoTracks()[0].contentHint = currentMode().hint;
+  for (const pc of peers.values()) tuneSender(pc);
+}
+
+$('start').onclick = startSharing;
+$('stop').onclick = stopSharing;
+$('mode').onchange = retune;
+$('maxWidth').onchange = retune;
+$('quit').onclick = async () => {
+  stopSharing();
+  try { await fetch('/api/sender/quit', { method: 'POST' }); } catch (e) {}
+  document.body.innerHTML = '<main><div class="card"><h1>ScreenStream stopped.</h1><p>You can close this tab.</p></div></main>';
+};
+
+loadConfig().catch(() => { $('url').textContent = 'Server not reachable. Is ScreenStream running?'; });
+</script>
+</body>
+</html>

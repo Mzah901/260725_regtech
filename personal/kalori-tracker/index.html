@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pelacak Kalori & Protein</title>
+
+<!-- =====================================================================
+     BAGIAN 1 — CSS (tampilan)
+     CSS mengatur warna, ukuran, dan tata letak. Tidak ada logika di sini.
+     ===================================================================== -->
+<style>
+  /* Variabel warna: didefinisikan sekali, dipakai di banyak tempat. */
+  :root {
+    --bg: #f6f7f9;
+    --kartu: #ffffff;
+    --teks: #1d2330;
+    --redup: #6b7280;
+    --garis: #e5e7eb;
+    --kalori: #f59e0b;
+    --protein: #2563eb;
+    --ok: #16a34a;
+    --bahaya: #dc2626;
+  }
+  /* Kalau HP/laptop memakai mode gelap, warnanya otomatis ikut gelap. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418;
+      --kartu: #1b2027;
+      --teks: #e8eaed;
+      --redup: #9aa3ad;
+      --garis: #2c333c;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--teks);
+    line-height: 1.45;
+  }
+  /* max-width membuat tampilan tetap enak di layar lebar, tapi penuh di HP. */
+  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.35rem; margin: 4px 0 2px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .sub { color: var(--redup); margin: 0 0 16px; font-size: .9rem; }
+
+  .kartu {
+    background: var(--kartu);
+    border: 1px solid var(--garis);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  label { display: block; font-size: .85rem; color: var(--redup); margin-bottom: 4px; }
+  input, select, button {
+    font: inherit;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--garis);
+    background: var(--bg);
+    color: var(--teks);
+  }
+  button { background: var(--protein); color: #fff; border: none; font-weight: 600; cursor: pointer; }
+  button.sekunder { background: transparent; color: var(--bahaya); border: 1px solid var(--garis); }
+
+  /* .baris menaruh dua input berdampingan (flexbox). */
+  .baris { display: flex; gap: 10px; margin-bottom: 12px; }
+  .baris > div { flex: 1; min-width: 0; }
+  .field { margin-bottom: 12px; }
+
+  /* Progress bar = kotak abu-abu (.bar) berisi kotak berwarna (.isi)
+     yang lebarnya kita atur lewat JavaScript, misalnya width: 64%. */
+  .label-progress { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: 4px; }
+  .bar { height: 14px; background: var(--garis); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
+  .isi { height: 100%; width: 0; border-radius: 99px; transition: width .3s; }
+  .isi.kalori { background: var(--kalori); }
+  .isi.protein { background: var(--protein); }
+  .isi.lebih { background: var(--bahaya); }
+
+  .preview { font-size: .9rem; color: var(--redup); margin: -4px 0 12px; }
+
+  .grup-waktu { margin-bottom: 12px; }
+  .grup-waktu h3 { font-size: .9rem; margin: 0 0 4px; color: var(--redup); }
+  .item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--garis); font-size: .92rem; }
+  .item .nama { flex: 1; min-width: 0; }
+  .item .angka { color: var(--redup); white-space: nowrap; font-size: .85rem; }
+  .item button { width: auto; padding: 4px 10px; background: transparent; color: var(--bahaya); border: 1px solid var(--garis); }
+  .kosong { color: var(--redup); font-size: .9rem; margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--garis); }
+  th { color: var(--redup); font-weight: 500; }
+  .streak { font-weight: 600; margin-bottom: 10px; }
+
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 12px; }
+  .catatan { font-size: .8rem; color: var(--redup); }
+</style>
+</head>
+
+<!-- =====================================================================
+     BAGIAN 2 — HTML (kerangka halaman)
+     Isinya kotak-kotak kosong. Elemen dengan id="..." nanti diisi/dibaca
+     oleh JavaScript.
+     ===================================================================== -->
+<body>
+<main>
+  <h1>Pelacak Kalori & Protein</h1>
+  <p class="sub" id="tanggal-hari-ini"></p>
+
+  <!-- Kartu A: progress hari ini -->
+  <section class="kartu">
+    <h2>Hari ini</h2>
+    <div class="label-progress"><span>Kalori</span><span id="teks-kalori"></span></div>
+    <div class="bar"><div class="isi kalori" id="bar-kalori"></div></div>
+    <div class="label-progress"><span>Protein</span><span id="teks-protein"></span></div>
+    <div class="bar"><div class="isi protein" id="bar-protein"></div></div>
+  </section>
+
+  <!-- Kartu B: input cepat -->
+  <section class="kartu">
+    <h2>Tambah makanan</h2>
+    <form id="form-tambah">
+      <div class="field">
+        <label for="pilih-makanan">Makanan</label>
+        <select id="pilih-makanan" required></select>
+      </div>
+      <div class="baris">
+        <div>
+          <label for="jumlah-porsi">Jumlah porsi</label>
+          <input id="jumlah-porsi" type="number" min="0.25" step="0.25" value="1" required inputmode="decimal">
+        </div>
+        <div>
+          <label for="waktu-makan">Waktu makan</label>
+          <select id="waktu-makan">
+            <option value="pagi">Pagi</option>
+            <option value="siang">Siang</option>
+            <option value="sore">Sore</option>
+            <option value="malam">Malam</option>
+          </select>
+        </div>
+      </div>
+      <p class="preview" id="preview"></p>
+      <button type="submit">+ Tambahkan</button>
+    </form>
+  </section>
+
+  <!-- Kartu C: daftar makanan yang sudah dicatat hari ini -->
+  <section class="kartu">
+    <h2>Catatan hari ini</h2>
+    <div id="daftar-hari-ini"></div>
+  </section>
+
+  <!-- Kartu D: riwayat 7 hari + streak -->
+  <section class="kartu">
+    <h2>Riwayat 7 hari</h2>
+    <div class="streak" id="streak"></div>
+    <table>
+      <thead><tr><th>Hari</th><th>Kalori</th><th>Protein</th><th>Target</th></tr></thead>
+      <tbody id="tabel-riwayat"></tbody>
+    </table>
+    <p class="catatan" id="aturan-target"></p>
+  </section>
+
+  <!-- Kartu E: tambah makanan sendiri -->
+  <section class="kartu">
+    <details>
+      <summary>Makanan saya (tambah sendiri)</summary>
+      <form id="form-makanan-baru">
+        <div class="field">
+          <label for="baru-nama">Nama makanan</label>
+          <input id="baru-nama" required maxlength="60" placeholder="contoh: Pecel lele">
+        </div>
+        <div class="field">
+          <label for="baru-porsi">Ukuran 1 porsi</label>
+          <input id="baru-porsi" required maxlength="40" placeholder="contoh: 1 porsi tanpa nasi">
+        </div>
+        <div class="baris">
+          <div>
+            <label for="baru-kkal">Kalori (kkal)</label>
+            <input id="baru-kkal" type="number" min="0" step="1" required inputmode="numeric">
+          </div>
+          <div>
+            <label for="baru-protein">Protein (g)</label>
+            <input id="baru-protein" type="number" min="0" step="0.1" required inputmode="decimal">
+          </div>
+        </div>
+        <button type="submit">Simpan makanan</button>
+      </form>
+      <div id="daftar-makanan-saya" style="margin-top:12px"></div>
+    </details>
+  </section>
+
+  <!-- Kartu F: pengaturan -->
+  <section class="kartu">
+    <details>
+      <summary>Pengaturan target</summary>
+      <form id="form-pengaturan">
+        <div class="baris">
+          <div>
+            <label for="set-kkal">Target kalori (kkal)</label>
+            <input id="set-kkal" type="number" min="500" max="10000" step="50" required>
+          </div>
+          <div>
+            <label for="set-protein">Target protein (g)</label>
+            <input id="set-protein" type="number" min="10" max="400" step="1" required>
+          </div>
+        </div>
+        <button type="submit">Simpan target</button>
+      </form>
+      <button type="button" class="sekunder" id="tombol-reset" style="margin-top:12px">Hapus semua data</button>
+    </details>
+  </section>
+
+  <p class="catatan">
+    Angka kalori & protein bawaan adalah estimasi porsi umum (dibulatkan) dan bisa beda jauh
+    tergantung resep, minyak, dan ukuran porsi. Bukan saran medis/gizi.
+    Data hanya tersimpan di browser ini (localStorage).
+  </p>
+</main>
+
+<!-- =====================================================================
+     BAGIAN 3 — JavaScript (logika)
+     ===================================================================== -->
+<script>
+// ---------------------------------------------------------------------
+// 3.1 DATABASE MAKANAN BAWAAN
+// Sebuah array (daftar) berisi object. Tiap object = satu makanan.
+// kkal & protein adalah nilai untuk SATU porsi yang tertulis.
+// ---------------------------------------------------------------------
+const MAKANAN_BAWAAN = [
+  { id: "nasi-putih",    nama: "Nasi putih",              porsi: "1 piring (±150 g)",        kkal: 200, protein: 4 },
+  { id: "nasi-merah",    nama: "Nasi merah",              porsi: "1 piring (±150 g)",        kkal: 170, protein: 4 },
+  { id: "nasi-goreng",   nama: "Nasi goreng",             porsi: "1 piring",                 kkal: 600, protein: 18 },
+  { id: "nasi-padang",   nama: "Nasi padang (rendang)",   porsi: "1 bungkus",                kkal: 750, protein: 30 },
+  { id: "nasi-uduk",     nama: "Nasi uduk + lauk",        porsi: "1 bungkus",                kkal: 550, protein: 15 },
+  { id: "bubur-ayam",    nama: "Bubur ayam",              porsi: "1 mangkuk",                kkal: 370, protein: 15 },
+  { id: "ayam-goreng",   nama: "Ayam goreng (paha)",      porsi: "1 potong",                 kkal: 245, protein: 20 },
+  { id: "ayam-dada",     nama: "Ayam goreng (dada)",      porsi: "1 potong",                 kkal: 260, protein: 27 },
+  { id: "ayam-geprek",   nama: "Ayam geprek (tanpa nasi)",porsi: "1 porsi",                  kkal: 350, protein: 25 },
+  { id: "sate-ayam",     nama: "Sate ayam + bumbu kacang",porsi: "10 tusuk",                 kkal: 400, protein: 30 },
+  { id: "rendang",       nama: "Rendang daging",          porsi: "1 potong (±50 g)",         kkal: 195, protein: 14 },
+  { id: "ikan-lele",     nama: "Lele goreng",             porsi: "1 ekor",                   kkal: 240, protein: 18 },
+  { id: "telur-rebus",   nama: "Telur rebus",             porsi: "1 butir",                  kkal: 75,  protein: 6.5 },
+  { id: "telur-goreng",  nama: "Telur ceplok/dadar",      porsi: "1 butir",                  kkal: 110, protein: 6.5 },
+  { id: "tempe-goreng",  nama: "Tempe goreng",            porsi: "1 potong (±25 g)",         kkal: 90,  protein: 5 },
+  { id: "tahu-goreng",   nama: "Tahu goreng",             porsi: "1 potong (±40 g)",         kkal: 70,  protein: 4 },
+  { id: "soto-ayam",     nama: "Soto ayam (tanpa nasi)",  porsi: "1 mangkuk",                kkal: 250, protein: 18 },
+  { id: "bakso",         nama: "Bakso",                   porsi: "1 mangkuk",                kkal: 400, protein: 20 },
+  { id: "mie-ayam",      nama: "Mie ayam",                porsi: "1 mangkuk",                kkal: 500, protein: 20 },
+  { id: "mie-instan",    nama: "Mie instan goreng",       porsi: "1 bungkus",                kkal: 380, protein: 8 },
+  { id: "gado-gado",     nama: "Gado-gado",               porsi: "1 porsi",                  kkal: 350, protein: 15 },
+  { id: "sayur-asem",    nama: "Sayur asem",              porsi: "1 mangkuk",                kkal: 80,  protein: 2 },
+  { id: "tumis-kangkung",nama: "Tumis kangkung",          porsi: "1 porsi",                  kkal: 100, protein: 3 },
+  { id: "bakwan",        nama: "Bakwan / gorengan",       porsi: "1 buah",                   kkal: 135, protein: 2 },
+  { id: "roti-tawar",    nama: "Roti tawar",              porsi: "1 lembar",                 kkal: 70,  protein: 2.5 },
+  { id: "susu-sapi",     nama: "Susu sapi full cream",    porsi: "1 gelas (200 ml)",         kkal: 125, protein: 6.5 },
+  { id: "susu-kedelai",  nama: "Susu kedelai",            porsi: "1 gelas (200 ml)",         kkal: 100, protein: 7 },
+  { id: "whey",          nama: "Whey protein",            porsi: "1 scoop (±30 g)",          kkal: 120, protein: 24 },
+  { id: "kacang-tanah",  nama: "Kacang tanah",            porsi: "1 genggam (±30 g)",        kkal: 170, protein: 7.5 },
+  { id: "pisang",        nama: "Pisang",                  porsi: "1 buah sedang",            kkal: 105, protein: 1.3 },
+  { id: "apel",          nama: "Apel",                    porsi: "1 buah sedang",            kkal: 95,  protein: 0.5 },
+  { id: "alpukat",       nama: "Alpukat",                 porsi: "½ buah",                   kkal: 160, protein: 2 },
+  { id: "ubi-rebus",     nama: "Ubi rebus",               porsi: "1 buah sedang",            kkal: 130, protein: 1.5 },
+  { id: "kopi-susu",     nama: "Kopi susu gula aren",     porsi: "1 gelas",                  kkal: 200, protein: 4 },
+  { id: "teh-manis",     nama: "Teh manis",               porsi: "1 gelas",                  kkal: 90,  protein: 0 },
+];
+
+// ---------------------------------------------------------------------
+// 3.2 PENYIMPANAN (localStorage)
+// localStorage hanya bisa menyimpan TEKS. Jadi object kita ubah jadi teks
+// dengan JSON.stringify saat menyimpan, lalu dikembalikan dengan JSON.parse
+// saat memuat. try/catch menjaga aplikasi tidak crash kalau browser
+// memblokir penyimpanan (misalnya mode penyamaran).
+// ---------------------------------------------------------------------
+const KUNCI_SIMPAN = "pelacakKalori.v1";
+
+function dataAwal() {
+  return {
+    pengaturan: { targetKkal: 2500, targetProtein: 90 },
+    makananSaya: [],   // makanan buatan pengguna
+    catatan: {},       // { "2026-10-27": [entri, entri, ...], ... }
+  };
+}
+
+function muatData() {
+  try {
+    const teks = localStorage.getItem(KUNCI_SIMPAN);
+    if (!teks) return dataAwal();
+    const tersimpan = JSON.parse(teks);
+    // Gabungkan dengan dataAwal supaya field yang belum ada tetap terisi.
+    return {
+      ...dataAwal(),
+      ...tersimpan,
+      pengaturan: { ...dataAwal().pengaturan, ...tersimpan.pengaturan },
+    };
+  } catch (e) {
+    return dataAwal();
+  }
+}
+
+function simpanData() {
+  try {
+    localStorage.setItem(KUNCI_SIMPAN, JSON.stringify(data));
+  } catch (e) {
+    alert("Gagal menyimpan. Browser mungkin memblokir penyimpanan lokal.");
+  }
+}
+
+// "data" adalah satu-satunya sumber kebenaran (state) aplikasi ini.
+let data = muatData();
+
+// ---------------------------------------------------------------------
+// 3.3 FUNGSI BANTU (kecil-kecil, dipakai berulang)
+// ---------------------------------------------------------------------
+
+// Mengubah tanggal jadi teks "YYYY-MM-DD" memakai jam LOKAL.
+// (Sengaja tidak pakai toISOString(), karena itu memakai jam UTC:
+//  di WIB, makan jam 06.00 pagi bisa tercatat sebagai hari kemarin.)
+function kunciTanggal(tgl) {
+  const tahun = tgl.getFullYear();
+  const bulan = String(tgl.getMonth() + 1).padStart(2, "0"); // bulan dimulai dari 0!
+  const hari = String(tgl.getDate()).padStart(2, "0");
+  return `${tahun}-${bulan}-${hari}`;
+}
+
+function hariIni() {
+  return kunciTanggal(new Date());
+}
+
+// Tanggal n hari yang lalu (0 = hari ini, 1 = kemarin, dst.)
+function mundurHari(n) {
+  const tgl = new Date();
+  tgl.setDate(tgl.getDate() - n);
+  return kunciTanggal(tgl);
+}
+
+// "2026-10-27" -> "Sel, 27 Okt"
+function formatTanggalPendek(kunci) {
+  const [tahun, bulan, hari] = kunci.split("-").map(Number);
+  return new Date(tahun, bulan - 1, hari)
+    .toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
+}
+
+function bulatkan(angka) {
+  return Math.round(angka * 10) / 10; // 1 angka di belakang koma
+}
+
+// Mencegah teks buatan pengguna dibaca sebagai kode HTML.
+// Contoh: nama makanan "<b>x</b>" akan tampil apa adanya, bukan jadi tebal.
+function amanHtml(teks) {
+  return String(teks)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buatId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function semuaMakanan() {
+  return [...MAKANAN_BAWAAN, ...data.makananSaya];
+}
+
+function cariMakanan(id) {
+  return semuaMakanan().find((m) => m.id === id);
+}
+
+// Menjumlahkan kalori & protein satu hari.
+function totalHari(kunci) {
+  const entri = data.catatan[kunci] || [];
+  let kkal = 0;
+  let protein = 0;
+  for (const e of entri) {
+    kkal += e.kkal;
+    protein += e.protein;
+  }
+  return { kkal, protein };
+}
+
+// ATURAN "TARGET TERCAPAI" (ubah di sini kalau mau aturan lain):
+// - kalori berada di 90%–110% dari target, DAN
+// - protein minimal 100% dari target.
+function targetTercapai(total) {
+  const { targetKkal, targetProtein } = data.pengaturan;
+  const kaloriPas = total.kkal >= targetKkal * 0.9 && total.kkal <= targetKkal * 1.1;
+  const proteinCukup = total.protein >= targetProtein;
+  return kaloriPas && proteinCukup;
+}
+
+// Streak = berapa hari berturut-turut target tercapai.
+// Hari ini belum selesai, jadi kalau hari ini belum tercapai,
+// hitungan dimulai dari kemarin (streak tidak langsung putus pagi-pagi).
+function hitungStreak() {
+  let streak = 0;
+  let mulai = targetTercapai(totalHari(hariIni())) ? 0 : 1;
+  for (let i = mulai; i < 3650; i++) {
+    if (targetTercapai(totalHari(mundurHari(i)))) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// Menebak waktu makan dari jam sekarang, supaya input lebih cepat.
+function tebakWaktuMakan() {
+  const jam = new Date().getHours();
+  if (jam < 10) return "pagi";
+  if (jam < 15) return "siang";
+  if (jam < 18) return "sore";
+  return "malam";
+}
+
+// Ambil elemen HTML berdasarkan id (biar tidak mengetik panjang terus).
+const $ = (id) => document.getElementById(id);
+
+// ---------------------------------------------------------------------
+// 3.4 FUNGSI RENDER (menggambar ulang tampilan dari "data")
+// Polanya: data berubah -> simpanData() -> renderSemua().
+// ---------------------------------------------------------------------
+
+function renderPilihanMakanan() {
+  const pilihanSebelumnya = $("pilih-makanan").value;
+  const opsi = (m) =>
+    `<option value="${amanHtml(m.id)}">${amanHtml(m.nama)} — ${amanHtml(m.porsi)}</option>`;
+
+  let html = `<optgroup label="Bawaan">${MAKANAN_BAWAAN.map(opsi).join("")}</optgroup>`;
+  if (data.makananSaya.length > 0) {
+    html += `<optgroup label="Makanan saya">${data.makananSaya.map(opsi).join("")}</optgroup>`;
+  }
+  $("pilih-makanan").innerHTML = html;
+
+  // Pertahankan pilihan sebelumnya kalau masih ada.
+  if (cariMakanan(pilihanSebelumnya)) $("pilih-makanan").value = pilihanSebelumnya;
+}
+
+function renderPreview() {
+  const makanan = cariMakanan($("pilih-makanan").value);
+  const porsi = parseFloat($("jumlah-porsi").value) || 0;
+  if (!makanan) {
+    $("preview").textContent = "";
+    return;
+  }
+  $("preview").textContent =
+    `= ${Math.round(makanan.kkal * porsi)} kkal · ${bulatkan(makanan.protein * porsi)} g protein`;
+}
+
+function renderSatuBar(idBar, idTeks, nilai, target, satuan) {
+  const persen = target > 0 ? (nilai / target) * 100 : 0;
+  const bar = $(idBar);
+  bar.style.width = Math.min(persen, 100) + "%";      // bar maksimal penuh 100%
+  bar.classList.toggle("lebih", persen > 110);         // merah kalau kelebihan >10%
+  $(idTeks).textContent =
+    `${bulatkan(nilai)} / ${target} ${satuan} (${Math.round(persen)}%)`;
+}
+
+function renderProgress() {
+  const total = totalHari(hariIni());
+  const { targetKkal, targetProtein } = data.pengaturan;
+  renderSatuBar("bar-kalori", "teks-kalori", total.kkal, targetKkal, "kkal");
+  renderSatuBar("bar-protein", "teks-protein", total.protein, targetProtein, "g");
+}
+
+function renderCatatanHariIni() {
+  const entri = data.catatan[hariIni()] || [];
+  if (entri.length === 0) {
+    $("daftar-hari-ini").innerHTML = `<p class="kosong">Belum ada yang dicatat hari ini.</p>`;
+    return;
+  }
+
+  const urutanWaktu = ["pagi", "siang", "sore", "malam"];
+  let html = "";
+  for (const waktu of urutanWaktu) {
+    const entriWaktuIni = entri.filter((e) => e.waktu === waktu);
+    if (entriWaktuIni.length === 0) continue;
+
+    html += `<div class="grup-waktu"><h3>${waktu[0].toUpperCase() + waktu.slice(1)}</h3>`;
+    for (const e of entriWaktuIni) {
+      html += `
+        <div class="item">
+          <span class="nama">${amanHtml(e.nama)} × ${e.porsi}</span>
+          <span class="angka">${Math.round(e.kkal)} kkal · ${bulatkan(e.protein)} g</span>
+          <button type="button" data-hapus-entri="${e.id}" aria-label="Hapus">✕</button>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+  $("daftar-hari-ini").innerHTML = html;
+}
+
+function renderRiwayat() {
+  let html = "";
+  for (let i = 0; i < 7; i++) {
+    const kunci = mundurHari(i);
+    const total = totalHari(kunci);
+    const adaData = (data.catatan[kunci] || []).length > 0;
+    let tanda = "—";
+    if (adaData) tanda = targetTercapai(total) ? "✅" : "❌";
+    if (i === 0 && adaData && !targetTercapai(total)) tanda = "⏳"; // hari ini masih berjalan
+
+    html += `
+      <tr>
+        <td>${i === 0 ? "Hari ini" : formatTanggalPendek(kunci)}</td>
+        <td>${Math.round(total.kkal)}</td>
+        <td>${bulatkan(total.protein)} g</td>
+        <td>${tanda}</td>
+      </tr>`;
+  }
+  $("tabel-riwayat").innerHTML = html;
+
+  const streak = hitungStreak();
+  $("streak").textContent = streak > 0
+    ? `🔥 Streak: ${streak} hari berturut-turut`
+    : "Streak: 0 hari — ayo mulai hari ini!";
+
+  const { targetKkal, targetProtein } = data.pengaturan;
+  $("aturan-target").textContent =
+    `✅ = kalori ${Math.round(targetKkal * 0.9)}–${Math.round(targetKkal * 1.1)} kkal ` +
+    `dan protein ≥ ${targetProtein} g. ⏳ = hari ini belum tercapai.`;
+}
+
+function renderMakananSaya() {
+  if (data.makananSaya.length === 0) {
+    $("daftar-makanan-saya").innerHTML = `<p class="kosong">Belum ada makanan buatan sendiri.</p>`;
+    return;
+  }
+  $("daftar-makanan-saya").innerHTML = data.makananSaya.map((m) => `
+    <div class="item">
+      <span class="nama">${amanHtml(m.nama)} — ${amanHtml(m.porsi)}</span>
+      <span class="angka">${m.kkal} kkal · ${m.protein} g</span>
+      <button type="button" data-hapus-makanan="${amanHtml(m.id)}" aria-label="Hapus">✕</button>
+    </div>`).join("");
+}
+
+function renderPengaturan() {
+  $("set-kkal").value = data.pengaturan.targetKkal;
+  $("set-protein").value = data.pengaturan.targetProtein;
+}
+
+function renderSemua() {
+  $("tanggal-hari-ini").textContent = new Date()
+    .toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  renderPilihanMakanan();
+  renderPreview();
+  renderProgress();
+  renderCatatanHariIni();
+  renderRiwayat();
+  renderMakananSaya();
+}
+
+// ---------------------------------------------------------------------
+// 3.5 EVENT (reaksi terhadap klik / ketikan pengguna)
+// ---------------------------------------------------------------------
+
+// Pratinjau berubah setiap kali makanan atau porsi diganti.
+$("pilih-makanan").addEventListener("change", renderPreview);
+$("jumlah-porsi").addEventListener("input", renderPreview);
+
+// Tambah entri makan.
+$("form-tambah").addEventListener("submit", (event) => {
+  event.preventDefault(); // cegah halaman reload (perilaku bawaan form)
+  const makanan = cariMakanan($("pilih-makanan").value);
+  const porsi = parseFloat($("jumlah-porsi").value);
+  if (!makanan || !(porsi > 0)) return;
+
+  const kunci = hariIni();
+  if (!data.catatan[kunci]) data.catatan[kunci] = [];
+
+  // Nilai kalori/protein DISALIN ke entri ("snapshot"), supaya riwayat
+  // tidak ikut berubah kalau makanan buatan sendiri nanti dihapus.
+  data.catatan[kunci].push({
+    id: buatId(),
+    nama: makanan.nama,
+    porsi: porsi,
+    kkal: makanan.kkal * porsi,
+    protein: makanan.protein * porsi,
+    waktu: $("waktu-makan").value,
+  });
+
+  simpanData();
+  $("jumlah-porsi").value = 1;
+  renderSemua();
+});
+
+// Satu "pendengar" untuk semua tombol hapus (event delegation).
+// Tombolnya dibuat ulang setiap render, jadi lebih mudah mendengarkan
+// di level dokumen lalu cek tombol mana yang diklik.
+document.addEventListener("click", (event) => {
+  const tombolEntri = event.target.closest("[data-hapus-entri]");
+  if (tombolEntri) {
+    const id = tombolEntri.dataset.hapusEntri;
+    const kunci = hariIni();
+    data.catatan[kunci] = (data.catatan[kunci] || []).filter((e) => e.id !== id);
+    simpanData();
+    renderSemua();
+    return;
+  }
+
+  const tombolMakanan = event.target.closest("[data-hapus-makanan]");
+  if (tombolMakanan) {
+    if (!confirm("Hapus makanan ini dari daftar? Catatan lama tetap aman.")) return;
+    const id = tombolMakanan.dataset.hapusMakanan;
+    data.makananSaya = data.makananSaya.filter((m) => m.id !== id);
+    simpanData();
+    renderSemua();
+  }
+});
+
+// Simpan makanan buatan sendiri.
+$("form-makanan-baru").addEventListener("submit", (event) => {
+  event.preventDefault();
+  data.makananSaya.push({
+    id: "saya-" + buatId(),
+    nama: $("baru-nama").value.trim(),
+    porsi: $("baru-porsi").value.trim(),
+    kkal: parseFloat($("baru-kkal").value),
+    protein: parseFloat($("baru-protein").value),
+  });
+  simpanData();
+  event.target.reset();
+  renderSemua();
+});
+
+// Simpan target baru.
+$("form-pengaturan").addEventListener("submit", (event) => {
+  event.preventDefault();
+  data.pengaturan.targetKkal = parseFloat($("set-kkal").value);
+  data.pengaturan.targetProtein = parseFloat($("set-protein").value);
+  simpanData();
+  renderSemua();
+  alert("Target disimpan.");
+});
+
+// Hapus semua data (dengan konfirmasi).
+$("tombol-reset").addEventListener("click", () => {
+  if (!confirm("Yakin hapus SEMUA catatan, makanan buatan, dan pengaturan?")) return;
+  data = dataAwal();
+  simpanData();
+  renderPengaturan();
+  renderSemua();
+});
+
+// ---------------------------------------------------------------------
+// 3.6 MULAI APLIKASI
+// ---------------------------------------------------------------------
+$("waktu-makan").value = tebakWaktuMakan();
+renderPengaturan();
+renderSemua();
+</script>
+</body>
+</html>

@@ -871,35 +871,96 @@ function buildScene() {
   keyPlate.rotation.x = -Math.PI / 2; keyPlate.position.set(0, 0.0125, -0.03); laptop.add(keyPlate);
   const lid = new THREE.Group(); lid.position.set(0, 0.012, -0.11); lid.rotation.x = -0.28; laptop.add(lid);
   block(0.32, 0.21, 0.008, darkMetal, 0, 0.105, 0, lid);
-  const screenCanvas = document.createElement("canvas"); screenCanvas.width = 512; screenCanvas.height = 336;
+  // The laptop screen: a desktop with a PDF of the OJK law on the left and Claude Code in a terminal
+  // on the right. The still parts are painted once; the terminal text and the clock are redrawn as it types.
+  const SW = 1200, SH = 780;
+  const screenCanvas = document.createElement("canvas"); screenCanvas.width = SW; screenCanvas.height = SH;
   const screenTex = new THREE.CanvasTexture(screenCanvas); screenTex.encoding = THREE.sRGBEncoding;
+  screenTex.anisotropy = renderer.capabilities.getMaxAnisotropy();   // keeps the small text sharp at an angle
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.195), new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }));
   screen.position.set(0, 0.105, 0.0045); lid.add(screen);
+
+  const desktop = document.createElement("canvas"); desktop.width = SW; desktop.height = SH;
+  (function paintDesktop(g) {
+    const round = (x, y, w, h, r, fill) => { g.fillStyle = fill; g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.fill(); };
+    const wall = g.createLinearGradient(0, 0, 0, SH); wall.addColorStop(0, "#6b5a49"); wall.addColorStop(1, "#2e3a2b");
+    g.fillStyle = wall; g.fillRect(0, 0, SW, SH);
+    // Menu bar.
+    g.fillStyle = "rgba(236,236,240,.93)"; g.fillRect(0, 0, SW, 26);
+    g.fillStyle = "#111"; g.font = "bold 15px sans-serif"; g.fillText("Edge", 16, 19);
+    g.font = "15px sans-serif"; ["File", "Edit", "View", "History", "Favourites", "Profiles", "Tab", "Window", "Help"].reduce((x, m) => { g.fillText(m, x, 19); return x + g.measureText(m).width + 22; }, 74);
+    // Left window: browser showing the PDF.
+    round(10, 38, 556, 678, 12, "#25292d");
+    for (const [c, x] of [["#ff5f57", 28], ["#febc2e", 48], ["#28c840", 68]]) { g.fillStyle = c; g.beginPath(); g.arc(x, 56, 6, 0, Math.PI * 2); g.fill(); }
+    round(150, 44, 250, 26, 13, "#33383d");
+    g.fillStyle = "#d7dbe0"; g.font = "14px sans-serif"; g.fillText("File   /Users/mzah/Documents/uu-21-2011.pdf", 162, 62);
+    g.fillStyle = "#2f3438"; g.fillRect(10, 78, 556, 34);
+    g.fillStyle = "#c9cdd2"; g.font = "13px sans-serif"; g.fillText("☰      −   +     1  of 71", 30, 100);
+    g.fillStyle = "#e9eaec"; g.fillRect(10, 112, 556, 604);
+    g.fillStyle = "#ffffff"; g.fillRect(36, 120, 504, 596);
+    g.fillStyle = "#111"; g.textAlign = "center"; g.font = "bold 14px sans-serif";
+    [["UNDANG-UNDANG REPUBLIK INDONESIA", 186], ["NOMOR 21 TAHUN 2011", 208], ["TENTANG", 230], ["OTORITAS JASA KEUANGAN", 252]].forEach(([s, y]) => g.fillText(s, 288, y));
+    g.font = "13px sans-serif";
+    g.fillText("DENGAN RAHMAT TUHAN YANG MAHA ESA", 288, 304); g.fillText("PRESIDEN REPUBLIK INDONESIA,", 288, 336);
+    g.textAlign = "left"; g.fillText("Menimbang:", 64, 380);
+    let y = 404;
+    ["a.", "b.", "c."].forEach((lab, k) => {
+      g.fillStyle = "#111"; g.fillText(lab, 64, y + 4);
+      g.fillStyle = "#9a9c9f";
+      for (let l = 0; l < (k === 2 ? 2 : 3); l++) { g.fillRect(92, y - 6 + l * 17, l === (k === 2 ? 1 : 2) ? 220 + k * 40 : 418, 6); }
+      y += k === 2 ? 50 : 66;
+    });
+    g.fillStyle = "#111"; g.fillText("Mengingat:", 64, y + 22);
+    g.fillStyle = "#9a9c9f"; for (let l = 0; l < 4; l++) g.fillRect(92, y + 40 + l * 17, l === 3 ? 260 : 418, 6);
+    g.fillStyle = "#c9cbce"; g.fillRect(64, 690, 448, 1);
+    // Right window frame: the terminal (its text is drawn on every update).
+    round(576, 38, 614, 678, 12, "#121417");
+    g.fillStyle = "#24272b"; g.fillRect(576, 50, 614, 50); round(576, 38, 614, 30, 12, "#24272b");
+    for (const [c, x] of [["#ff5f57", 594], ["#febc2e", 614], ["#28c840", 634]]) { g.fillStyle = c; g.beginPath(); g.arc(x, 56, 6, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = "#c9cdd2"; g.font = "bold 13px sans-serif"; g.fillText("mzah — ✳ Claude Code — 75×38", 790, 61);
+    g.fillStyle = "#2e3236"; g.fillRect(576, 74, 300, 26); g.fillStyle = "#9aa3ad"; g.font = "12px sans-serif"; g.fillText("~ — claude", 680, 92);
+    // Dock.
+    round(250, 724, 700, 50, 14, "rgba(240,240,245,.28)");
+    const icons = ["#3b82f6", "#a855f7", "#0ea5e9", "#60a5fa", "#ef4444", "#22c55e", "#9ca3af", "#f97316", "#111827", "#64748b", "#16a34a", "#15803d", "#f97316", "#1e293b", "#dc2626", "#2563eb", "#0f172a", "#facc15", "#94a3b8"];
+    icons.forEach((c, k) => round(262 + k * 35.8, 730, 32, 32, 8, c));
+    // Now playing.
+    round(450, 30, 300, 34, 17, "#050505");
+    g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillText("♪  Oasis — Live Forever", 600, 52); g.textAlign = "left";
+    g.fillStyle = "#6aa2ff"; [0, 1, 2, 3].forEach((k) => g.fillRect(712 + k * 6, 40 + (k % 2) * 4, 3, 14 - (k % 2) * 6));
+  })(desktop.getContext("2d"));
+
   const termLines = [
-    "$ python3 scripts/build_map.py", "27 companies", "7 notes, 14 links between them", "Wrote public/",
-    "$ claude", "> read the regulation, list who must do what", "  reading Pasal 1–42 …", "  12 obligations found",
-    "> check them against my hand-checked sample", "  precision 0.92 · recall 0.88", "> what did it miss?",
-    "  Pasal 27 ayat (3): obligation hidden in an exception", "> log it in experiments/", "✓ saved", "",
+    "> rebuild the site and check it", "$ python3 scripts/build_map.py", "  27 companies", "  7 notes, 14 links between them",
+    "  Wrote public/", "✓ build passes", "", "> read UU 21/2011, list who must do what", "  reading Pasal 1–70 …",
+    "  12 obligations found", "> score them against my hand-checked sample", "  precision 0.92 · recall 0.88",
+    "> what did it miss?", "  Pasal 27 ayat (3): hidden in an exception", "> log it in experiments/", "✓ saved", "",
   ];
   let termShown = 0, termNext = 0;
   function drawScreen(t) {
     if (t < termNext) return;
     termNext = t + 450 + Math.random() * 500;
-    termShown = (termShown + 1) % (termLines.length + 6);
-    const g = screenCanvas.getContext("2d"), w = screenCanvas.width, h = screenCanvas.height;
-    g.fillStyle = "#0e1013"; g.fillRect(0, 0, w, h);
-    g.fillStyle = "#1c1f24"; g.fillRect(0, 0, w, 26);
-    for (const [k, c] of [["#ff5f57", 14], ["#febc2e", 34], ["#28c840", 54]]) { g.fillStyle = k; g.beginPath(); g.arc(c, 13, 6, 0, Math.PI * 2); g.fill(); }
-    g.fillStyle = "#9aa3ad"; g.font = "13px monospace"; g.fillText("statuta.id — regulatory ai labs", 150, 18);
-    g.font = "15px monospace";
-    const shown = termLines.slice(0, Math.min(termShown, termLines.length)).slice(-15);
+    termShown = (termShown + 1) % (termLines.length + 8);
+    const g = screenCanvas.getContext("2d");
+    g.drawImage(desktop, 0, 0);
+    // Clock in the menu bar.
+    const now = new Date(), two = (n) => String(n).padStart(2, "0");
+    g.fillStyle = "#111"; g.font = "15px sans-serif"; g.textAlign = "right";
+    g.fillText(now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }).replace(",", "") + "  " + two(now.getHours()) + "." + two(now.getMinutes()), SW - 14, 19);
+    g.textAlign = "left";
+    // Terminal text.
+    g.font = "16px monospace";
+    const shown = termLines.slice(0, Math.min(termShown, termLines.length)).slice(-24);
     shown.forEach((line, i) => {
-      g.fillStyle = line.startsWith("$") || line.startsWith(">") ? "#e8e6e1" : line.startsWith("✓") ? "#6dff9a" : "#8fd0ff";
-      g.fillText(line, 14, 50 + i * 19);
+      g.fillStyle = line.startsWith(">") ? "#e8e6e1" : line.startsWith("$") ? "#c9cdd2" : line.startsWith("✓") ? "#6dff9a" : "#8fd0ff";
+      g.fillText(line, 594, 130 + i * 21);
     });
-    if (Math.floor(t / 500) % 2) { g.fillStyle = "#e8e6e1"; g.fillRect(14, 40 + shown.length * 19, 9, 15); }
+    g.fillStyle = "#3a3f45"; g.fillRect(590, 640, 586, 1);
+    g.fillStyle = "#e8e6e1"; g.fillText("❯", 594, 664);
+    if (Math.floor(t / 500) % 2) g.fillRect(614, 650, 10, 18);
+    g.fillStyle = "#6dff9a"; g.font = "14px monospace"; g.fillText("[PONYTAIL]  ▸▸ auto mode on · 2 shells", 594, 698);
     screenTex.needsUpdate = true;
   }
+
 
   // Tablet in a pink case, standing on its cover, showing a second terminal.
   const tablet = new THREE.Group(); tablet.position.set(0.42, DESK_Y + 0.001, WALL_Z + 0.2); tablet.rotation.set(0, -0.15, 0); room.add(tablet);
@@ -1091,7 +1152,7 @@ function buildScene() {
   piece(new THREE.CylinderGeometry(0.0035, 0.0035, 0.14, 6), mat(0x111111, 0.4), -0.36, DESK_Y + 0.02, WALL_Z + 0.48).rotation.set(Math.PI / 2, 0, 0.6);
   for (const [x, c] of [[-0.1, 0xfff27a], [0.08, 0xffb3c7]]) {
     const note = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 0.035), mat(c, 0.9));
-    note.position.set(x, 0.205, 0.0045); note.rotation.z = (Math.random() - 0.5) * 0.3; lid.add(note);
+    note.position.set(x, 0.205, 0.0058);   // in front of the screen, never at the same depth note.rotation.z = (Math.random() - 0.5) * 0.3; lid.add(note);
   }
   const plant = new THREE.Group(); plant.position.set(0.66, DESK_Y, WALL_Z + 0.42); room.add(plant);
   piece(new THREE.CylinderGeometry(0.045, 0.035, 0.08, 16), mat(0xc96f4a, 0.8), 0, 0.04, 0, plant);
@@ -1100,6 +1161,47 @@ function buildScene() {
     leaf.scale.set(0.45, 1.6, 0.2); leaf.rotation.set(0.5 * Math.cos(k), (k / 9) * Math.PI * 2, 0.55);
     leaf.translateY(0.04);
   }
+
+  // ---- A lived-in, slightly messy desk and chair. ----
+  // Printed regulations scattered and stacked; each sheet sits a little higher than the one below,
+  // so no two pages share the same height (shared heights make surfaces flicker).
+  let sheetY = DESK_Y + 0.001;
+  [[0.12, 0.5, 0.3], [0.2, 0.47, -0.2], [0.55, 0.3, 0.6], [0.5, 0.33, 0.35], [-0.78, 0.25, 0.1], [-0.76, 0.27, -0.15], [0.18, 0.12, 1.4]].forEach(([x, z, rot]) => {
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.297), paperMat);
+    sheet.rotation.set(-Math.PI / 2, 0, rot); sheet.position.set(x, sheetY += 0.0012, WALL_Z + z);
+    sheet.receiveShadow = true; room.add(sheet);
+  });
+  // Highlighter, a calculator, a water bottle, crumpled paper, a snack wrapper and a charger.
+  piece(new THREE.CylinderGeometry(0.008, 0.009, 0.12, 8), mat(0xf3e23a, 0.5), 0.16, sheetY + 0.009, WALL_Z + 0.48).rotation.set(Math.PI / 2, 0, 0.9);
+  const calc = block(0.08, 0.012, 0.14, mat(0x24272b, 0.6), 0.7, DESK_Y + 0.007, WALL_Z + 0.33); calc.rotation.y = -0.3;
+  const calcKeys = canvasTexture(64, 112, (g, w, h) => { g.fillStyle = "#24272b"; g.fillRect(0, 0, w, h); g.fillStyle = "#a9c4a0"; g.fillRect(6, 6, w - 12, 22); g.fillStyle = "#4a4f55"; for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) g.fillRect(6 + c * 14, 36 + r * 14, 11, 10); });
+  const calcTop = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.14), mat(0xffffff, 0.6, { map: calcKeys }));
+  calcTop.rotation.x = -Math.PI / 2; calcTop.position.y = 0.0062; calc.add(calcTop);
+  piece(new THREE.CylinderGeometry(0.032, 0.034, 0.22, 16), mat(0x8fc6e8, 0.1, { transparent: true, opacity: 0.55 }), -0.82, DESK_Y + 0.11, WALL_Z + 0.42);
+  piece(new THREE.CylinderGeometry(0.02, 0.02, 0.03, 12), mat(0x1e4fd8, 0.4), -0.82, DESK_Y + 0.235, WALL_Z + 0.42);
+  for (const [x, z] of [[0.45, 0.55], [-0.2, 0.58], [0.6, 0.6]]) {
+    const ball = piece(new THREE.IcosahedronGeometry(0.03, 0), mat(0xeeeae2, 0.9, { flatShading: true }), x, DESK_Y + 0.025, WALL_Z + z);
+    ball.scale.set(1, 0.85, 1.1); ball.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+  }
+  block(0.1, 0.006, 0.06, mat(0xc4202b, 0.25, { metalness: 0.5 }), 0.3, DESK_Y + 0.004, WALL_Z + 0.6).rotation.y = 0.7;   // snack wrapper
+  block(0.05, 0.03, 0.05, mat(0xf4f4f2, 0.5), -0.55, DESK_Y + 0.015, WALL_Z + 0.12);                                      // charger
+  // A book lying open, face down, like a small tent.
+  for (const s of [-1, 1]) {
+    const half = block(0.12, 0.012, 0.17, mat(0x8b2a2a, 0.7), -0.3 + s * 0.058, DESK_Y + 0.02, WALL_Z + 0.58);
+    half.rotation.z = s * 0.28;
+  }
+
+  // The chair gets a low backrest with a towel over it.
+  block(0.44, 0.2, 0.035, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.62, 0.2, chair);
+  for (const x of [-0.2, 0.2]) piece(new THREE.CylinderGeometry(0.012, 0.012, 0.26, 8), steel, x, 0.6, 0.22, chair);
+  // A folded towel thrown over the backrest: cloth over a bar hangs as two flat panels meeting at the top.
+  const towelTex = canvasTexture(64, 64, (g, w, h) => { g.fillStyle = "#6d7f8f"; g.fillRect(0, 0, w, h); g.fillStyle = "#e9e4d8"; g.fillRect(0, 50, w, 5); g.fillRect(0, 58, w, 2); });
+  const towel = mat(0xffffff, 1, { map: towelTex });
+  for (const s of [-1, 1]) {
+    const panel = block(0.26, 0.17, 0.012, towel, 0.08, 0.66, 0.2 + s * 0.03, chair);
+    panel.rotation.x = s * 0.18;
+  }
+  block(0.26, 0.016, 0.07, towel, 0.08, 0.745, 0.2, chair);   // the fold along the top
 
   // Under the desk: a power strip with cables running up to the laptop and tablet.
   block(0.3, 0.035, 0.06, mat(0xf2f0ec, 0.6), -0.2, RY + 0.018, WALL_Z + 0.2);
@@ -1240,7 +1342,7 @@ function buildScene() {
   // ---- Camera path: the points it moves through as you scroll from top (0) to bottom (1). ----
   const path = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0.15, 31.35, 70.7),    // standing behind your chair, looking at the desk
-    new THREE.Vector3(-0.05, 31.1, 69.75),   // leaning in towards the laptop
+    new THREE.Vector3(-0.07, 31.05, 68.98),  // leaning in close enough to read the laptop
     new THREE.Vector3(-0.35, 31.6, 69.1),    // at the window, blinds lifting
     new THREE.Vector3(-0.35, 31.7, 67.2),    // out through the window
     new THREE.Vector3(0, 24, 30),            // gliding down over the desert
@@ -1252,7 +1354,7 @@ function buildScene() {
   ]);
   const look = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-0.05, 31.05, 68.5),
-    new THREE.Vector3(-0.1, 30.95, 68.4),
+    new THREE.Vector3(-0.08, 30.97, 68.4),
     new THREE.Vector3(-0.35, 31.9, 50),
     new THREE.Vector3(0, 26, 0),
     new THREE.Vector3(0, 8, -40),

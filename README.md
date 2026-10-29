@@ -9,7 +9,10 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `data/` — datasets built from public sources, each with a data dictionary
 - `scripts/` — small Python scripts (run from the repo root)
 - `site/` — page templates (the map template, the lab home page and the 404 page)
-- `.github/workflows/pages.yml` — publishes the website at https://statuta.id (not switched on yet)
+- `content/beyond-statutes/` — the Beyond Statutes notes, one Markdown file each. Start a file with a
+  `---` header (`title`, `rank`, `tag`), write paragraphs, and link to another note with `[[Its title]]`.
+  The build makes a page per note with its links and backlinks, and fills the home page's chapter list.
+- `.github/workflows/pages.yml` — publishes the website at https://statuta.id
 
 ## Experiments
 
@@ -17,9 +20,9 @@ AI applied to Indonesian regulatory compliance, using public sources only
 |---|---|---|---|
 | 2026-10-11 | [Legal Industry Map (pilot)](experiments/2026-10-11-legal-industry-map.md) | [Interactive map](https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw) | `data/legal_industry_map.csv`, `site/legal-industry-map.html` |
 
-The interactive views are hosted as claude.ai artifacts for now. They will move to https://statuta.id once the website is live.
+The interactive views are also live at https://statuta.id.
 
-## Website (planned): https://statuta.id
+## Website: https://statuta.id
 
 `python3 scripts/build_map.py` builds the site into `public/` (not committed).
 GitHub Actions runs the same script on every push to check that the build works.

@@ -6,92 +6,196 @@
 <title>Regulatory AI Labs</title>
 <link rel="canonical" href="https://statuta.id/">
 <meta name="description" content="Independent research applying AI to Indonesian regulation, using public sources only.">
+<meta name="theme-color" content="#161616">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,650&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one narrow column, a short register of experiments. Same tokens as the map page. */
+/* Layout: one narrow monospace column. A pixel kawung (batik) pattern shimmers at the top,
+   a two-line tagline types itself out, then short sections. Dark only. */
 :root {
-  --bg: #F3F5F7; --surface: #FFFFFF; --ink: #17212B; --muted: #5A6673; --line: #D9DFE5; --accent: #0E5A5E;
-  --font-display: "Source Serif 4", Georgia, serif;
-  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #11171D; --surface: #18212A; --ink: #E4E9EE; --muted: #9AA6B2; --line: #2B3843; --accent: #6FC3C2; color-scheme: dark; }
+  --bg: #161616; --ink: #E6E3DD; --muted: #8D8A84; --line: #34322F;
+  --soga: #C8743A;   /* batik brown, the accent */
+  --font: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
-main { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 56px 48px; display: grid; gap: 28px; }
-.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
-h1 { font-family: var(--font-display); font-size: clamp(32px, 6vw, 46px); line-height: 1.08; margin: 6px 0 10px; text-wrap: balance; }
-p { margin: 0; max-width: 62ch; }
-.muted { color: var(--muted); }
-ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-li { border-bottom: 1px solid var(--line); }
-li a { display: grid; grid-template-columns: 7.5em 1fr; gap: 4px 16px; padding: 16px 4px; color: inherit; text-decoration: none; }
-li a:hover, li a:focus-visible { background: var(--surface); outline: none; }
-li time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-top: 3px; }
-li b { color: var(--accent); font-weight: 500; }
-li span { grid-column: 2; color: var(--muted); font-size: 14px; }
-section { display: grid; gap: 10px; }
-h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
-section ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 62ch; }
-section a { color: var(--accent); }
-footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
-footer a { color: var(--accent); }
-@media (max-width: 480px) { li a { grid-template-columns: 1fr; } li span { grid-column: 1; } }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.7; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 4px; }
+a:hover, a:focus-visible { text-decoration-color: var(--soga); color: #fff; outline: none; }
+
+nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 2;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px;
+  border-radius: 999px; background: rgba(40, 39, 37, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+nav .name { font-weight: 500; text-decoration: none; }
+nav ul { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+nav ul a { color: var(--muted); text-decoration: none; }
+nav ul a:hover { color: var(--ink); }
+
+main { max-width: 720px; margin: 0 auto; padding: 0 16px 56px; }
+canvas { display: block; width: 100%; height: 300px; margin-bottom: 8px;
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+
+.tagline { color: var(--muted); white-space: pre-line; min-height: 3.4em; margin: 0 0 28px; }
+.cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: -.2em; background: var(--muted); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+p { margin: 0 0 12px; max-width: 64ch; }
+.links { color: var(--muted); margin-top: 20px; }
+
+section { margin-top: 56px; scroll-margin-top: 90px; }
+h2 { font-size: 13px; font-weight: 400; color: var(--soga); margin: 0 0 14px; }
+h2::before { content: "§ "; }
+section ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 64ch; }
+section li::before { content: "– "; color: var(--muted); }
+.exp { display: grid; grid-template-columns: 8.5em 1fr; gap: 0 16px; }
+.exp time, .muted { color: var(--muted); }
+li.exp::before { content: none; }
+
+footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: grid; gap: 4px; }
+
+@media (max-width: 520px) {
+  nav ul { gap: 12px; font-size: 12px; } nav ul li.wide { display: none; }
+  canvas { height: 220px; } .exp { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor { animation: none; } }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <div class="eyebrow">statuta.id</div>
-    <h1>Regulatory AI Labs</h1>
-    <p class="muted">Applying AI to Indonesian regulation using public sources only. Each experiment publishes its data, method, sources and known errors.</p>
-  </header>
+<nav aria-label="Main">
+  <a class="name" href="#top">statuta.id</a>
+  <ul>
+    <li><a href="#experiments">experiments</a></li>
+    <li class="wide"><a href="#responsible-ai">responsible ai</a></li>
+    <li><a href="#data">data</a></li>
+  </ul>
+</nav>
 
-  <section>
-    <h2>About</h2>
-    <p>I trained in law at Universitas Gadjah Mada and work on Indonesian regulatory compliance. I have no formal computing background; this lab is where I learn to build and evaluate AI tools for the problems I know from practice: finding obligations in regulations, tracking amendments, and mapping how rules refer to each other.</p>
-  </section>
+<main id="top">
+  <canvas id="kawung" aria-hidden="true"></canvas>
 
-  <section>
-    <h2>Experiments</h2>
-  <ol>
-    <li>
-      <a href="legal-industry-map/">
+  <p class="tagline" id="tagline" aria-label="di lautan pasal, tarik benang merahnya">di lautan pasal,
+tarik benang merahnya</p>
+
+  <p>Halo, saya Hamzah.</p>
+  <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
+  <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
+  <p class="links"><a href="https://github.com/Mzah901">github</a></p>
+
+  <section id="experiments">
+    <h2>experiments</h2>
+    <ul>
+      <li class="exp">
         <time datetime="2026-10-11">11 Oct 2026</time>
-        <b>Legal Industry Map</b>
-        <span>27 legal-tech companies in Indonesia, ASEAN and global markets, with disclosed funding and sources. Pilot.</span>
-      </a>
-    </li>
-  </ol>
-  </section>
-
-  <section>
-    <h2>Responsible AI</h2>
-    <p>Every experiment follows the same rules, written down before any code:</p>
-    <ul>
-      <li><b>Public sources only.</b> Regulations from peraturan.go.id, JDIH portals, Pasal.id, official gazettes and published court decisions. No private or workplace data.</li>
-      <li><b>A human reviews everything.</b> AI output is a draft until I have checked it. Each experiment log records what I reviewed.</li>
-      <li><b>Measured, not eyeballed.</b> Results are scored against a sample I check by hand, with error counts, not "it looks right".</li>
-      <li><b>Limits stated up front.</b> Each experiment lists its sources, tools, models and known errors.</li>
+        <span><a href="legal-industry-map/">Legal Industry Map</a> <span class="muted">— 27 legal-tech companies in Indonesia, ASEAN and global markets, with disclosed funding and sources. Pilot.</span></span>
+      </li>
     </ul>
-    <p class="muted">The full rules are in <a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/CLAUDE.md">CLAUDE.md</a>; every experiment's log is in <a href="https://github.com/Mzah901/260725_regtech/tree/claude/new-session-euryc2/experiments">experiments/</a>.</p>
   </section>
 
-  <section>
-    <h2>Datasets</h2>
+  <section id="responsible-ai">
+    <h2>responsible ai</h2>
     <ul>
-      <li><a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/legal_industry_map.csv">legal_industry_map.csv</a>: 27 legal-tech companies, one row each, with a source URL on every row. <a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/schema.md">Data dictionary</a>.</li>
+      <li>Public sources only: peraturan.go.id, JDIH portals, Pasal.id, official gazettes, published court decisions. No private or workplace data.</li>
+      <li>A human reviews everything. AI output is a draft until I have checked it.</li>
+      <li>Measured, not eyeballed. Results are scored against a hand-checked sample, with error counts.</li>
+      <li>Limits stated up front: every experiment lists its sources, tools, models and known errors.</li>
+    </ul>
+    <p class="muted" style="margin-top:14px">Full rules: <a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/CLAUDE.md">CLAUDE.md</a>. Experiment logs: <a href="https://github.com/Mzah901/260725_regtech/tree/claude/new-session-euryc2/experiments">experiments/</a>.</p>
+  </section>
+
+  <section id="data">
+    <h2>data</h2>
+    <ul>
+      <li><a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/legal_industry_map.csv">legal_industry_map.csv</a> <span class="muted">— 27 rows, a source URL on every row (<a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/schema.md">data dictionary</a>)</span></li>
     </ul>
   </section>
 
   <footer>
     <span>Independent personal research. Not affiliated with or endorsed by any employer.</span>
-    <span>Outputs are research artifacts, not legal or investment advice. Code and data: <a href="https://github.com/Mzah901/260725_regtech">github.com/Mzah901/260725_regtech</a></span>
+    <span>Outputs are research artifacts, not legal or investment advice.</span>
   </footer>
 </main>
+
+<script>
+// 1. Tagline: type it out one letter at a time, then leave a blinking cursor.
+const tagline = document.getElementById("tagline");
+const text = tagline.textContent;
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const cursor = '<span class="cursor"></span>';
+if (still) {
+  tagline.innerHTML = text + cursor;
+} else {
+  let i = 0;
+  const type = () => {
+    tagline.innerHTML = text.slice(0, i) + cursor;
+    if (i++ < text.length) setTimeout(type, 55);
+  };
+  setTimeout(type, 400);
+}
+
+// 2. Kawung: the Javanese batik motif of four oval petals around a point, drawn as pixels.
+//    Each grid cell checks whether it falls inside a petal; a slow wave makes the petals shimmer.
+const canvas = document.getElementById("kawung");
+const ctx = canvas.getContext("2d");
+const CELL = 9, TILE = 12;          // pixel size, and petal-pattern size in cells
+let cols, rows;
+
+function resize() {
+  const ratio = devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = canvas.clientHeight * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  cols = Math.ceil(canvas.clientWidth / CELL);
+  rows = Math.ceil(canvas.clientHeight / CELL);
+}
+
+// How strongly cell (x, y) sits inside a petal: 0 = outside, up to 1 = centre of a petal.
+function petal(x, y) {
+  const u = (x + y) / Math.SQRT2, v = (x - y) / Math.SQRT2;   // turn the grid 45 degrees
+  const fu = ((u % TILE) + TILE) % TILE - TILE / 2;
+  const fv = ((v % TILE) + TILE) % TILE - TILE / 2;
+  const a = TILE / 4;                  // petal centre: a quarter tile from the middle
+  const r = a * 0.78, w = TILE / 5.5;  // petal length and width, short enough to leave gaps
+  const d = Math.min(
+    ((fu - a) / r) ** 2 + (fv / w) ** 2, ((fu + a) / r) ** 2 + (fv / w) ** 2,
+    (fu / w) ** 2 + ((fv - a) / r) ** 2, (fu / w) ** 2 + ((fv + a) / r) ** 2
+  );
+  return Math.max(0, 1 - d);
+}
+
+function draw(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const p = petal(x, y);
+      const wave = 0.5 + 0.5 * Math.sin(x * 0.18 - y * 0.11 + t / 900);
+      if (p > 0) {
+        // Petals: grey, turning batik-brown where the wave passes over their centres.
+        const glow = p * wave;
+        ctx.fillStyle = glow > 0.55 ? "#C8743A" : `rgba(230, 227, 221, ${0.25 + 0.6 * p * (0.4 + 0.6 * wave)})`;
+        ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+      } else if ((x + y) % 2 === 0 && wave > 0.7) {
+        // Background: a faint dotted ground, like the isen (filler) dots in batik.
+        ctx.fillStyle = "rgba(230, 227, 221, 0.07)";
+        ctx.fillRect(x * CELL + 3, y * CELL + 3, 2, 2);
+      }
+    }
+  }
+}
+
+resize();
+addEventListener("resize", () => { resize(); draw(performance.now()); });
+if (still) {
+  draw(0);
+} else {
+  let last = 0;
+  const loop = (t) => {
+    if (t - last > 80) { draw(t); last = t; }   // about 12 frames a second is enough
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+</script>
 </body>
 </html>

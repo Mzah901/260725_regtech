@@ -6,58 +6,71 @@
 <title>Regulatory AI Labs</title>
 <link rel="canonical" href="https://statuta.id/">
 <meta name="description" content="Independent research applying AI to Indonesian regulation, using public sources only.">
-<meta name="theme-color" content="#161616">
+<meta name="theme-color" content="#0B0B0B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one narrow monospace column. A pixel kawung (batik) pattern shimmers at the top,
-   a two-line tagline types itself out, then short sections. Dark only. */
+/* Layout: manga-volume feel. Black and white with one red accent, a field of pixel particles
+   cut by a red slash at the top, a short opening poem, then numbered "chapters". Dark only. */
 :root {
-  --bg: #161616; --ink: #E6E3DD; --muted: #8D8A84; --line: #34322F;
-  --soga: #C8743A;   /* batik brown, the accent */
+  --bg: #0B0B0B; --ink: #F2F0EB; --muted: #8E8B85; --line: #2A2927;
+  --red: #C8262E;
   --font: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --display: "Shippori Mincho B1", "Hiragino Mincho ProN", Georgia, serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.7; }
 a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 4px; }
-a:hover, a:focus-visible { text-decoration-color: var(--soga); color: #fff; outline: none; }
+a:hover, a:focus-visible { text-decoration-color: var(--red); color: #fff; outline: none; }
 
 nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 2;
   display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px;
-  border-radius: 999px; background: rgba(40, 39, 37, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  border-radius: 999px; background: rgba(30, 30, 29, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 nav .name { font-weight: 500; text-decoration: none; }
 nav ul { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
 nav ul a { color: var(--muted); text-decoration: none; }
 nav ul a:hover { color: var(--ink); }
 
 main { max-width: 720px; margin: 0 auto; padding: 0 16px 56px; }
-canvas { display: block; width: 100%; height: 300px; margin-bottom: 8px;
-  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.hero { position: relative; }
+canvas { display: block; width: 100%; height: 320px; }
+.vol { position: absolute; right: 0; bottom: 18px; writing-mode: vertical-rl; font-family: var(--display); font-weight: 800;
+  font-size: 30px; letter-spacing: .12em; line-height: 1; }
+.vol span { color: var(--red); }
 
-.tagline { color: var(--muted); white-space: pre-line; min-height: 3.4em; margin: 0 0 28px; }
-.cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: -.2em; background: var(--muted); animation: blink 1s steps(1) infinite; }
+.poem { color: var(--muted); white-space: pre-line; min-height: 7em; margin: 8px 0 32px; font-style: italic; }
+.cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: -.2em; background: var(--red); animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
 p { margin: 0 0 12px; max-width: 64ch; }
 .links { color: var(--muted); margin-top: 20px; }
+.muted { color: var(--muted); }
 
-section { margin-top: 56px; scroll-margin-top: 90px; }
-h2 { font-size: 13px; font-weight: 400; color: var(--soga); margin: 0 0 14px; }
-h2::before { content: "§ "; }
-section ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 64ch; }
-section li::before { content: "– "; color: var(--muted); }
+section { margin-top: 72px; scroll-margin-top: 90px; }
+h2 { font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1.2; margin: 0 0 6px; }
+h2::after { content: ""; display: block; width: 56px; height: 3px; background: var(--red); margin-top: 10px; transform: skewX(-30deg); }
+.lede { color: var(--muted); margin: 14px 0 28px; }
+
+.chapters { list-style: none; margin: 0; padding: 0; display: grid; gap: 34px; }
+.chapters li { display: grid; grid-template-columns: 4.2em 1fr; gap: 0 18px; }
+.ch { font-size: 12px; color: var(--red); padding-top: 6px; letter-spacing: .06em; }
+.chapters h3 { font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.3; margin: 0 0 8px; }
+.chapters p { color: #CFCCC6; margin: 0; }
+
+section ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 64ch; }
+ul.plain li::before { content: "— "; color: var(--red); }
 .exp { display: grid; grid-template-columns: 8.5em 1fr; gap: 0 16px; }
-.exp time, .muted { color: var(--muted); }
-li.exp::before { content: none; }
+.exp time { color: var(--muted); }
 
-footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: grid; gap: 4px; }
+footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: grid; gap: 4px; }
 
 @media (max-width: 520px) {
   nav ul { gap: 12px; font-size: 12px; } nav ul li.wide { display: none; }
-  canvas { height: 220px; } .exp { grid-template-columns: 1fr; }
+  canvas { height: 240px; } .vol { font-size: 22px; }
+  .exp, .chapters li { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor { animation: none; } }
 </style>
@@ -66,26 +79,67 @@ footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line);
 <nav aria-label="Main">
   <a class="name" href="#top">statuta.id</a>
   <ul>
+    <li><a href="#chapters">chapters</a></li>
     <li><a href="#experiments">experiments</a></li>
-    <li class="wide"><a href="#responsible-ai">responsible ai</a></li>
+    <li class="wide"><a href="#rules">rules</a></li>
     <li><a href="#data">data</a></li>
   </ul>
 </nav>
 
 <main id="top">
-  <canvas id="kawung" aria-hidden="true"></canvas>
+  <div class="hero">
+    <canvas id="reishi" aria-hidden="true"></canvas>
+    <div class="vol" aria-hidden="true">VOL<span>.</span>01</div>
+  </div>
 
-  <p class="tagline" id="tagline" aria-label="di lautan pasal, tarik benang merahnya">di lautan pasal,
-tarik benang merahnya</p>
+  <p class="poem" id="poem" aria-label="Opening poem">we cite the law
+as if it were carved in stone.
+it was written in sand,
+and the tide keeps coming.</p>
 
-  <p>Halo, saya Hamzah.</p>
+  <p>Hello, I'm Hamzah.</p>
   <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
   <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
   <p class="links"><a href="https://github.com/Mzah901">github</a></p>
 
+  <section id="chapters">
+    <h2>Beyond Statutes</h2>
+    <p class="lede">Notes from my journal. Law has never stopped evolving, from canon law to code, and neither should the way we work with it.</p>
+    <ol class="chapters">
+      <li><span class="ch">CH.01</span><div>
+        <h3>Law is a database problem.</h3>
+        <p>Regulations and court decisions change constantly. AI can already handle everyday legal questions if you give it the right documents. The hard part is knowing that what you gave it is complete, correct and still in force. That is the problem this lab works on.</p>
+      </div></li>
+      <li><span class="ch">CH.02</span><div>
+        <h3>Evidence before norms.</h3>
+        <p>Good policy is built on evidence and measured impact, not on legal reasoning alone, and public participation should be meaningful, not a formality. The values I work by: rational autonomy, evidence-based and impact-driven thinking, integrity and justice.</p>
+      </div></li>
+      <li><span class="ch">CH.03</span><div>
+        <h3>The law exists because promises break.</h3>
+        <p>Contract law and its relatives exist because people cannot simply be trusted to keep their word. So I believe in the rule of law over the rule of individuals, and I try to do what I promise, or say early when I cannot.</p>
+      </div></li>
+      <li><span class="ch">CH.04</span><div>
+        <h3>Lawyers should build.</h3>
+        <p>Engineers compete by building bridges, rockets and software. Legal work deserves the same healthy competition: tools that make the law easier to know and to follow.</p>
+      </div></li>
+      <li><span class="ch">CH.05</span><div>
+        <h3>Learn slowly, then master.</h3>
+        <p>Finishing a course quickly means little if you cannot explain it afterwards. I would rather learn slowly, fail, and end up understanding what matters and what does not.</p>
+      </div></li>
+      <li><span class="ch">CH.06</span><div>
+        <h3>Hype or real use case?</h3>
+        <p>Every few years a new story promises to replace everything. The only reliable way to tell hype from a real use case is to become the expert, or to work closely with one.</p>
+      </div></li>
+      <li><span class="ch">CH.07</span><div>
+        <h3>Sideways is still progress.</h3>
+        <p>Life often moves like a chart going sideways. The job in those stretches is to keep working. If your last 50 days beat your last 200, the trend follows.</p>
+      </div></li>
+    </ol>
+  </section>
+
   <section id="experiments">
-    <h2>experiments</h2>
-    <ul>
+    <h2>Experiments</h2>
+    <ul class="plain" style="margin-top:24px">
       <li class="exp">
         <time datetime="2026-10-11">11 Oct 2026</time>
         <span><a href="legal-industry-map/">Legal Industry Map</a> <span class="muted">— 27 legal-tech companies in Indonesia, ASEAN and global markets, with disclosed funding and sources. Pilot.</span></span>
@@ -93,9 +147,9 @@ tarik benang merahnya</p>
     </ul>
   </section>
 
-  <section id="responsible-ai">
-    <h2>responsible ai</h2>
-    <ul>
+  <section id="rules">
+    <h2>House rules</h2>
+    <ul class="plain" style="margin-top:24px">
       <li>Public sources only: peraturan.go.id, JDIH portals, Pasal.id, official gazettes, published court decisions. No private or workplace data.</li>
       <li>A human reviews everything. AI output is a draft until I have checked it.</li>
       <li>Measured, not eyeballed. Results are scored against a hand-checked sample, with error counts.</li>
@@ -105,8 +159,8 @@ tarik benang merahnya</p>
   </section>
 
   <section id="data">
-    <h2>data</h2>
-    <ul>
+    <h2>Data</h2>
+    <ul class="plain" style="margin-top:24px">
       <li><a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/legal_industry_map.csv">legal_industry_map.csv</a> <span class="muted">— 27 rows, a source URL on every row (<a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/schema.md">data dictionary</a>)</span></li>
     </ul>
   </section>
@@ -118,80 +172,103 @@ tarik benang merahnya</p>
 </main>
 
 <script>
-// 1. Tagline: type it out one letter at a time, then leave a blinking cursor.
-const tagline = document.getElementById("tagline");
-const text = tagline.textContent;
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// 1. Opening poem: type it out one letter at a time, then leave a blinking cursor.
+const poem = document.getElementById("poem");
+const verse = poem.textContent;
 const cursor = '<span class="cursor"></span>';
 if (still) {
-  tagline.innerHTML = text + cursor;
+  poem.innerHTML = verse + cursor;
 } else {
   let i = 0;
   const type = () => {
-    tagline.innerHTML = text.slice(0, i) + cursor;
-    if (i++ < text.length) setTimeout(type, 55);
+    poem.innerHTML = verse.slice(0, i) + cursor;
+    if (i++ < verse.length) setTimeout(type, 45);
   };
-  setTimeout(type, 400);
+  setTimeout(type, 500);
 }
 
-// 2. Kawung: the Javanese batik motif of four oval petals around a point, drawn as pixels.
-//    Each grid cell checks whether it falls inside a petal; a slow wave makes the petals shimmer.
-const canvas = document.getElementById("kawung");
+// 2. Particles: pixel blocks drifting upward. Each has a depth (z): near ones are bigger,
+//    brighter and faster, which gives the 3D feel. Every few seconds a red slash cuts
+//    across the field and pushes the nearby blocks away from it.
+const canvas = document.getElementById("reishi");
 const ctx = canvas.getContext("2d");
-const CELL = 9, TILE = 12;          // pixel size, and petal-pattern size in cells
-let cols, rows;
+let W, H, blocks = [], slash = null;
 
 function resize() {
   const ratio = devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * ratio;
-  canvas.height = canvas.clientHeight * ratio;
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = W * ratio; canvas.height = H * ratio;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  cols = Math.ceil(canvas.clientWidth / CELL);
-  rows = Math.ceil(canvas.clientHeight / CELL);
+  const count = Math.round(W * H / 1400);   // more blocks on bigger screens
+  blocks = Array.from({ length: count }, () => newBlock(Math.random() * H));
 }
 
-// How strongly cell (x, y) sits inside a petal: 0 = outside, up to 1 = centre of a petal.
-function petal(x, y) {
-  const u = (x + y) / Math.SQRT2, v = (x - y) / Math.SQRT2;   // turn the grid 45 degrees
-  const fu = ((u % TILE) + TILE) % TILE - TILE / 2;
-  const fv = ((v % TILE) + TILE) % TILE - TILE / 2;
-  const a = TILE / 4;                  // petal centre: a quarter tile from the middle
-  const r = a * 0.78, w = TILE / 5.5;  // petal length and width, short enough to leave gaps
-  const d = Math.min(
-    ((fu - a) / r) ** 2 + (fv / w) ** 2, ((fu + a) / r) ** 2 + (fv / w) ** 2,
-    (fu / w) ** 2 + ((fv - a) / r) ** 2, (fu / w) ** 2 + ((fv + a) / r) ** 2
-  );
-  return Math.max(0, 1 - d);
+function newBlock(y) {
+  const z = 0.25 + Math.random() * 0.75;   // depth: 0.25 = far away, 1 = close
+  return { x: Math.random() * W, y, z, vx: 0, vy: -(0.15 + z * 0.55), red: Math.random() < 0.04 };
 }
 
-function draw(t) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const p = petal(x, y);
-      const wave = 0.5 + 0.5 * Math.sin(x * 0.18 - y * 0.11 + t / 900);
-      if (p > 0) {
-        // Petals: grey, turning batik-brown where the wave passes over their centres.
-        const glow = p * wave;
-        ctx.fillStyle = glow > 0.55 ? "#C8743A" : `rgba(230, 227, 221, ${0.25 + 0.6 * p * (0.4 + 0.6 * wave)})`;
-        ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
-      } else if ((x + y) % 2 === 0 && wave > 0.7) {
-        // Background: a faint dotted ground, like the isen (filler) dots in batik.
-        ctx.fillStyle = "rgba(230, 227, 221, 0.07)";
-        ctx.fillRect(x * CELL + 3, y * CELL + 3, 2, 2);
+function startSlash() {
+  // A diagonal line from lower-left to upper-right, slightly different each time.
+  slash = { x1: -40, y1: H * (0.65 + Math.random() * 0.3), x2: W + 40, y2: H * (0.05 + Math.random() * 0.3), t: 0 };
+}
+
+// Distance from a point to the slash line, and which side of it the point is on.
+function sideOfSlash(b) {
+  const dx = slash.x2 - slash.x1, dy = slash.y2 - slash.y1, len = Math.hypot(dx, dy);
+  return ((b.x - slash.x1) * dy - (b.y - slash.y1) * dx) / len;   // signed distance in pixels
+}
+
+function step() {
+  ctx.fillStyle = "rgba(11, 11, 11, 0.35)";   // partial clear leaves short trails
+  ctx.fillRect(0, 0, W, H);
+
+  if (slash) {
+    slash.t += 1;
+    const draw = Math.min(1, slash.t / 6);            // the cut appears fast...
+    const fade = Math.max(0, 1 - (slash.t - 6) / 30);  // ...then fades out
+    const nx = (slash.y2 - slash.y1), ny = -(slash.x2 - slash.x1), n = Math.hypot(nx, ny);
+    ctx.strokeStyle = `rgba(200, 38, 46, ${fade})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(slash.x1, slash.y1);
+    ctx.lineTo(slash.x1 + (slash.x2 - slash.x1) * draw, slash.y1 + (slash.y2 - slash.y1) * draw);
+    ctx.stroke();
+    if (slash.t === 6) {
+      for (const b of blocks) {
+        const d = sideOfSlash(b);
+        if (Math.abs(d) < 70) {
+          const push = (70 - Math.abs(d)) / 70 * 6 * Math.sign(d || 1);
+          b.vx += nx / n * push; b.vy += ny / n * push;
+        }
       }
     }
+    if (fade === 0) slash = null;
+  }
+
+  for (const b of blocks) {
+    b.x += b.vx; b.y += b.vy;
+    b.vx *= 0.94;
+    b.vy += (-(0.15 + b.z * 0.55) - b.vy) * 0.05;   // ease back to the normal upward drift
+    if (b.y < -10 || b.x < -20 || b.x > W + 20) Object.assign(b, newBlock(H + 10));
+    const size = 2 + Math.round(b.z * 5);
+    const fadeTop = Math.min(1, b.y / (H * 0.35));    // dissolve near the top
+    ctx.fillStyle = b.red ? `rgba(200, 38, 46, ${b.z * fadeTop})` : `rgba(242, 240, 235, ${b.z * 0.85 * fadeTop})`;
+    ctx.fillRect(Math.round(b.x), Math.round(b.y), size, size);
   }
 }
 
 resize();
-addEventListener("resize", () => { resize(); draw(performance.now()); });
+addEventListener("resize", resize);
 if (still) {
-  draw(0);
+  for (let k = 0; k < 60; k++) step();   // draw one settled frame, no motion
 } else {
-  let last = 0;
+  let last = 0, nextSlash = 2500;
   const loop = (t) => {
-    if (t - last > 80) { draw(t); last = t; }   // about 12 frames a second is enough
+    if (t - last > 33) { step(); last = t; }   // about 30 frames a second
+    if (t > nextSlash) { startSlash(); nextSlash = t + 5000 + Math.random() * 3000; }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

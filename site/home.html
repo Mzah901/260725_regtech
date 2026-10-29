@@ -989,31 +989,52 @@ function buildScene() {
   piece(new THREE.SphereGeometry(0.025, 12, 8), mat(0xf6f6f4, 0.35), 0.2, DESK_Y + 0.018, WALL_Z + 0.5).scale.set(1.3, 0.75, 1);   // earbuds case
 
   // Books: a row standing between the laptop and the wall, plus one dark memoir standing face out.
-  const books = new THREE.Group(); books.position.set(-0.62, DESK_Y, WALL_Z + 0.09); room.add(books);
+  const books = new THREE.Group(); books.position.set(-0.62, DESK_Y, WALL_Z + 0.2); room.add(books);
   const bookColors = [0xe9e4d8, 0x2f3a56, 0xd7d0bf, 0x5b2a2a, 0xf0ece2, 0x2c4a3a, 0xcfc7b4, 0x3d3d6b, 0xe2dccb];
   let bx = 0;
   bookColors.forEach((c, k) => {
     const th = 0.022 + Math.random() * 0.018, ht = 0.19 + Math.random() * 0.06;
-    block(th, ht, 0.15, mat(c, 0.8), bx + th / 2, ht / 2, 0, books).rotation.z = k === 8 ? -0.18 : 0;
+    block(th, ht, 0.15, mat(c, 0.8), bx + th / 2, ht / 2, 0, books);
     bx += th + 0.002;
   });
-  const memoir = block(0.15, 0.22, 0.016, mat(0x1d1e22, 0.6), bx + 0.16, 0.11, 0.02, books);
+  const memoir = block(0.15, 0.2, 0.016, mat(0x1d1e22, 0.6), -0.2, 0.1, -0.1, books);   // leaning on the wall, left of the books
   memoir.rotation.x = -0.12;
-  const memoirCover = canvasTexture(96, 140, (g, w, h) => { g.fillStyle = "#1d1e22"; g.fillRect(0, 0, w, h); g.fillStyle = "#c9a54a"; g.font = "bold 13px serif"; g.fillText("SEMANGAT", 8, 22); g.font = "9px serif"; g.fillText("a memoir", 8, 36); g.fillStyle = "#555"; for (let y = 50; y < 128; y += 6) g.fillRect(8, y, 80, 2); });
+  const memoirCover = canvasTexture(96, 140, (g, w, h) => { g.fillStyle = "#1d1e22"; g.fillRect(0, 0, w, h); g.fillStyle = "#c9a54a"; g.font = "bold 14px serif"; g.fillText("BEYOND", 8, 22); g.fillText("STATUTES", 8, 38); g.fillStyle = "#c4202b"; g.fillRect(8, 44, 30, 2); g.fillStyle = "#c9a54a"; g.font = "italic 9px serif"; g.fillText("Mzah in journey", 8, 58); g.fillStyle = "#555"; for (let y = 72; y < 128; y += 6) g.fillRect(8, y, 80, 2); });
   const coverFace = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.22), new THREE.MeshStandardMaterial({ map: memoirCover, roughness: 0.6 }));
-  coverFace.position.set(0, 0, 0.0085); memoir.add(coverFace);
+  coverFace.position.set(0, 0, 0.0085); coverFace.scale.y = 0.2 / 0.22; memoir.add(coverFace);
 
-  // Trophies on the shelf: gold cups with columns, handles and red ribbons.
-  const gold = mat(0xd9ac45, 0.3, { metalness: 0.75, emissive: 0x2a1c05 }), teal = mat(0x1f8fa3, 0.3, { metalness: 0.6 });
+  // Trophies on the shelf, like the ones in your room: a stepped base with a plaque, a teal-and-gold column,
+  // a gold cup on a stem with a lid, side handles, and a red ribbon tied round the neck.
+  const gold = mat(0xd6a63e, 0.28, { metalness: 0.8, emissive: 0x2a1c05 }), teal = mat(0x168a9c, 0.15, { metalness: 0.5, emissive: 0x03181c });
+  const marble = mat(0xf0ede6, 0.35), walnut = mat(0x4a2e1a, 0.5), ribbon = mat(0xc4202b, 0.7, { side: THREE.DoubleSide });
+  const plaqueTex = canvasTexture(64, 40, (g, w, h) => { g.fillStyle = "#c9a54a"; g.fillRect(0, 0, w, h); g.fillStyle = "#6b5220"; for (let y = 10; y < 34; y += 7) g.fillRect(8, y, w - 16, 2); });
   const trophies = new THREE.Group(); trophies.position.set(0.36, SHELF_Y + 0.0125, WALL_Z + 0.16); room.add(trophies);
-  [[0, 0.34], [0.26, 0.42], [0.52, 0.3], [0.76, 0.38]].forEach(([x, h], k) => {
-    const tr = new THREE.Group(); tr.position.x = x; trophies.add(tr);
-    block(0.1, 0.05, 0.1, mat(0x5a3b22, 0.6), 0, 0.025, 0, tr);
-    piece(new THREE.CylinderGeometry(0.012, 0.018, h * 0.45, 10), k % 2 ? teal : gold, 0, 0.05 + h * 0.225, 0, tr);
-    const cup = new THREE.LatheGeometry([[0, 0], [0.02, 0.005], [0.03, 0.04], [0.045, 0.1], [0.05, 0.14], [0.047, 0.142], [0.0, 0.142]].map(([r, y]) => new THREE.Vector2(r, y)), 24);
-    piece(cup, gold, 0, 0.05 + h * 0.45, 0, tr);
-    for (const s of [-1, 1]) piece(new THREE.TorusGeometry(0.025, 0.004, 6, 12, Math.PI), gold, s * 0.05, 0.05 + h * 0.45 + 0.09, 0, tr).rotation.z = s * Math.PI / 2;
-    if (k % 2 === 0) block(0.012, 0.16, 0.004, mat(0xc4202b, 0.7), 0.02, 0.05 + h * 0.3, 0.035, tr).rotation.z = 0.15;
+  const cupProfile = [[0, 0], [0.026, 0], [0.026, 0.006], [0.008, 0.012], [0.006, 0.03], [0.016, 0.04], [0.036, 0.07], [0.046, 0.105], [0.05, 0.13], [0.053, 0.134], [0.049, 0.136]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
+  [[0, 0.36], [0.24, 0.46], [0.5, 0.3], [0.74, 0.4]].forEach(([x, h], k) => {
+    const tr = new THREE.Group(); tr.position.set(x, 0, (k % 2) * 0.02); tr.rotation.y = (k - 1.5) * 0.12; trophies.add(tr);
+    block(0.12, 0.03, 0.12, walnut, 0, 0.015, 0, tr);                                   // stepped base
+    block(0.09, 0.05, 0.09, marble, 0, 0.055, 0, tr);
+    const plaque = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.035), mat(0xffffff, 0.3, { map: plaqueTex, metalness: 0.5 }));
+    plaque.position.set(0, 0.055, 0.0455); tr.add(plaque);
+    let y = 0.08;
+    const col = h - 0.2;                                                                  // column: gold collars between teal segments
+    for (let seg = 0; seg < 2; seg++) {
+      piece(new THREE.CylinderGeometry(0.024, 0.026, 0.012, 16), gold, 0, y + 0.006, 0, tr); y += 0.012;
+      piece(new THREE.CylinderGeometry(0.017, 0.017, col / 2 - 0.02, 16), teal, 0, y + (col / 2 - 0.02) / 2, 0, tr); y += col / 2 - 0.02;
+      piece(new THREE.SphereGeometry(0.019, 16, 10), gold, 0, y + 0.008, 0, tr); y += 0.016;
+    }
+    piece(new THREE.LatheGeometry(cupProfile, 32), mat(0xd6a63e, 0.28, { metalness: 0.8, emissive: 0x2a1c05, side: THREE.DoubleSide }), 0, y, 0, tr);
+    for (const sd of [-1, 1]) {
+      const handle = piece(new THREE.TorusGeometry(0.03, 0.0045, 8, 16, Math.PI * 1.2), gold, sd * 0.05, y + 0.085, 0, tr);
+      handle.rotation.z = sd > 0 ? -Math.PI / 2 - 0.3 : Math.PI / 2 + 0.3;
+    }
+    piece(new THREE.SphereGeometry(0.05, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), gold, 0, y + 0.134, 0, tr).scale.y = 0.45;   // lid
+    piece(new THREE.SphereGeometry(0.012, 12, 8), gold, 0, y + 0.165, 0, tr);              // finial
+    if (k !== 2) for (const sd of [-1, 1]) {                                               // ribbon tails hanging from the neck
+      const tail = new THREE.Mesh(new THREE.PlaneGeometry(0.022, 0.14), ribbon);
+      tail.position.set(sd * 0.018, y - 0.08, 0.03); tail.rotation.set(0.1, 0, sd * 0.18); tr.add(tail);
+    }
   });
   // A bottle and a desk lamp on the shelf, for the night.
   piece(new THREE.CylinderGeometry(0.025, 0.025, 0.14, 12), mat(0xf2f0ec, 0.4), 0.26, SHELF_Y + 0.08, WALL_Z + 0.12);
@@ -1023,7 +1044,7 @@ function buildScene() {
   lampGlow.position.copy(lamp.position); lampGlow.scale.set(0.35, 0.35, 1); room.add(lampGlow);
 
   // Acoustic guitar leaning against the wall left of the desk, stickers on the body.
-  const guitar = new THREE.Group(); guitar.position.set(-1.25, RY, WALL_Z + 0.3); guitar.rotation.set(-0.12, 0.35, 0.08); room.add(guitar);
+  const guitar = new THREE.Group(); guitar.position.set(-0.86, RY, WALL_Z + 0.75); guitar.rotation.set(-0.1, 0.45, 0.03); room.add(guitar);
   const bodyShape = new THREE.Shape();
   bodyShape.moveTo(0, 0);
   bodyShape.bezierCurveTo(0.24, 0, 0.24, 0.28, 0.13, 0.3); bodyShape.bezierCurveTo(0.1, 0.32, 0.18, 0.45, 0.1, 0.5);
@@ -1061,7 +1082,7 @@ function buildScene() {
   block(ROOM_W, 0.08, 0.02, skirting, 0, RY + 0.04, BACK_Z - 0.01);
   block(0.02, 0.08, BACK_Z - WALL_Z, skirting, -ROOM_W / 2 + 0.01, RY + 0.04, (WALL_Z + BACK_Z) / 2);
   block(0.02, 0.08, BACK_Z - WALL_Z, skirting, ROOM_W / 2 - 0.01, RY + 0.04, (WALL_Z + BACK_Z) / 2);
-  block(WX * 2 + 0.2, 0.03, 0.14, skirting, 0, WB - 0.015, WALL_Z + 0.06);
+  block(WX * 2 + 0.2, 0.03, 0.07, skirting, 0, WB - 0.015, WALL_Z + 0.035);   // sill: shallow, so it clears the books
 
   // A woven rug under the chair.
   const rugTex = canvasTexture(256, 256, (g, s) => {
@@ -1080,9 +1101,24 @@ function buildScene() {
   block(0.88, 0.06, 0.5, mat(0x3f6b8f, 0.95), -1.25, RY + 0.48, WALL_Z + 1.1);
 
   // Backpack slumped against the right desk leg, a fabric basket and a slim bookshelf by the right wall.
-  const bag = block(0.3, 0.42, 0.18, mat(0x262a2f, 0.9), 0.9, RY + 0.21, WALL_Z + 0.75);
-  bag.rotation.set(-0.15, -0.4, 0.05);
-  block(0.22, 0.14, 0.04, mat(0x30353b, 0.9), 0.9, RY + 0.14, WALL_Z + 0.85).rotation.y = -0.4;
+  const leatherTex = pixelTexture(128, 128, (x, y) => {
+    const v = 0.8 + (fbm(x / 10, y / 10, 3) - 0.5) * 0.35 + (Math.random() - 0.5) * 0.06;
+    return [118 * v, 64 * v, 34 * v, 255];
+  });
+  const leather = mat(0xffffff, 0.55, { map: leatherTex }), brass = mat(0xb08a3e, 0.3, { metalness: 0.8 });
+  const satchel = new THREE.Group(); satchel.position.set(0.6, RY, WALL_Z + 0.82); satchel.rotation.set(-0.1, -0.45, 0); room.add(satchel);
+  block(0.42, 0.3, 0.12, leather, 0, 0.15, 0, satchel);                                   // body
+  const flap = block(0.43, 0.2, 0.012, leather, 0, 0.2, 0.066, satchel); flap.rotation.x = -0.04;
+  block(0.43, 0.012, 0.13, leather, 0, 0.302, 0.005, satchel);                            // flap fold over the top
+  for (const sx of [-0.1, 0.1]) {
+    block(0.034, 0.2, 0.006, mat(0x5a2f18, 0.5), sx, 0.15, 0.075, satchel);               // strap
+    const buckle = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.003, 6, 4), brass);
+    buckle.rotation.z = Math.PI / 4; buckle.scale.set(1.3, 1, 1); buckle.position.set(sx, 0.1, 0.08); satchel.add(buckle);
+  }
+  piece(new THREE.TorusGeometry(0.07, 0.009, 8, 16, Math.PI), mat(0x5a2f18, 0.5), 0, 0.306, 0.02, satchel);   // top handle
+  const sling = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.21, 0.27, 0), new THREE.Vector3(-0.3, 0.05, 0.12), new THREE.Vector3(0, 0.005, 0.32), new THREE.Vector3(0.3, 0.05, 0.12), new THREE.Vector3(0.21, 0.27, 0)]);
+  piece(new THREE.TubeGeometry(sling, 40, 0.008, 4), mat(0x3b2416, 0.6), 0, 0, 0, satchel);    // shoulder strap lying on the floor
+  for (const sx of [-0.21, 0.21]) piece(new THREE.TorusGeometry(0.012, 0.003, 6, 10), brass, sx, 0.27, 0, satchel);
   piece(new THREE.CylinderGeometry(0.2, 0.17, 0.35, 16, 1, true), mat(0xd8e0d2, 0.95, { side: THREE.DoubleSide }), 1.35, RY + 0.175, WALL_Z + 1.35);
   const shelfWood = mat(0x6e4a2c, 0.7);
   const bookcase = new THREE.Group(); bookcase.position.set(ROOM_W / 2 - 0.16, RY, BACK_Z - 0.9); room.add(bookcase);
@@ -1202,6 +1238,29 @@ function buildScene() {
     panel.rotation.x = s * 0.18;
   }
   block(0.26, 0.016, 0.07, towel, 0.08, 0.745, 0.2, chair);   // the fold along the top
+
+  // Under the desk, so it's crowded like a real one.
+  const boxTex = canvasTexture(128, 96, (g, w, h) => {
+    g.fillStyle = "#b48a5a"; g.fillRect(0, 0, w, h); g.fillStyle = "#c9a477"; g.fillRect(0, 40, w, 14);
+    g.fillStyle = "#3b3b3b"; g.font = "bold 11px sans-serif"; g.fillText("ARSIP 2025", 10, 80); g.fillText("↑↑", 100, 22);
+  });
+  block(0.42, 0.3, 0.34, mat(0xffffff, 0.9, { map: boxTex }), -0.62, RY + 0.15, WALL_Z + 0.32).rotation.y = 0.08;
+  piece(new THREE.CylinderGeometry(0.13, 0.11, 0.3, 20, 1, true), mat(0x3a3f46, 0.7, { side: THREE.DoubleSide }), 0.48, RY + 0.15, WALL_Z + 0.32);
+  for (const [x, y, z] of [[0.46, 0.27, 0.3], [0.52, 0.29, 0.36], [0.4, 0.25, 0.38]]) {
+    const ball = piece(new THREE.IcosahedronGeometry(0.035, 0), mat(0xeeeae2, 0.9, { flatShading: true }), x, RY + y, WALL_Z + z);
+    ball.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+  }
+  let stackY = RY + 0.3;   // on top of the box
+  [[0x2f3a56, 0.04], [0xd7d0bf, 0.03], [0x5b2a2a, 0.05], [0x2c4a3a, 0.035]].forEach(([c, th], k) => {
+    block(0.2, th, 0.27, mat(c, 0.8), -0.64 + (k % 2) * 0.012, stackY + th / 2, WALL_Z + 0.32).rotation.y = (k - 1.5) * 0.08;
+    stackY += th;
+  });
+  for (const sx of [-1, 1]) {
+    const shoe = new THREE.Group(); shoe.position.set(0.1 + sx * 0.07, RY, WALL_Z + 0.68); shoe.rotation.y = 0.3 + sx * 0.1; room.add(shoe);
+    block(0.09, 0.025, 0.27, mat(0xf2f0ea, 0.7), 0, 0.0125, 0, shoe);                    // sole
+    const upper = piece(new THREE.SphereGeometry(0.06, 14, 10), mat(0x2b2f36, 0.8), 0, 0.045, 0.02, shoe);
+    upper.scale.set(0.75, 0.55, 2.0);
+  }
 
   // Under the desk: a power strip with cables running up to the laptop and tablet.
   block(0.3, 0.035, 0.06, mat(0xf2f0ec, 0.6), -0.2, RY + 0.018, WALL_Z + 0.2);
@@ -1341,7 +1400,7 @@ function buildScene() {
 
   // ---- Camera path: the points it moves through as you scroll from top (0) to bottom (1). ----
   const path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.15, 31.35, 70.7),    // standing behind your chair, looking at the desk
+    new THREE.Vector3(0.1, 31.45, 71.2),     // standing behind your chair, looking at the desk
     new THREE.Vector3(-0.07, 31.05, 68.98),  // leaning in close enough to read the laptop
     new THREE.Vector3(-0.35, 31.6, 69.1),    // at the window, blinds lifting
     new THREE.Vector3(-0.35, 31.7, 67.2),    // out through the window

@@ -4,7 +4,7 @@
 **Status:** Pilot built. Waiting for owner review.
 **Merged with:** "Legal Startup Reverse Engineer" idea. This dataset is the base for later deep dives on 2–3 companies.
 
-**Interactive map:** https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw (claude.ai artifact; will move to https://lab.statuta.id)
+**Interactive map:** https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw (claude.ai artifact). Website version: https://statuta.id/legal-industry-map/ (live once GitHub Pages is switched on)
 
 ## Question / hypothesis
 

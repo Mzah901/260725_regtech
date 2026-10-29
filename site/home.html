@@ -11,7 +11,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a fixed 3D night scene fills the window behind the page. Scrolling flies the camera
+/* Layout: a fixed 3D scene fills the window behind the page: first your room in afternoon sun
+   (desk objects are clickable), then out through the window into the night desert. Scrolling flies the camera
    from a concrete palace in a living desert, over a transmutation circle, round to its side. The text sits
    on dark glass panels above it. Black and white with one red accent. Dark only. */
 :root {
@@ -28,6 +29,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 4px; }
 a:hover, a:focus-visible { text-decoration-color: var(--red); color: #fff; outline: none; }
 
+.intro, section, .poem a { pointer-events: auto; }
+.obj-tip { position: fixed; z-index: 5; pointer-events: none; background: rgba(11,11,11,.85); border: 1px solid var(--red); padding: 4px 10px; font-size: 12px; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
 
 nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 3;
@@ -38,17 +41,18 @@ nav ul { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; font
 nav ul a { color: var(--muted); text-decoration: none; }
 nav ul a:hover { color: var(--ink); }
 
-main { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 16px 40vh; }
+main { pointer-events: none; position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 16px 40vh; }
 
-.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 64px; position: relative; }
-.vol { position: absolute; right: 0; top: 96px; writing-mode: vertical-rl; font-family: var(--display); font-weight: 800;
+.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 92px 0 28px; position: relative; }
+.vol { text-shadow: 0 0 10px #000, 0 0 2px #000; position: absolute; right: 0; top: 96px; writing-mode: vertical-rl; font-family: var(--display); font-weight: 800;
   font-size: 30px; letter-spacing: .12em; line-height: 1; }
 .vol span { color: var(--red); }
-.poem { color: var(--muted); white-space: pre-line; min-height: 7em; margin: 0 0 28px; font-style: italic; text-shadow: 0 1px 12px #000; }
+.poem { align-self: flex-start; color: var(--ink); white-space: pre-line; min-height: 7em; margin: 0; padding: 10px 16px; font-style: italic; background: rgba(11, 11, 11, .6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: -.2em; background: var(--red); animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .intro { max-width: 420px; background: var(--panel); border: 1px solid var(--line); padding: 20px 22px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.scroll-hint { margin-top: 18px; font-size: 12px; color: var(--muted); }
+.scroll-hint { align-self: flex-start; font-size: 12px; color: var(--ink); background: rgba(11, 11, 11, .6); padding: 4px 10px; }
+.intro { margin-top: 30vh; }
 
 p { margin: 0 0 12px; max-width: 64ch; }
 .intro p:last-child { margin-bottom: 0; }
@@ -109,13 +113,14 @@ footer { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; paddi
 as if it were carved in stone.
 it was written in sand,
 and the tide keeps coming.</p>
-    <div class="intro">
-      <p>Hello, I'm Hamzah.</p>
-      <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
-      <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
-      <p class="muted"><a href="https://github.com/Mzah901">github</a></p>
-    </div>
     <div class="scroll-hint">scroll ↓</div>
+  </div>
+
+  <div class="intro">
+    <p>Hello, I'm Hamzah.</p>
+    <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
+    <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
+    <p class="muted"><a href="https://github.com/Mzah901">github</a></p>
   </div>
 
   <section id="chapters">
@@ -212,6 +217,7 @@ function buildScene() {
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1200);
   scene.add(camera);
   const col = new THREE.Color();
+  let nightK = 1;   // 0 = afternoon, 1 = night; set by dayNight() as you scroll
 
   // Helper: paint on a 2D canvas and use it as a texture.
   function canvasTexture(w, h, paint, color = true) {
@@ -240,7 +246,8 @@ function buildScene() {
   });
 
   // ---- Light: cold sky light from above, and a moon-coloured key light that casts shadows. ----
-  scene.add(new THREE.HemisphereLight(0x9fb3b8, 0x2b2a26, 0.75));
+  const hemi = new THREE.HemisphereLight(0x9fb3b8, 0x2b2a26, 0.75);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight(0xe4eef0, 1.25);
   key.position.set(-70, 120, 90);
   key.castShadow = true;
@@ -392,7 +399,7 @@ function buildScene() {
 
   // ---- The laboratory: a bunker with a glowing glass cube, a turning radar dish, a mast and server racks. ----
   const lab = new THREE.Group();
-  lab.position.set(-58, 0, -38);
+  lab.position.set(58, 0, -38); lab.rotation.y = -0.5;
   scene.add(lab);
   box(16, 6, 11, 0, 3, 0, concrete(1.2, 0.4), lab);
   box(17, 0.8, 12, 0, 6.4, 0, concrete(1.2, 0.1, 0xbfc1bc), lab);
@@ -458,7 +465,7 @@ function buildScene() {
   for (let k = 0; k < TREES; k++) {
     let x, z;
     do { x = (Math.random() - 0.5) * 460; z = -260 + Math.random() * 300; }
-    while (Math.abs(x) < 80 && z < -20 && z > -150 || Math.hypot(x, z + 24) < 26 || Math.hypot(x + 58, z + 38) < 16);   // keep clear of palace, circle and lab
+    while (Math.abs(x) < 80 && z < -20 && z > -150 || Math.hypot(x, z + 24) < 26 || Math.hypot(x - 58, z + 38) < 16);   // keep clear of palace, circle and lab
     const tree = new THREE.Group();
     branchOut(tree, 4 + Math.random() * 3, 0.55, 3);
     tree.position.set(x, 0, z); tree.rotation.y = Math.random() * Math.PI;
@@ -521,7 +528,8 @@ function buildScene() {
   const dotGeo = new THREE.BufferGeometry();
   dotGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   dotGeo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
-  scene.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 1.3, opacity: 0.85, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })));
+  const dotMat = new THREE.PointsMaterial({ size: 1.3, opacity: 0.85, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  scene.add(new THREE.Points(dotGeo, dotMat));
 
   // A column of reiatsu that rises from the circle when it activates.
   const streakTex = pixelTexture(128, 256, (x, y) => [255, 255, 255, Math.min(255, Math.max(0, fbm(x / 5, y / 60, 3) - 0.45) * 3 * 255)]);
@@ -686,7 +694,7 @@ function buildScene() {
       g.position.x += g.userData.speed; if (g.position.x > 320) g.position.x = -320;
       g.position.y = Math.abs(Math.sin(t * 0.0015 + g.userData.phase)) * 1.2;   // heavy footsteps
     }
-    for (const w of windows) w.material.opacity = 0.45 + 0.4 * Math.max(0, Math.sin(t * 0.002 + w.userData.phase)) * (Math.sin(t * 0.03 + w.userData.phase) > -0.95 ? 1 : 0.2);
+    for (const w of windows) w.material.opacity = nightK * (0.45 + 0.4 * Math.max(0, Math.sin(t * 0.002 + w.userData.phase)) * (Math.sin(t * 0.03 + w.userData.phase) > -0.95 ? 1 : 0.2));
 
     // Laboratory: the specimen turns, the dish scans, the beacon blinks, the racks flicker, the symbols orbit.
     specimen.rotation.set(t * 0.0007, t * 0.001, 0);
@@ -762,19 +770,362 @@ function buildScene() {
     }
   }
 
+  // =====================================================================================
+  // ---- Your room: a lit room on top of a concrete tower, its window facing the palace. ----
+  // Real-world sizes in metres. The window wall is at z = 68.2; you stand at the back.
+  // =====================================================================================
+  const RY = 30, WALL_Z = 68.2, BACK_Z = 71.8, ROOM_W = 3.4, ROOM_H = 2.7;
+  const room = new THREE.Group();
+  scene.add(room);
+  const mat = (color, rough = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
+  const piece = (geo, material, x, y, z, parent = room) => {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true;
+    parent.add(m); return m;
+  };
+  const block = (w, h, d, material, x, y, z, parent) => piece(new THREE.BoxGeometry(w, h, d), material, x, y, z, parent);
+
+  // The tower the room sits on, so it belongs to the desert town when seen from outside.
+  block(5.2, RY, 5.2, concrete(1, 8), 0, RY / 2, 70);
+
+  // Walls, floor and ceiling. Thick walls keep outside light from leaking in.
+  const paint = mat(0xd9d2c5, 0.95);
+  const wallpaperTex = canvasTexture(256, 256, (g, s) => {
+    g.fillStyle = "#2d4f9c"; g.fillRect(0, 0, s, s);
+    g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 2;
+    for (let k = -s; k < s * 2; k += 16) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + s, s); g.moveTo(k + s, 0); g.lineTo(k, s); g.stroke(); }
+    for (const [x, y] of [[64, 64], [192, 192]]) {   // round emblems, like the pattern on your wallpaper
+      g.fillStyle = "#e9ecef"; g.beginPath(); g.arc(x, y, 34, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#2d4f9c"; g.beginPath(); g.arc(x, y, 26, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#c9a54a"; g.beginPath(); g.arc(x, y, 14, 0, Math.PI * 2); g.fill();
+    }
+  });
+  wallpaperTex.wrapS = wallpaperTex.wrapT = THREE.RepeatWrapping; wallpaperTex.repeat.set(5, 4);
+  const tileTex = canvasTexture(256, 256, (g, s) => {
+    g.fillStyle = "#8f8d88"; g.fillRect(0, 0, s, s);
+    for (let k = 0; k < 900; k++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? 255 : 0},${Math.random() < 0.5 ? 255 : 0},255,.04)`; g.fillRect(Math.random() * s, Math.random() * s, 3, 3); }
+    g.strokeStyle = "#6f6d69"; g.lineWidth = 3; g.strokeRect(0, 0, s, s);
+  });
+  tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping; tileTex.repeat.set(8, 8);
+  block(ROOM_W + 0.6, 0.3, BACK_Z - WALL_Z + 0.6, mat(0xffffff, 0.6, { map: tileTex }), 0, RY - 0.15, (WALL_Z + BACK_Z) / 2);   // floor
+  block(ROOM_W + 0.6, 0.3, BACK_Z - WALL_Z + 0.6, paint, 0, RY + ROOM_H + 0.15, (WALL_Z + BACK_Z) / 2);                        // ceiling
+  block(0.3, ROOM_H, BACK_Z - WALL_Z, paint, -ROOM_W / 2 - 0.15, RY + ROOM_H / 2, (WALL_Z + BACK_Z) / 2);                      // left wall
+  block(0.3, ROOM_H, BACK_Z - WALL_Z, mat(0xffffff, 0.9, { map: wallpaperTex }), ROOM_W / 2 + 0.15, RY + ROOM_H / 2, (WALL_Z + BACK_Z) / 2);   // right wall
+  block(ROOM_W + 0.6, ROOM_H, 0.3, paint, 0, RY + ROOM_H / 2, BACK_Z + 0.15);                                                   // back wall
+  // Window wall: four pieces around an opening (x -0.9..0.9, y RY+1.0..RY+2.4).
+  const WX = 0.9, WB = RY + 1.0, WT = RY + 2.4;
+  block(ROOM_W / 2 - WX + 0.3, ROOM_H, 0.3, paint, -(WX + (ROOM_W / 2 - WX + 0.3) / 2), RY + ROOM_H / 2, WALL_Z - 0.15);
+  block(ROOM_W / 2 - WX + 0.3, ROOM_H, 0.3, paint, WX + (ROOM_W / 2 - WX + 0.3) / 2, RY + ROOM_H / 2, WALL_Z - 0.15);
+  block(WX * 2, WB - RY, 0.3, paint, 0, (RY + WB) / 2, WALL_Z - 0.15);
+  block(WX * 2, RY + ROOM_H - WT, 0.3, paint, 0, (WT + RY + ROOM_H) / 2, WALL_Z - 0.15);
+  const frameMat = mat(0xf1efe9, 0.6);
+  block(WX * 2 + 0.08, 0.05, 0.36, frameMat, 0, WB, WALL_Z - 0.15); block(WX * 2 + 0.08, 0.05, 0.36, frameMat, 0, WT, WALL_Z - 0.15);
+  block(0.05, WT - WB, 0.36, frameMat, -WX, (WB + WT) / 2, WALL_Z - 0.15); block(0.05, WT - WB, 0.36, frameMat, WX, (WB + WT) / 2, WALL_Z - 0.15);
+  block(0.03, WT - WB, 0.06, frameMat, 0, (WB + WT) / 2, WALL_Z - 0.2);   // middle mullion
+
+  // Venetian blinds: slats that tilt open, then lift as you scroll.
+  const slats = [], SLATS = 22, slatMat = mat(0xeee7da, 0.7);
+  for (let k = 0; k < SLATS; k++) {
+    const slat = block(WX * 2 - 0.04, 0.004, 0.05, slatMat, 0, WT - 0.04 - k * 0.062, WALL_Z + 0.05);
+    slats.push(slat);
+  }
+  function setBlinds(tilt, lift) {
+    slats.forEach((s, k) => {
+      s.rotation.x = tilt;
+      s.position.y = WT - 0.04 - k * 0.062 * (1 - lift * 0.93);
+    });
+  }
+
+  // Desk: a wooden top with a curved front edge, a lower shelf, thin metal legs.
+  const wood = mat(0xb87a2e, 0.55);
+  const deskShape = new THREE.Shape();
+  deskShape.moveTo(-0.95, 0); deskShape.lineTo(0.75, 0); deskShape.lineTo(0.75, 0.62);
+  deskShape.bezierCurveTo(0.35, 0.66, 0.1, 0.44, -0.3, 0.5); deskShape.lineTo(-0.95, 0.58); deskShape.closePath();
+  const deskGeo = new THREE.ExtrudeGeometry(deskShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2 });
+  const DESK_Y = RY + 0.76;
+  piece(deskGeo, wood, 0, DESK_Y, WALL_Z + 0.05).rotation.x = Math.PI / 2;
+  piece(deskGeo, wood, 0, RY + 0.52, WALL_Z + 0.05).rotation.x = Math.PI / 2;   // keyboard shelf below
+  const steel = mat(0x8e9196, 0.35, { metalness: 0.7 });
+  for (const [x, z] of [[-0.9, WALL_Z + 0.1], [0.7, WALL_Z + 0.1], [-0.9, WALL_Z + 0.55], [0.7, WALL_Z + 0.58]])
+    piece(new THREE.CylinderGeometry(0.016, 0.016, 0.76, 8), steel, x, RY + 0.38, z);
+  // Shelf above the desk, crossing the window, holding trophies.
+  const SHELF_Y = RY + 1.62;
+  block(1.1, 0.025, 0.28, wood, 0.75, SHELF_Y, WALL_Z + 0.16);
+  for (const x of [0.23, 1.27]) piece(new THREE.CylinderGeometry(0.012, 0.012, SHELF_Y - DESK_Y, 8), steel, x, (SHELF_Y + DESK_Y) / 2, WALL_Z + 0.04);
+
+  // Laptop: a dark base and an open lid whose screen shows a terminal that keeps typing.
+  const laptop = new THREE.Group(); laptop.position.set(-0.08, DESK_Y + 0.001, WALL_Z + 0.33); laptop.rotation.y = 0.12; room.add(laptop);
+  const darkMetal = mat(0x1d1f22, 0.35, { metalness: 0.5 });
+  block(0.32, 0.012, 0.22, darkMetal, 0, 0.006, 0, laptop);
+  const keys = canvasTexture(128, 96, (g, w, h) => { g.fillStyle = "#16181a"; g.fillRect(0, 0, w, h); g.fillStyle = "#2b2e33"; for (let r = 0; r < 5; r++) for (let c = 0; c < 12; c++) g.fillRect(6 + c * 9.8, 8 + r * 11, 8, 9); g.fillRect(36, 66, 56, 20); });
+  const keyPlate = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.12), new THREE.MeshStandardMaterial({ map: keys, roughness: 0.6 }));
+  keyPlate.rotation.x = -Math.PI / 2; keyPlate.position.set(0, 0.0125, -0.03); laptop.add(keyPlate);
+  const lid = new THREE.Group(); lid.position.set(0, 0.012, -0.11); lid.rotation.x = -0.28; laptop.add(lid);
+  block(0.32, 0.21, 0.008, darkMetal, 0, 0.105, 0, lid);
+  const screenCanvas = document.createElement("canvas"); screenCanvas.width = 512; screenCanvas.height = 336;
+  const screenTex = new THREE.CanvasTexture(screenCanvas); screenTex.encoding = THREE.sRGBEncoding;
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.195), new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }));
+  screen.position.set(0, 0.105, 0.0045); lid.add(screen);
+  const termLines = [
+    "$ python3 scripts/build_map.py", "27 companies", "7 notes, 14 links between them", "Wrote public/",
+    "$ claude", "> read the regulation, list who must do what", "  reading Pasal 1–42 …", "  12 obligations found",
+    "> check them against my hand-checked sample", "  precision 0.92 · recall 0.88", "> what did it miss?",
+    "  Pasal 27 ayat (3): obligation hidden in an exception", "> log it in experiments/", "✓ saved", "",
+  ];
+  let termShown = 0, termNext = 0;
+  function drawScreen(t) {
+    if (t < termNext) return;
+    termNext = t + 450 + Math.random() * 500;
+    termShown = (termShown + 1) % (termLines.length + 6);
+    const g = screenCanvas.getContext("2d"), w = screenCanvas.width, h = screenCanvas.height;
+    g.fillStyle = "#0e1013"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#1c1f24"; g.fillRect(0, 0, w, 26);
+    for (const [k, c] of [["#ff5f57", 14], ["#febc2e", 34], ["#28c840", 54]]) { g.fillStyle = k; g.beginPath(); g.arc(c, 13, 6, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = "#9aa3ad"; g.font = "13px monospace"; g.fillText("statuta.id — regulatory ai labs", 150, 18);
+    g.font = "15px monospace";
+    const shown = termLines.slice(0, Math.min(termShown, termLines.length)).slice(-15);
+    shown.forEach((line, i) => {
+      g.fillStyle = line.startsWith("$") || line.startsWith(">") ? "#e8e6e1" : line.startsWith("✓") ? "#6dff9a" : "#8fd0ff";
+      g.fillText(line, 14, 50 + i * 19);
+    });
+    if (Math.floor(t / 500) % 2) { g.fillStyle = "#e8e6e1"; g.fillRect(14, 40 + shown.length * 19, 9, 15); }
+    screenTex.needsUpdate = true;
+  }
+
+  // Tablet in a pink case, standing on its cover, showing a second terminal.
+  const tablet = new THREE.Group(); tablet.position.set(0.42, DESK_Y + 0.001, WALL_Z + 0.2); tablet.rotation.set(0, -0.15, 0); room.add(tablet);
+  block(0.26, 0.004, 0.17, mat(0xe8b4ad, 0.7), 0, 0.002, 0.03, tablet);
+  const tabletBody = new THREE.Group(); tabletBody.rotation.x = -0.35; tablet.add(tabletBody);
+  block(0.26, 0.18, 0.012, mat(0xe8b4ad, 0.7), 0, 0.09, 0, tabletBody);
+  const tabTex = canvasTexture(256, 176, (g, w, h) => {
+    g.fillStyle = "#0e1013"; g.fillRect(0, 0, w, h); g.font = "10px monospace";
+    for (let i = 0; i < 14; i++) { g.fillStyle = i % 4 ? "#8fd0ff" : "#e8e6e1"; g.fillText(["> beyond statutes", "  [[Equivalent exchange.]]", "  backlinks: 3", "  building graph …"][i % 4], 8, 16 + i * 11.5); }
+    g.fillStyle = "#e8e6e1"; g.fillRect(w / 2 - 30, h - 24, 60, 14);
+  });
+  const tabScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.16), new THREE.MeshBasicMaterial({ map: tabTex, toneMapped: false }));
+  tabScreen.position.set(0, 0.09, 0.0065); tabletBody.add(tabScreen);
+
+  // Mug, glasses, earbuds case.
+  const mug = new THREE.Group(); mug.position.set(-0.55, DESK_Y, WALL_Z + 0.42); room.add(mug);
+  const mugLabel = canvasTexture(256, 64, (g, w, h) => { g.fillStyle = "#f4f2ed"; g.fillRect(0, 0, w, h); g.fillStyle = "#3b3b3b"; g.fillRect(96, 10, 40, 44); g.fillStyle = "#c33"; g.font = "bold 10px sans-serif"; g.fillText("TETAP SEMANGAT", 140, 36); });
+  piece(new THREE.CylinderGeometry(0.042, 0.04, 0.1, 24, 1, true), mat(0xffffff, 0.3, { map: mugLabel, side: THREE.DoubleSide }), 0, 0.05, 0, mug);
+  piece(new THREE.CircleGeometry(0.04, 24), mat(0x3a2414, 0.2), 0, 0.085, 0, mug).rotation.x = -Math.PI / 2;   // coffee
+  piece(new THREE.TorusGeometry(0.026, 0.007, 8, 16, Math.PI), mat(0xf4f2ed, 0.3), -0.045, 0.05, 0, mug).rotation.z = Math.PI / 2;
+  const glasses = new THREE.Group(); glasses.position.set(-0.62, DESK_Y + 0.012, WALL_Z + 0.2); glasses.rotation.set(-Math.PI / 2 + 0.15, 0, 0.3); room.add(glasses);
+  const frameRed = mat(0xb3121b, 0.4), frameBlack = mat(0x111111, 0.4);
+  for (const x of [-0.034, 0.034]) piece(new THREE.TorusGeometry(0.024, 0.0035, 6, 20), frameBlack, x, 0, 0, glasses).scale.set(1.2, 0.85, 1);
+  piece(new THREE.CylinderGeometry(0.003, 0.003, 0.02, 6), frameBlack, 0, 0.008, 0, glasses).rotation.z = Math.PI / 2;
+  for (const x of [-0.064, 0.064]) piece(new THREE.BoxGeometry(0.004, 0.13, 0.004), frameRed, x, -0.06, -0.005, glasses);
+  piece(new THREE.SphereGeometry(0.025, 12, 8), mat(0xf6f6f4, 0.35), 0.2, DESK_Y + 0.018, WALL_Z + 0.5).scale.set(1.3, 0.75, 1);   // earbuds case
+
+  // Books: a row standing between the laptop and the wall, plus one dark memoir standing face out.
+  const books = new THREE.Group(); books.position.set(-0.62, DESK_Y, WALL_Z + 0.09); room.add(books);
+  const bookColors = [0xe9e4d8, 0x2f3a56, 0xd7d0bf, 0x5b2a2a, 0xf0ece2, 0x2c4a3a, 0xcfc7b4, 0x3d3d6b, 0xe2dccb];
+  let bx = 0;
+  bookColors.forEach((c, k) => {
+    const th = 0.022 + Math.random() * 0.018, ht = 0.19 + Math.random() * 0.06;
+    block(th, ht, 0.15, mat(c, 0.8), bx + th / 2, ht / 2, 0, books).rotation.z = k === 8 ? -0.18 : 0;
+    bx += th + 0.002;
+  });
+  const memoir = block(0.15, 0.22, 0.016, mat(0x1d1e22, 0.6), bx + 0.16, 0.11, 0.02, books);
+  memoir.rotation.x = -0.12;
+  const memoirCover = canvasTexture(96, 140, (g, w, h) => { g.fillStyle = "#1d1e22"; g.fillRect(0, 0, w, h); g.fillStyle = "#c9a54a"; g.font = "bold 13px serif"; g.fillText("SEMANGAT", 8, 22); g.font = "9px serif"; g.fillText("a memoir", 8, 36); g.fillStyle = "#555"; for (let y = 50; y < 128; y += 6) g.fillRect(8, y, 80, 2); });
+  const coverFace = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.22), new THREE.MeshStandardMaterial({ map: memoirCover, roughness: 0.6 }));
+  coverFace.position.set(0, 0, 0.0085); memoir.add(coverFace);
+
+  // Trophies on the shelf: gold cups with columns, handles and red ribbons.
+  const gold = mat(0xd9ac45, 0.3, { metalness: 0.75, emissive: 0x2a1c05 }), teal = mat(0x1f8fa3, 0.3, { metalness: 0.6 });
+  const trophies = new THREE.Group(); trophies.position.set(0.36, SHELF_Y + 0.0125, WALL_Z + 0.16); room.add(trophies);
+  [[0, 0.34], [0.26, 0.42], [0.52, 0.3], [0.76, 0.38]].forEach(([x, h], k) => {
+    const tr = new THREE.Group(); tr.position.x = x; trophies.add(tr);
+    block(0.1, 0.05, 0.1, mat(0x5a3b22, 0.6), 0, 0.025, 0, tr);
+    piece(new THREE.CylinderGeometry(0.012, 0.018, h * 0.45, 10), k % 2 ? teal : gold, 0, 0.05 + h * 0.225, 0, tr);
+    const cup = new THREE.LatheGeometry([[0, 0], [0.02, 0.005], [0.03, 0.04], [0.045, 0.1], [0.05, 0.14], [0.047, 0.142], [0.0, 0.142]].map(([r, y]) => new THREE.Vector2(r, y)), 24);
+    piece(cup, gold, 0, 0.05 + h * 0.45, 0, tr);
+    for (const s of [-1, 1]) piece(new THREE.TorusGeometry(0.025, 0.004, 6, 12, Math.PI), gold, s * 0.05, 0.05 + h * 0.45 + 0.09, 0, tr).rotation.z = s * Math.PI / 2;
+    if (k % 2 === 0) block(0.012, 0.16, 0.004, mat(0xc4202b, 0.7), 0.02, 0.05 + h * 0.3, 0.035, tr).rotation.z = 0.15;
+  });
+  // A bottle and a desk lamp on the shelf, for the night.
+  piece(new THREE.CylinderGeometry(0.025, 0.025, 0.14, 12), mat(0xf2f0ec, 0.4), 0.26, SHELF_Y + 0.08, WALL_Z + 0.12);
+  piece(new THREE.CylinderGeometry(0.03, 0.04, 0.05, 12, 1, true), mat(0x222222, 0.5, { side: THREE.DoubleSide }), 1.0, SHELF_Y - 0.06, WALL_Z + 0.2);
+  const lamp = new THREE.PointLight(0xffc58a, 0, 5, 2); lamp.position.set(1.0, SHELF_Y - 0.12, WALL_Z + 0.25); lamp.castShadow = !small; room.add(lamp);
+  const lampGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffc58a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  lampGlow.position.copy(lamp.position); lampGlow.scale.set(0.35, 0.35, 1); room.add(lampGlow);
+
+  // Acoustic guitar leaning against the wall left of the desk, stickers on the body.
+  const guitar = new THREE.Group(); guitar.position.set(-1.25, RY, WALL_Z + 0.3); guitar.rotation.set(-0.12, 0.35, 0.08); room.add(guitar);
+  const bodyShape = new THREE.Shape();
+  bodyShape.moveTo(0, 0);
+  bodyShape.bezierCurveTo(0.24, 0, 0.24, 0.28, 0.13, 0.3); bodyShape.bezierCurveTo(0.1, 0.32, 0.18, 0.45, 0.1, 0.5);
+  bodyShape.bezierCurveTo(0.05, 0.53, -0.05, 0.53, -0.1, 0.5); bodyShape.bezierCurveTo(-0.18, 0.45, -0.1, 0.32, -0.13, 0.3);
+  bodyShape.bezierCurveTo(-0.24, 0.28, -0.24, 0, 0, 0);
+  const hole = new THREE.Path(); hole.absarc(0, 0.33, 0.045, 0, Math.PI * 2, true); bodyShape.holes.push(hole);
+  const spruceTex = canvasTexture(128, 256, (g, w, h) => {
+    g.fillStyle = "#e9d6a8"; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 3) { g.fillStyle = `rgba(150,110,60,${0.05 + Math.random() * 0.08})`; g.fillRect(x, 0, 1, h); }
+    g.fillStyle = "#d8262f"; g.fillRect(24, 40, 26, 50);                           // red sticker
+    g.fillStyle = "#efe9dc"; g.fillRect(70, 30, 34, 26); g.fillStyle = "#333"; for (let y = 34; y < 54; y += 4) g.fillRect(73, y, 28, 1.5);   // newspaper sticker
+    g.fillStyle = "#222"; g.fillRect(30, 150, 20, 30); g.fillStyle = "#c33"; g.fillRect(34, 156, 12, 18);                                      // band sticker
+  });
+  spruceTex.wrapS = spruceTex.wrapT = THREE.RepeatWrapping; spruceTex.repeat.set(2, 2);
+  piece(new THREE.ExtrudeGeometry(bodyShape, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 2 }),
+    [mat(0xffffff, 0.45, { map: spruceTex }), mat(0x6b3d1f, 0.5)], 0, 0, 0, guitar);
+  piece(new THREE.CylinderGeometry(0.045, 0.045, 0.002, 24), mat(0x0a0a0a, 0.9), 0, 0.33, 0.108, guitar).rotation.x = Math.PI / 2;
+  block(0.05, 0.55, 0.025, mat(0xe2c48c, 0.5), 0, 0.78, 0.09, guitar);              // neck
+  block(0.07, 0.17, 0.02, mat(0x141414, 0.4), 0, 1.13, 0.085, guitar);              // headstock
+  for (let s = 0; s < 6; s++) block(0.0015, 0.85, 0.0015, steel, -0.017 + s * 0.007, 0.62, 0.105, guitar);   // strings
+  block(0.06, 0.012, 0.012, mat(0x2a1a10, 0.6), 0, 0.2, 0.107, guitar);             // bridge
+
+  // Bed corner on the left and the striped chair cushion in front of you.
+  block(0.9, 0.45, 2.0, mat(0x1f8a8f, 0.95), -1.25, RY + 0.225, BACK_Z - 1.0);
+  const stripeTex = canvasTexture(128, 128, (g, w, h) => {
+    for (let y = 0; y < h; y += 16) { g.fillStyle = y % 32 ? "#e7dcc1" : "#2d8f7b"; g.fillRect(0, y, w, 16); g.fillStyle = "rgba(120,90,40,.25)"; for (let x = 4; x < w; x += 10) g.fillRect(x, y + 6, 4, 4); }
+  });
+  const chair = new THREE.Group(); chair.position.set(0.05, RY, WALL_Z + 1.05); room.add(chair);
+  block(0.46, 0.07, 0.44, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.47, 0, chair);
+  for (const [x, z] of [[-0.2, -0.19], [0.2, -0.19], [-0.2, 0.19], [0.2, 0.19]]) piece(new THREE.CylinderGeometry(0.014, 0.014, 0.44, 8), steel, x, 0.22, z, chair);
+
+  // Sunbeam: a warm spotlight outside the window shining in, so the blinds cast stripes.
+  const sun = new THREE.SpotLight(0xffd29a, 0, 14, 0.55, 0.5, 1);
+  sun.position.set(0.4, RY + 3.6, WALL_Z - 4.5); sun.target.position.set(-0.1, DESK_Y, WALL_Z + 0.9);
+  sun.castShadow = true; sun.shadow.mapSize.set(small ? 512 : 2048, small ? 512 : 2048); sun.shadow.bias = -0.0004;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 14;
+  room.add(sun, sun.target);
+  // The visible shaft of light and the dust floating in it.
+  const shaftDir = sun.target.position.clone().sub(new THREE.Vector3(0, (WB + WT) / 2, WALL_Z)), shaftLen = shaftDir.length();
+  const shaftMat = new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 1.0, shaftLen, 24, 1, true), shaftMat);
+  shaft.position.set(0, (WB + WT) / 2, WALL_Z).addScaledVector(shaftDir, 0.5);
+  shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), shaftDir.clone().normalize());
+  room.add(shaft);
+  const MOTES = 260, motePos = new Float32Array(MOTES * 3);
+  for (let k = 0; k < MOTES; k++) motePos.set([(Math.random() - 0.5) * 1.8, RY + 0.8 + Math.random() * 1.7, WALL_Z + 0.1 + Math.random() * 1.6], k * 3);
+  const moteGeo = new THREE.BufferGeometry(); moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+  const moteMat = new THREE.PointsMaterial({ size: 0.012, color: 0xffe2b8, map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  room.add(new THREE.Points(moteGeo, moteMat));
+  // Soft glow from the laptop screen onto the desk and your face.
+  const screenGlow = new THREE.PointLight(0x9fc8ff, 0, 2.2, 2); screenGlow.position.set(-0.08, DESK_Y + 0.2, WALL_Z + 0.45); room.add(screenGlow);
+
+  // ---- Clickable objects: hover shows a label, click goes somewhere (or plays the guitar). ----
+  const tip = document.createElement("div");
+  tip.className = "obj-tip"; tip.hidden = true; document.body.appendChild(tip);
+  const clickables = [
+    { obj: books, label: "Beyond Statutes →", href: "/beyond-statutes/" },
+    { obj: laptop, label: "Experiments ↓", href: "#experiments" },
+    { obj: tablet, label: "House rules ↓", href: "#rules" },
+    { obj: trophies, label: "GitHub →", href: "https://github.com/Mzah901" },
+    { obj: guitar, label: "Play a chord ♪", play: true },
+  ];
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let hovered = null;
+  function pick(ev) {
+    if (ev.target !== canvas || roomVisible() === false) return null;
+    ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    for (const hit of ray.intersectObjects(clickables.map((c) => c.obj), true)) {
+      const found = clickables.find((c) => { let o = hit.object; while (o) { if (o === c.obj) return true; o = o.parent; } return false; });
+      if (found) return found;
+    }
+    return null;
+  }
+  addEventListener("pointermove", (ev) => {
+    hovered = pick(ev);
+    canvas.style.cursor = hovered ? "pointer" : "";
+    tip.hidden = !hovered;
+    if (hovered) { tip.textContent = hovered.label; tip.style.left = ev.clientX + 14 + "px"; tip.style.top = ev.clientY + 14 + "px"; }
+  });
+  addEventListener("click", (ev) => {
+    const c = pick(ev);
+    if (!c) return;
+    if (c.play) strum();
+    else if (c.href.startsWith("#")) document.querySelector(c.href).scrollIntoView({ behavior: still ? "auto" : "smooth" });
+    else location.href = c.href;
+  });
+
+  // Guitar: a G major chord, each string synthesised by the Karplus–Strong method
+  // (a burst of noise fed through a short delay loop, which rings like a plucked string).
+  let audio = null;
+  function strum() {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const rate = audio.sampleRate;
+    [98.0, 123.47, 146.83, 196.0, 246.94, 392.0].forEach((freq, i) => {
+      const len = Math.floor(rate * 2.5), data = new Float32Array(len), period = Math.round(rate / freq);
+      for (let n = 0; n < period; n++) data[n] = Math.random() * 2 - 1;
+      for (let n = period; n < len; n++) data[n] = 0.996 * 0.5 * (data[n - period] + data[n - period + 1]);
+      const buf = audio.createBuffer(1, len, rate); buf.copyToChannel(data, 0);
+      const src = audio.createBufferSource(), gain = audio.createGain();
+      src.buffer = buf; gain.gain.value = 0.18;
+      src.connect(gain).connect(audio.destination);
+      src.start(audio.currentTime + i * 0.035);
+    });
+  }
+
+  // ---- Day to night as you scroll: afternoon sun in the room, Hueco Mundo night outside. ----
+  const daySkyTex = canvasTexture(4, 256, (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, "#6f87a3"); grad.addColorStop(0.55, "#d9b48a"); grad.addColorStop(1, "#f3d3a4");
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  });
+  const daySkyMat = new THREE.MeshBasicMaterial({ map: daySkyTex, side: THREE.BackSide, fog: false, transparent: true, opacity: 1, depthWrite: false });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(880, 32, 16), daySkyMat));
+  const sunDisc = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd9a0, fog: false, transparent: true, depthWrite: false }));
+  sunDisc.position.set(30, 70, -560); sunDisc.scale.set(220, 220, 1); scene.add(sunDisc);
+  const fogDay = new THREE.Color(0xc7ad8c), fogNight = new THREE.Color(0x2a3133);
+  const hemiDay = new THREE.Color(0xffe6c8), hemiNight = new THREE.Color(0x9fb3b8);
+  const keyDay = new THREE.Color(0xffcf96), keyNight = new THREE.Color(0xe4eef0);
+  const keyDayPos = new THREE.Vector3(40, 70, -220), keyNightPos = new THREE.Vector3(-70, 120, 90);
+  const smooth = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+  function roomVisible() { return progress < 0.3; }
+
+  function dayNight(p, t) {
+    const night = smooth(0.12, 0.42, p), day = 1 - night;
+    nightK = night;
+    scene.fog.color.copy(fogDay).lerp(fogNight, night);
+    scene.fog.density = 0.0035 + night * 0.004;
+    renderer.toneMappingExposure = 0.85 + night * 0.05;
+    daySkyMat.opacity = day; sunDisc.material.opacity = day; moon.material.opacity = 0.25 + night * 0.75;
+    hemi.color.copy(hemiDay).lerp(hemiNight, night); hemi.intensity = 0.45 + night * 0.3;
+    key.color.copy(keyDay).lerp(keyNight, night); key.position.copy(keyDayPos).lerp(keyNightPos, night);
+    key.intensity = 0.7 + night * 0.55;
+    for (const cl of clouds) if (flashStart < 0) cl.material.color.setRGB(1 + day * 0.9, 1 + day * 0.6, 1 + day * 0.3);
+    dotMat.opacity = 0.15 + night * 0.7;
+    // Room lights: sun in the afternoon, lamp and screens at night.
+    sun.intensity = day * 4.5; shaftMat.opacity = day * 0.018; moteMat.opacity = day * 0.9;
+    lamp.intensity = night * 1.6; lampGlow.material.opacity = night * 0.9;
+    screenGlow.intensity = 0.15 + night * 0.9;
+    // Blinds tilt open first, then lift out of the way as you walk to the window.
+    setBlinds(0.35 + smooth(0.04, 0.16, p) * 1.15, smooth(0.16, 0.26, p));
+    // Dust drifts slowly in the beam.
+    if (t !== undefined) for (let k = 0; k < MOTES; k++) {
+      motePos[k * 3 + 1] += Math.sin(t * 0.0005 + k) * 0.0004;
+      motePos[k * 3] += 0.0002;
+      if (motePos[k * 3] > 0.9) motePos[k * 3] = -0.9;
+    }
+    moteGeo.attributes.position.needsUpdate = true;
+    drawScreen(t || 0);
+  }
+
   // ---- Camera path: the points it moves through as you scroll from top (0) to bottom (1). ----
   const path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 8, 45),       // standing in the sand, palace ahead
-    new THREE.Vector3(-14, 26, 10),    // rising over the transmutation circle
-    new THREE.Vector3(-34, 12, -6),    // dropping down beside the laboratory
-    new THREE.Vector3(-82, 16, -40),   // walking round to the side of the palace
-    new THREE.Vector3(-30, 44, 50),    // stepping back for a wide view of the town
-    new THREE.Vector3(0, 100, 30),     // overhead
+    new THREE.Vector3(0.15, 31.35, 70.7),    // standing behind your chair, looking at the desk
+    new THREE.Vector3(-0.05, 31.1, 69.75),   // leaning in towards the laptop
+    new THREE.Vector3(-0.35, 31.6, 69.1),    // at the window, blinds lifting
+    new THREE.Vector3(-0.35, 31.7, 67.2),    // out through the window
+    new THREE.Vector3(0, 24, 30),            // gliding down over the desert
+    new THREE.Vector3(-14, 26, 10),          // over the transmutation circle
+    new THREE.Vector3(30, 12, -4),           // beside the laboratory
+    new THREE.Vector3(-82, 16, -40),         // round to the side of the palace
+    new THREE.Vector3(-30, 44, 50),          // a wide view of the town
+    new THREE.Vector3(0, 100, 30),           // overhead
   ]);
   const look = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 30, -85),
+    new THREE.Vector3(-0.05, 31.05, 68.5),
+    new THREE.Vector3(-0.1, 30.95, 68.4),
+    new THREE.Vector3(-0.35, 31.9, 50),
+    new THREE.Vector3(0, 26, 0),
+    new THREE.Vector3(0, 8, -40),
     new THREE.Vector3(0, 0, -24),
-    new THREE.Vector3(-58, 8, -38),
+    new THREE.Vector3(58, 8, -38),
     new THREE.Vector3(0, 14, -85),
     new THREE.Vector3(0, 10, -110),
     new THREE.Vector3(0, 0, -70),
@@ -803,7 +1154,8 @@ function buildScene() {
     progress += (target - progress) * (still ? 1 : 0.06);   // ease towards the scroll position
     camera.position.copy(path.getPoint(progress));
     if (!still) {
-      sway.set(Math.sin(t * 0.0003) * 0.8 + mx * 4, Math.cos(t * 0.00023) * 0.4 - my * 2, 0);
+      const swayK = 0.02 + 0.98 * smooth(0.25, 0.4, progress);   // tiny sway inside the room, more outside
+      sway.set(Math.sin(t * 0.0003) * 0.8 + mx * 4, Math.cos(t * 0.00023) * 0.4 - my * 2, 0).multiplyScalar(swayK);
       camera.position.add(sway);
     }
     camera.lookAt(look.getPoint(progress));
@@ -814,6 +1166,7 @@ function buildScene() {
     } else if (t === 0) {
       ambient(0);
     }
+    dayNight(progress, still ? undefined : t);
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }

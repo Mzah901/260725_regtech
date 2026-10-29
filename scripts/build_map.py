@@ -8,8 +8,8 @@ How it works (plain language):
    - site/legal-industry-map.html: page content only, for the claude.ai artifact
      (the artifact service adds the <html>/<head> wrapper itself).
    - public/legal-industry-map/index.html: a complete web page for the public
-     website (lab.statuta.id), plus public/index.html (the lab home page)
-     and public/CNAME (tells GitHub Pages which domain to use).
+     website (statuta.id), plus public/index.html (the lab home page),
+     public/404.html (the "page not found" page) and public/CNAME (tells GitHub Pages which domain to use).
 5. Print a small summary so you can sanity-check the numbers.
 
 Run it from the repo root:  python3 scripts/build_map.py
@@ -25,9 +25,10 @@ ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = ROOT / "data" / "legal_industry_map.csv"
 TEMPLATE_PATH = ROOT / "site" / "template.html"
 HOME_PATH = ROOT / "site" / "home.html"
+NOT_FOUND_PATH = ROOT / "site" / "404.html"
 ARTIFACT_OUTPUT = ROOT / "site" / "legal-industry-map.html"
 PUBLIC_DIR = ROOT / "public"
-CUSTOM_DOMAIN = "lab.statuta.id"
+CUSTOM_DOMAIN = "statuta.id"
 
 # Columns that hold numbers (USD millions). An empty cell means "undisclosed".
 NUMBER_COLUMNS = ["total_funding_usd_m", "last_round_usd_m", "valuation_usd_m"]
@@ -88,6 +89,7 @@ def main():
     (PUBLIC_DIR / "legal-industry-map").mkdir(parents=True)
     (PUBLIC_DIR / "legal-industry-map" / "index.html").write_text(full_document(fragment), encoding="utf-8")
     shutil.copy(HOME_PATH, PUBLIC_DIR / "index.html")
+    shutil.copy(NOT_FOUND_PATH, PUBLIC_DIR / "404.html")
     (PUBLIC_DIR / "CNAME").write_text(CUSTOM_DOMAIN + "\n", encoding="utf-8")
 
     print_summary(rows)

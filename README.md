@@ -8,8 +8,8 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `experiments/` — one log file per experiment (`YYYY-MM-DD-short-name.md`)
 - `data/` — datasets built from public sources, each with a data dictionary
 - `scripts/` — small Python scripts (run from the repo root)
-- `site/` — page templates (the map template and the lab home page)
-- `.github/workflows/pages.yml` — will publish the website at https://lab.statuta.id (not switched on yet)
+- `site/` — page templates (the map template, the lab home page and the 404 page)
+- `.github/workflows/pages.yml` — publishes the website at https://statuta.id (not switched on yet)
 
 ## Experiments
 
@@ -17,19 +17,30 @@ AI applied to Indonesian regulatory compliance, using public sources only
 |---|---|---|---|
 | 2026-10-11 | [Legal Industry Map (pilot)](experiments/2026-10-11-legal-industry-map.md) | [Interactive map](https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw) | `data/legal_industry_map.csv`, `site/legal-industry-map.html` |
 
-The interactive views are hosted as claude.ai artifacts for now. They will move to https://lab.statuta.id later.
+The interactive views are hosted as claude.ai artifacts for now. They will move to https://statuta.id once the website is live.
 
-## Website (planned)
+## Website (planned): https://statuta.id
 
 `python3 scripts/build_map.py` builds the site into `public/` (not committed).
 GitHub Actions runs the same script on every push to check that the build works.
-Publishing to GitHub Pages stays off until the repo variable `PAGES_ENABLED` is set to `true`
-(Settings → Secrets and variables → Actions → Variables). After that, every merge into the
-default branch goes live.
+Publishing to GitHub Pages stays off until the repo variable `PAGES_ENABLED` is set to `true`.
+After that, every merge into the default branch goes live.
+
+The domain is registered at Hostinger; Hostinger only handles DNS, GitHub Pages hosts the site.
+Setup checklist:
+
+1. Hostinger hPanel → Domains → statuta.id → DNS: remove the default parking `A` record for `@`
+   and any `www` record, then add four `A` records for `@`:
+   `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`,
+   and one `CNAME` record: `www` → `mzah901.github.io`.
+2. Repo Settings → Pages → Source: **GitHub Actions**.
+3. Repo Settings → Secrets and variables → Actions → Variables: `PAGES_ENABLED` = `true`.
+4. After DNS has updated (up to 24 hours): Settings → Pages → tick **Enforce HTTPS**.
+5. GitHub account Settings → Pages → **Verify** statuta.id, so no one else can claim the domain on GitHub.
 
 Outputs are research artifacts, not legal advice.
 
 Source regulation text is public domain under Pasal 42 UU No. 28 Tahun 2014 tentang Hak Cipta.
 
 *Independent personal research. Not affiliated with or endorsed by any employer.*
-No any workplace materials are used in this repo, including documents, methodology, workflows, people, source, et cetera.
+No workplace materials are used in this repo: no documents, methodology, workflows, people, sources or other internal information.

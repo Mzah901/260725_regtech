@@ -1,4 +1,4 @@
-# Publishes the lab website (lab.statuta.id) with GitHub Pages.
+# Publishes the lab website (statuta.id) with GitHub Pages.
 # Every push rebuilds the pages from the CSV to check that the build works.
 # Deploying happens only on the default branch, and only once the repo
 # variable PAGES_ENABLED is set to "true" (after DNS and Pages are set up).

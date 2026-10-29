@@ -34,6 +34,10 @@ li a:hover, li a:focus-visible { background: var(--surface); outline: none; }
 li time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-top: 3px; }
 li b { color: var(--accent); font-weight: 500; }
 li span { grid-column: 2; color: var(--muted); font-size: 14px; }
+section { display: grid; gap: 10px; }
+h2 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+section ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 62ch; }
+section a { color: var(--accent); }
 footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
 footer a { color: var(--accent); }
 @media (max-width: 480px) { li a { grid-template-columns: 1fr; } li span { grid-column: 1; } }
@@ -47,6 +51,13 @@ footer a { color: var(--accent); }
     <p class="muted">Applying AI to Indonesian regulation using public sources only. Each experiment publishes its data, method, sources and known errors.</p>
   </header>
 
+  <section>
+    <h2>About</h2>
+    <p>I trained in law at Universitas Gadjah Mada and work on Indonesian regulatory compliance. I have no formal computing background; this lab is where I learn to build and evaluate AI tools for the problems I know from practice: finding obligations in regulations, tracking amendments, and mapping how rules refer to each other.</p>
+  </section>
+
+  <section>
+    <h2>Experiments</h2>
   <ol>
     <li>
       <a href="legal-industry-map/">
@@ -56,6 +67,26 @@ footer a { color: var(--accent); }
       </a>
     </li>
   </ol>
+  </section>
+
+  <section>
+    <h2>Responsible AI</h2>
+    <p>Every experiment follows the same rules, written down before any code:</p>
+    <ul>
+      <li><b>Public sources only.</b> Regulations from peraturan.go.id, JDIH portals, Pasal.id, official gazettes and published court decisions. No private or workplace data.</li>
+      <li><b>A human reviews everything.</b> AI output is a draft until I have checked it. Each experiment log records what I reviewed.</li>
+      <li><b>Measured, not eyeballed.</b> Results are scored against a sample I check by hand, with error counts, not "it looks right".</li>
+      <li><b>Limits stated up front.</b> Each experiment lists its sources, tools, models and known errors.</li>
+    </ul>
+    <p class="muted">The full rules are in <a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/CLAUDE.md">CLAUDE.md</a>; every experiment's log is in <a href="https://github.com/Mzah901/260725_regtech/tree/claude/new-session-euryc2/experiments">experiments/</a>.</p>
+  </section>
+
+  <section>
+    <h2>Datasets</h2>
+    <ul>
+      <li><a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/legal_industry_map.csv">legal_industry_map.csv</a>: 27 legal-tech companies, one row each, with a source URL on every row. <a href="https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/data/schema.md">Data dictionary</a>.</li>
+    </ul>
+  </section>
 
   <footer>
     <span>Independent personal research. Not affiliated with or endorsed by any employer.</span>

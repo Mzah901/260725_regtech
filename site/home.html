@@ -786,10 +786,12 @@ function buildScene() {
   const block = (w, h, d, material, x, y, z, parent) => piece(new THREE.BoxGeometry(w, h, d), material, x, y, z, parent);
 
   // The tower the room sits on, so it belongs to the desert town when seen from outside.
-  block(5.2, RY, 5.2, concrete(1, 8), 0, RY / 2, 70);
+  block(5.2, RY - 0.32, 5.2, concrete(1, 8), 0, (RY - 0.32) / 2, 70);   // stops just under the floor, so the two never overlap
 
   // Walls, floor and ceiling. Thick walls keep outside light from leaking in.
-  const paint = mat(0xd9d2c5, 0.95);
+  const plasterTex = pixelTexture(128, 128, (x, y) => { const v = 214 + (fbm(x / 9, y / 9, 3) - 0.5) * 14 + (Math.random() - 0.5) * 6; return [v, v - 6, v - 16, 255]; });
+  plasterTex.wrapS = plasterTex.wrapT = THREE.RepeatWrapping; plasterTex.repeat.set(4, 3);
+  const paint = mat(0xffffff, 0.95, { map: plasterTex });
   const wallpaperTex = canvasTexture(256, 256, (g, s) => {
     g.fillStyle = "#2d4f9c"; g.fillRect(0, 0, s, s);
     g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 2;
@@ -837,15 +839,22 @@ function buildScene() {
   }
 
   // Desk: a wooden top with a curved front edge, a lower shelf, thin metal legs.
-  const wood = mat(0xb87a2e, 0.55);
+  const grainTex = pixelTexture(256, 256, (x, y) => {
+    const ring = Math.sin((x + fbm(x / 40, y / 40, 3) * 60) * 0.25) * 0.5 + 0.5;
+    const v = 0.82 + ring * 0.1 + (Math.random() - 0.5) * 0.04;
+    return [196 * v, 142 * v, 78 * v, 255];
+  });
+  grainTex.wrapS = grainTex.wrapT = THREE.RepeatWrapping; grainTex.repeat.set(2, 2);
+  const wood = mat(0xffffff, 0.5, { map: grainTex });
   const deskShape = new THREE.Shape();
   deskShape.moveTo(-0.95, 0); deskShape.lineTo(0.75, 0); deskShape.lineTo(0.75, 0.62);
   deskShape.bezierCurveTo(0.35, 0.66, 0.1, 0.44, -0.3, 0.5); deskShape.lineTo(-0.95, 0.58); deskShape.closePath();
   const deskGeo = new THREE.ExtrudeGeometry(deskShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2 });
   const DESK_Y = RY + 0.76;
-  piece(deskGeo, wood, 0, DESK_Y, WALL_Z + 0.05).rotation.x = Math.PI / 2;
-  piece(deskGeo, wood, 0, RY + 0.52, WALL_Z + 0.05).rotation.x = Math.PI / 2;   // keyboard shelf below
   const steel = mat(0x8e9196, 0.35, { metalness: 0.7 });
+  piece(deskGeo, wood, 0, DESK_Y, WALL_Z + 0.05).rotation.x = Math.PI / 2;
+  block(0.75, 0.018, 0.38, wood, -0.12, RY + 0.6, WALL_Z + 0.27);   // keyboard tray below
+  for (const x of [-0.48, 0.24]) block(0.02, 0.03, 0.42, steel, x, RY + 0.62, WALL_Z + 0.27);
   for (const [x, z] of [[-0.9, WALL_Z + 0.1], [0.7, WALL_Z + 0.1], [-0.9, WALL_Z + 0.55], [0.7, WALL_Z + 0.58]])
     piece(new THREE.CylinderGeometry(0.016, 0.016, 0.76, 8), steel, x, RY + 0.38, z);
   // Shelf above the desk, crossing the window, holding trophies.
@@ -985,6 +994,129 @@ function buildScene() {
   block(0.46, 0.07, 0.44, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.47, 0, chair);
   for (const [x, z] of [[-0.2, -0.19], [0.2, -0.19], [-0.2, 0.19], [0.2, 0.19]]) piece(new THREE.CylinderGeometry(0.014, 0.014, 0.44, 8), steel, x, 0.22, z, chair);
 
+  // ---- Lived-in details: the small things that make a room feel real. ----
+  // Skirting boards along every wall, and a sill under the window.
+  const skirting = mat(0xece7dd, 0.6);
+  block(ROOM_W, 0.08, 0.02, skirting, 0, RY + 0.04, BACK_Z - 0.01);
+  block(0.02, 0.08, BACK_Z - WALL_Z, skirting, -ROOM_W / 2 + 0.01, RY + 0.04, (WALL_Z + BACK_Z) / 2);
+  block(0.02, 0.08, BACK_Z - WALL_Z, skirting, ROOM_W / 2 - 0.01, RY + 0.04, (WALL_Z + BACK_Z) / 2);
+  block(WX * 2 + 0.2, 0.03, 0.14, skirting, 0, WB - 0.015, WALL_Z + 0.06);
+
+  // A woven rug under the chair.
+  const rugTex = canvasTexture(256, 256, (g, s) => {
+    g.fillStyle = "#7a3b34"; g.fillRect(0, 0, s, s);
+    g.strokeStyle = "#d9c7a6"; g.lineWidth = 6; g.strokeRect(14, 14, s - 28, s - 28);
+    g.lineWidth = 2; g.strokeRect(26, 26, s - 52, s - 52);
+    g.fillStyle = "#c79a5b";
+    for (let k = 0; k < 5; k++) { g.save(); g.translate(s / 2, s / 2); g.rotate(Math.PI / 4); g.fillRect(-12 - k * 14, -12 - k * 14, 24 + k * 28, 3); g.restore(); }
+    for (let k = 0; k < 3000; k++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.08})`; g.fillRect(Math.random() * s, Math.random() * s, 2, 1); }
+  });
+  const rug = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.0), mat(0xffffff, 1, { map: rugTex }));
+  rug.rotation.x = -Math.PI / 2; rug.position.set(0.1, RY + 0.004, WALL_Z + 1.2); rug.receiveShadow = true; room.add(rug);
+
+  // Pillow and a folded blanket on the bed.
+  block(0.55, 0.12, 0.35, mat(0xf2efe8, 0.95), -1.25, RY + 0.51, BACK_Z - 0.25);
+  block(0.88, 0.06, 0.5, mat(0x3f6b8f, 0.95), -1.25, RY + 0.48, WALL_Z + 1.1);
+
+  // Backpack slumped against the right desk leg, a fabric basket and a slim bookshelf by the right wall.
+  const bag = block(0.3, 0.42, 0.18, mat(0x262a2f, 0.9), 0.9, RY + 0.21, WALL_Z + 0.75);
+  bag.rotation.set(-0.15, -0.4, 0.05);
+  block(0.22, 0.14, 0.04, mat(0x30353b, 0.9), 0.9, RY + 0.14, WALL_Z + 0.85).rotation.y = -0.4;
+  piece(new THREE.CylinderGeometry(0.2, 0.17, 0.35, 16, 1, true), mat(0xd8e0d2, 0.95, { side: THREE.DoubleSide }), 1.35, RY + 0.175, WALL_Z + 1.35);
+  const shelfWood = mat(0x6e4a2c, 0.7);
+  const bookcase = new THREE.Group(); bookcase.position.set(ROOM_W / 2 - 0.16, RY, BACK_Z - 0.9); room.add(bookcase);
+  block(0.3, 1.5, 0.02, shelfWood, 0, 0.75, -0.3, bookcase); block(0.3, 1.5, 0.02, shelfWood, 0, 0.75, 0.3, bookcase);
+  for (let k = 0; k < 4; k++) {
+    block(0.3, 0.02, 0.6, shelfWood, 0, 0.05 + k * 0.48, 0, bookcase);
+    if (k === 3) break;
+    let z = -0.27;
+    while (z < 0.25) {
+      const th = 0.025 + Math.random() * 0.03, ht = 0.2 + Math.random() * 0.17;
+      block(0.2, ht, th, mat(bookColors[Math.floor(Math.random() * bookColors.length)], 0.8), -0.02, 0.06 + k * 0.48 + ht / 2, z + th / 2, bookcase);
+      z += th + 0.004;
+    }
+  }
+
+  // On the walls: a cork board with pinned notes, a framed diploma, a clock, a socket and a light switch.
+  const corkTex = canvasTexture(256, 180, (g, w, h) => {
+    g.fillStyle = "#b98a57"; g.fillRect(0, 0, w, h);
+    for (let k = 0; k < 2500; k++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? "70,40,20" : "230,200,160"},.25)`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    const notes = [["#fff7a8", 20, 20], ["#f3f1ec", 92, 14], ["#ffd2d2", 170, 28], ["#f3f1ec", 36, 98], ["#cfe8ff", 120, 92]];
+    for (const [c, x, y] of notes) {
+      g.save(); g.translate(x + 30, y + 30); g.rotate((Math.random() - 0.5) * 0.25);
+      g.fillStyle = c; g.fillRect(-30, -30, 60, 60);
+      g.fillStyle = "#555"; for (let l = -20; l < 22; l += 8) g.fillRect(-22, l, 30 + Math.random() * 14, 2);
+      g.fillStyle = "#c4202b"; g.beginPath(); g.arc(0, -26, 4, 0, Math.PI * 2); g.fill();
+      g.restore();
+    }
+    g.strokeStyle = "#5a3b22"; g.lineWidth = 10; g.strokeRect(0, 0, w, h);
+  });
+  const cork = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.53), mat(0xffffff, 0.9, { map: corkTex }));
+  cork.rotation.y = Math.PI / 2; cork.position.set(-ROOM_W / 2 + 0.005, RY + 1.55, WALL_Z + 0.95); room.add(cork);
+  const diplomaTex = canvasTexture(200, 150, (g, w, h) => {
+    g.fillStyle = "#3a2a1c"; g.fillRect(0, 0, w, h); g.fillStyle = "#f6f1e3"; g.fillRect(14, 14, w - 28, h - 28);
+    g.fillStyle = "#2b2b2b"; g.font = "bold 12px serif"; g.textAlign = "center"; g.fillText("SARJANA HUKUM", w / 2, 46);
+    g.fillStyle = "#888"; for (let y = 60; y < 104; y += 8) g.fillRect(40, y, w - 80, 2);
+    g.fillStyle = "#c9a54a"; g.beginPath(); g.arc(w / 2, 118, 9, 0, Math.PI * 2); g.fill();
+  });
+  const diploma = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), mat(0xffffff, 0.5, { map: diplomaTex }));
+  diploma.rotation.y = Math.PI / 2; diploma.position.set(-ROOM_W / 2 + 0.005, RY + 1.35, BACK_Z - 0.85); room.add(diploma);
+  const clockFace = canvasTexture(128, 128, (g, s) => {
+    g.fillStyle = "#f7f5f0"; g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#222"; g.lineWidth = 5; g.stroke();
+    g.fillStyle = "#222"; for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; g.fillRect(s / 2 + Math.cos(a) * 50 - 2, s / 2 + Math.sin(a) * 50 - 2, 4, 4); }
+  });
+  const clock = new THREE.Group(); clock.position.set(-ROOM_W / 2 + 0.01, RY + 2.15, WALL_Z + 1.9); clock.rotation.y = Math.PI / 2; room.add(clock);
+  clock.add(new THREE.Mesh(new THREE.CircleGeometry(0.14, 32), mat(0xffffff, 0.5, { map: clockFace })));
+  const hourHand = block(0.008, 0.07, 0.004, mat(0x111111), 0, 0.03, 0.006, clock), minuteHand = block(0.006, 0.1, 0.004, mat(0x111111), 0, 0.045, 0.008, clock);
+  const handPivot = (hand) => { const p = new THREE.Group(); p.position.z = 0.006; clock.add(p); clock.remove(hand); p.add(hand); return p; };
+  const hourPivot = handPivot(hourHand), minutePivot = handPivot(minuteHand);
+  const plate = mat(0xf4f2ee, 0.5);
+  block(0.012, 0.11, 0.07, plate, ROOM_W / 2 - 0.006, RY + 0.3, WALL_Z + 0.5);           // socket
+  block(0.012, 0.11, 0.07, plate, -ROOM_W / 2 + 0.006, RY + 1.2, BACK_Z - 0.2);          // light switch
+
+  // Ceiling light: a flat round fitting that glows at night.
+  const ceilingLampMat = mat(0xf7f5f0, 0.4, { emissive: 0x000000 });
+  piece(new THREE.CylinderGeometry(0.22, 0.24, 0.06, 32), ceilingLampMat, 0, RY + ROOM_H - 0.03, (WALL_Z + BACK_Z) / 2);
+
+  // On the desk: a pen cup, a phone face down, a notebook with a pen, sticky notes on the laptop bezel, a small plant.
+  const penCup = new THREE.Group(); penCup.position.set(0.62, DESK_Y, WALL_Z + 0.12); room.add(penCup);
+  piece(new THREE.CylinderGeometry(0.035, 0.032, 0.1, 16, 1, true), mat(0x2b2f36, 0.5, { side: THREE.DoubleSide }), 0, 0.05, 0, penCup);
+  [0x1e4fd8, 0xc4202b, 0x111111, 0x2f8f4f].forEach((c, k) => {
+    const pen = piece(new THREE.CylinderGeometry(0.004, 0.004, 0.15, 6), mat(c, 0.4), (k % 2 - 0.5) * 0.02, 0.1, (k > 1 ? 0.5 : -0.5) * 0.02, penCup);
+    pen.rotation.set((k - 1.5) * 0.12, 0, (k % 2 - 0.5) * 0.25);
+  });
+  block(0.075, 0.009, 0.155, mat(0x15171a, 0.3, { metalness: 0.4 }), 0.35, DESK_Y + 0.005, WALL_Z + 0.52).rotation.y = 0.4;   // phone
+  const notebook = block(0.15, 0.015, 0.21, mat(0x33415c, 0.8), -0.38, DESK_Y + 0.008, WALL_Z + 0.5); notebook.rotation.y = -0.25;
+  piece(new THREE.CylinderGeometry(0.0035, 0.0035, 0.14, 6), mat(0x111111, 0.4), -0.36, DESK_Y + 0.02, WALL_Z + 0.48).rotation.set(Math.PI / 2, 0, 0.6);
+  for (const [x, c] of [[-0.1, 0xfff27a], [0.08, 0xffb3c7]]) {
+    const note = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 0.035), mat(c, 0.9));
+    note.position.set(x, 0.205, 0.0045); note.rotation.z = (Math.random() - 0.5) * 0.3; lid.add(note);
+  }
+  const plant = new THREE.Group(); plant.position.set(0.66, DESK_Y, WALL_Z + 0.42); room.add(plant);
+  piece(new THREE.CylinderGeometry(0.045, 0.035, 0.08, 16), mat(0xc96f4a, 0.8), 0, 0.04, 0, plant);
+  for (let k = 0; k < 9; k++) {
+    const leaf = piece(new THREE.SphereGeometry(0.03, 8, 6), mat(0x3f7d3a, 0.7), 0, 0.1, 0, plant);
+    leaf.scale.set(0.45, 1.6, 0.2); leaf.rotation.set(0.5 * Math.cos(k), (k / 9) * Math.PI * 2, 0.55);
+    leaf.translateY(0.04);
+  }
+
+  // Under the desk: a power strip with cables running up to the laptop and tablet.
+  block(0.3, 0.035, 0.06, mat(0xf2f0ec, 0.6), -0.2, RY + 0.018, WALL_Z + 0.2);
+  const cable = mat(0x151515, 0.6);
+  for (const [x, z] of [[-0.12, WALL_Z + 0.25], [0.3, WALL_Z + 0.2]]) {
+    const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.2, RY + 0.03, WALL_Z + 0.2), new THREE.Vector3(x * 0.6, RY + 0.25, WALL_Z + 0.12), new THREE.Vector3(x, DESK_Y - 0.05, WALL_Z + 0.06), new THREE.Vector3(x, DESK_Y + 0.01, z)]);
+    piece(new THREE.TubeGeometry(curve, 24, 0.004, 5), cable, 0, 0, 0);
+  }
+
+  // The clock keeps real time.
+  function tickClock() {
+    const now = new Date();
+    minutePivot.rotation.z = -(now.getMinutes() / 60) * Math.PI * 2;
+    hourPivot.rotation.z = -((now.getHours() % 12) / 12 + now.getMinutes() / 720) * Math.PI * 2;
+  }
+  tickClock(); setInterval(tickClock, 30000);
+
   // Sunbeam: a warm spotlight outside the window shining in, so the blinds cast stripes.
   const sun = new THREE.SpotLight(0xffd29a, 0, 14, 0.55, 0.5, 1);
   sun.position.set(0.4, RY + 3.6, WALL_Z - 4.5); sun.target.position.set(-0.1, DESK_Y, WALL_Z + 0.9);
@@ -1091,7 +1223,7 @@ function buildScene() {
     dotMat.opacity = 0.15 + night * 0.7;
     // Room lights: sun in the afternoon, lamp and screens at night.
     sun.intensity = day * 4.5; shaftMat.opacity = day * 0.018; moteMat.opacity = day * 0.9;
-    lamp.intensity = night * 1.6; lampGlow.material.opacity = night * 0.9;
+    lamp.intensity = night * 1.6; ceilingLampMat.emissive.setScalar(night * 0.7); lampGlow.material.opacity = night * 0.9;
     screenGlow.intensity = 0.15 + night * 0.9;
     // Blinds tilt open first, then lift out of the way as you walk to the window.
     setBlinds(0.35 + smooth(0.04, 0.16, p) * 1.15, smooth(0.16, 0.26, p));

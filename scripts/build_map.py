@@ -10,6 +10,8 @@ How it works (plain language):
    - public/legal-industry-map/index.html: a complete web page for the public
      website (statuta.id), plus public/index.html (the lab home page),
      public/404.html (the "page not found" page) and public/CNAME (tells GitHub Pages which domain to use).
+   - public/beyond-statutes/: one page per note, built by build_notes.py. The home page's
+     chapter list is filled in from the same notes, where site/home.html says <!--CHAPTERS-->.
 5. Print a small summary so you can sanity-check the numbers.
 
 Run it from the repo root:  python3 scripts/build_map.py
@@ -20,6 +22,8 @@ import json
 import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
+
+import build_notes
 
 ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = ROOT / "data" / "legal_industry_map.csv"
@@ -88,7 +92,9 @@ def main():
         shutil.rmtree(PUBLIC_DIR)
     (PUBLIC_DIR / "legal-industry-map").mkdir(parents=True)
     (PUBLIC_DIR / "legal-industry-map" / "index.html").write_text(full_document(fragment), encoding="utf-8")
-    shutil.copy(HOME_PATH, PUBLIC_DIR / "index.html")
+    chapters = build_notes.build(PUBLIC_DIR)
+    home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)
+    (PUBLIC_DIR / "index.html").write_text(home, encoding="utf-8")
     shutil.copy(NOT_FOUND_PATH, PUBLIC_DIR / "404.html")
     (PUBLIC_DIR / "CNAME").write_text(CUSTOM_DOMAIN + "\n", encoding="utf-8")
 

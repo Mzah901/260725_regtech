@@ -69,6 +69,8 @@ h2::after { content: ""; display: block; width: 56px; height: 3px; background: v
 .ch { font-size: 12px; color: var(--red); letter-spacing: .08em; }
 .chapters h3 { font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.3; margin: 2px 0 8px; }
 .chapters p { color: #D4D1CB; margin: 0; }
+.chapters h3 a { text-decoration: none; }
+.chapters h3 a:hover { text-decoration: underline; text-decoration-color: var(--red); }
 
 ul.plain { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 64ch; }
 ul.plain li::before { content: "— "; color: var(--red); }
@@ -118,44 +120,8 @@ and the tide keeps coming.</p>
 
   <section id="chapters">
     <h2>Beyond Statutes</h2>
-    <p class="lede">Notes from my journal. Law has never stopped evolving, from canon law to code, and neither should the way we work with it.</p>
-    <ol class="chapters">
-      <li><span class="rank" aria-hidden="true">1</span>
-        <span class="ch">CH.01 · LAW</span>
-        <h3>Law is a database problem.</h3>
-        <p>Regulations and court decisions change constantly. AI can already handle everyday legal questions if you give it the right documents. The hard part is knowing that what you gave it is complete, correct and still in force. That is the problem this lab works on.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">2</span>
-        <span class="ch">CH.02 · POLICY</span>
-        <h3>Evidence before norms.</h3>
-        <p>Good policy is built on evidence and measured impact, not on legal reasoning alone, and public participation should be meaningful, not a formality. The values I work by: rational autonomy, evidence-based and impact-driven thinking, integrity and justice.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">3</span>
-        <span class="ch">CH.03 · LAW</span>
-        <h3>The law exists because promises break.</h3>
-        <p>Contract law and its relatives exist because people cannot simply be trusted to keep their word. So I believe in the rule of law over the rule of individuals, and I try to do what I promise, or say early when I cannot.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">4</span>
-        <span class="ch">CH.04 · TECH</span>
-        <h3>Lawyers should build.</h3>
-        <p>Engineers compete by building bridges, rockets and software. Legal work deserves the same healthy competition: tools that make the law easier to know and to follow.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">5</span>
-        <span class="ch">CH.05 · FINANCE</span>
-        <h3>Equivalent exchange.</h3>
-        <p>Wealth eventually settles at the level of the value behind it. High value with little wealth is a gap that time closes; wealth without value erodes. So the first investment is always in the value.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">6</span>
-        <span class="ch">CH.06 · FINANCE</span>
-        <h3>Follow the cash, not the story.</h3>
-        <p>A company can report profits that never arrive as cash; operating cash flow shows what really happened. People and projects are the same: judge them by what they deliver, not by what they promise.</p>
-      </li>
-      <li><span class="rank" aria-hidden="true">7</span>
-        <span class="ch">CH.07 · LIFE</span>
-        <h3>Sideways is still progress.</h3>
-        <p>Life often moves like a chart going sideways. The job in those stretches is to keep working. If your last 50 days beat your last 200, the trend follows.</p>
-      </li>
-    </ol>
+    <p class="lede">Notes from my journal. Law has never stopped evolving, from canon law to code, and neither should the way we work with it. Each note links to the others: <a href="/beyond-statutes/">see how they connect →</a></p>
+    <!--CHAPTERS-->
   </section>
 
   <section id="experiments">
@@ -231,7 +197,7 @@ function fbm(x, y, layers = 5) {
 }
 
 function buildScene() {
-  const RED = 0xE0242E, BONE = 0xF2F0EB, SPIRIT = 0xBFE9FF;
+  const RED = 0xE0242E, SPIRIT = 0xBFE9FF, LAB = 0x7FE3FF;
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
@@ -242,9 +208,10 @@ function buildScene() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x2a3133, 0.0085);
+  scene.fog = new THREE.FogExp2(0x2a3133, 0.0075);
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1200);
   scene.add(camera);
+  const col = new THREE.Color();
 
   // Helper: paint on a 2D canvas and use it as a texture.
   function canvasTexture(w, h, paint, color = true) {
@@ -266,6 +233,11 @@ function buildScene() {
       g.putImageData(img, 0, 0);
     });
   }
+  const glowTex = canvasTexture(64, 64, (g, s) => {
+    const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.3, "rgba(255,255,255,.5)"); grad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grad; g.fillRect(0, 0, s, s);
+  });
 
   // ---- Light: cold sky light from above, and a moon-coloured key light that casts shadows. ----
   scene.add(new THREE.HemisphereLight(0x9fb3b8, 0x2b2a26, 0.75));
@@ -273,23 +245,22 @@ function buildScene() {
   key.position.set(-70, 120, 90);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
-  Object.assign(key.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 10, far: 400 });
+  key.shadow.bias = -0.0005;
+  Object.assign(key.shadow.camera, { left: -160, right: 160, top: 160, bottom: -160, near: 10, far: 450 });
   scene.add(key);
 
-  // ---- Sky: a dark gradient dome, heavy clouds, and an eclipse-like crescent moon. ----
+  // ---- Sky: a dark gradient dome, heavy drifting clouds, and an eclipse-like crescent moon. ----
   const skyTex = canvasTexture(4, 256, (g, w, h) => {
     const grad = g.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, "#07090a"); grad.addColorStop(0.55, "#1d2426"); grad.addColorStop(1, "#3c4648");
     g.fillStyle = grad; g.fillRect(0, 0, w, h);
   });
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false }));
-  scene.add(sky);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })));
 
   const cloudTex = pixelTexture(256, 128, (x, y) => {
     const n = fbm(x / 40, y / 40, 5);
-    const edge = Math.sin((y / 128) * Math.PI) * Math.sin((x / 256) * Math.PI);   // fade at the borders
-    const a = Math.max(0, n - 0.42) * 2.4 * edge;
-    const shade = 40 + n * 70;
+    const edge = Math.sin((y / 128) * Math.PI) * Math.sin((x / 256) * Math.PI);
+    const a = Math.max(0, n - 0.42) * 2.4 * edge, shade = 40 + n * 70;
     return [shade, shade + 4, shade + 6, Math.min(255, a * 255)];
   });
   const clouds = [];
@@ -300,7 +271,6 @@ function buildScene() {
     cl.userData.speed = 0.02 + Math.random() * 0.03;
     scene.add(cl); clouds.push(cl);
   }
-
   const moonTex = canvasTexture(512, 512, (g, w) => {
     const c = w / 2;
     const glow = g.createRadialGradient(c, c, w * 0.12, c, c, w * 0.5);
@@ -314,10 +284,9 @@ function buildScene() {
   moon.position.set(0, 210, -560); moon.scale.set(170, 170, 1);
   scene.add(moon);
 
-  // ---- Ground: rolling pale sand. ----
+  // ---- Ground: rolling pale sand, flatter around the buildings. ----
   const sandTex = pixelTexture(256, 256, (x, y) => {
-    const n = fbm(x / 18, y / 18, 4) * 50 + Math.random() * 18;
-    const v = 150 + n;
+    const v = 150 + fbm(x / 18, y / 18, 4) * 50 + Math.random() * 18;
     return [v, v + 4, v + 4, 255];
   });
   sandTex.wrapS = sandTex.wrapT = THREE.RepeatWrapping; sandTex.repeat.set(60, 60);
@@ -325,8 +294,8 @@ function buildScene() {
   const gp = groundGeo.attributes.position;
   for (let k = 0; k < gp.count; k++) {
     const x = gp.getX(k), y = gp.getY(k);
-    const nearFortress = Math.max(0, 1 - Math.hypot(x, y + 70) / 140);   // flatter around the buildings
-    gp.setZ(k, (fbm(x / 60, y / 60, 4) - 0.5) * 9 * (1 - nearFortress));
+    const flat = Math.max(0, 1 - Math.hypot(x, y + 70) / 160);
+    gp.setZ(k, (fbm(x / 60, y / 60, 4) - 0.5) * 9 * (1 - flat));
   }
   groundGeo.computeVertexNormals();
   const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ map: sandTex, roughness: 1, color: 0xd6dbd9 }));
@@ -334,53 +303,177 @@ function buildScene() {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // ---- Concrete: grain, stains, horizontal formwork lines and rain streaks. ----
+  // ---- Concrete: grain, stains, horizontal formwork lines, tie-holes and rain streaks. ----
   const concreteTex = pixelTexture(512, 512, (x, y) => {
     let v = 120 + (fbm(x / 70, y / 70, 5) - 0.5) * 70 + (Math.random() - 0.5) * 22;
-    if (y % 64 < 2) v -= 22;                                                 // formwork joints
-    const streak = fbm(x / 6, 0.5, 2);                                       // vertical rain stains
-    if (streak > 0.62) v -= (streak - 0.62) * 160 * (1 - y / 700);
+    if (y % 64 < 2) v -= 24;                                                   // formwork joints
+    if (x % 64 < 1) v -= 10;                                                   // panel edges
+    if ((x % 64 - 32) ** 2 + (y % 64 - 32) ** 2 < 5) v -= 35;                  // tie-holes
+    const streak = fbm(x / 6, 0.5, 2);
+    if (streak > 0.62) v -= (streak - 0.62) * 160 * (1 - y / 700);            // rain stains
+    v -= Math.max(0, (y - 440) / 72) * 18;                                     // darker near the ground
     return [v, v + 2, v + 1, 255];
   });
   concreteTex.wrapS = concreteTex.wrapT = THREE.RepeatWrapping;
-  const concrete = (rx, ry) => {
+  const concrete = (rx, ry, tint = 0xaeb0ab) => {
     const map = concreteTex.clone(); map.needsUpdate = true; map.repeat.set(rx, ry);
-    return new THREE.MeshStandardMaterial({ map, bumpMap: map, bumpScale: 0.6, roughness: 0.95, color: 0xaeb0ab });
+    return new THREE.MeshStandardMaterial({ map, bumpMap: map, bumpScale: 0.6, roughness: 0.95, color: tint });
   };
-  const solid = (mesh) => { mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh; };
+  const solid = (mesh, parent = scene) => { mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh; };
+  const box = (w, h, d, x, y, z, mat, parent) => { const m = solid(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat), parent); m.position.set(x, y, z); return m; };
 
-  // The palace: a massive block with a low dome, three vents on top and a small gatehouse.
+  // ---- The palace: plinth, block with ribs and cornice, two wings, a ribbed low dome, gatehouse with steps. ----
   const FZ = -85;
-  solid(new THREE.Mesh(new THREE.BoxGeometry(60, 16, 40), concrete(3, 1))).position.set(0, 8, FZ);
+  box(70, 1.6, 50, 0, 0.8, FZ, concrete(4, 0.2));                        // plinth
+  box(60, 16, 40, 0, 9, FZ, concrete(3, 1));                             // main block
+  box(63, 1.4, 43, 0, 17.6, FZ, concrete(4, 0.1, 0xbfc1bc));             // cornice
+  for (let k = 0; k < 11; k++) box(1.4, 15, 1.2, -27 + k * 5.4, 8.6, FZ + 20.4, concrete(0.2, 1));   // front ribs
+  for (const side of [-1, 1]) {
+    box(20, 10, 30, side * 40, 5.8, FZ + 2, concrete(1.4, 0.7));         // wings
+    box(21, 1, 31, side * 40, 11.2, FZ + 2, concrete(1.4, 0.1, 0xbfc1bc));
+  }
   const dome = solid(new THREE.Mesh(new THREE.SphereGeometry(26, 64, 24, 0, Math.PI * 2, 0, Math.PI / 2), concrete(4, 1)));
-  dome.scale.set(1, 0.32, 0.72); dome.position.set(0, 16, FZ);
-  for (let k = -1; k <= 1; k++) solid(new THREE.Mesh(new THREE.BoxGeometry(1.6, 4, 1.6), concrete(0.3, 0.5))).position.set(k * 2.6, 25.5, FZ);
-  solid(new THREE.Mesh(new THREE.BoxGeometry(12, 9, 7), concrete(1, 0.6))).position.set(4, 4.5, FZ + 23);
+  dome.scale.set(1, 0.32, 0.72); dome.position.set(0, 18.3, FZ);
+  const ribGroup = new THREE.Group();                                    // dome ribs
+  for (let k = 0; k < 16; k++) {
+    const rib = solid(new THREE.Mesh(new THREE.TorusGeometry(26, 0.3, 6, 32, Math.PI), concrete(1, 1)), ribGroup);
+    rib.rotation.y = (k / 16) * Math.PI;
+  }
+  ribGroup.scale.set(1, 0.32, 0.72); ribGroup.position.set(0, 18.3, FZ);
+  scene.add(ribGroup);
+  for (let k = -1; k <= 1; k++) box(1.6, 4, 1.6, k * 2.6, 27.8, FZ, concrete(0.3, 0.5));   // vents on the crown
+  box(12, 9, 7, 4, 5.4, FZ + 23.5, concrete(1, 0.6));                    // gatehouse
+  for (let s = 0; s < 3; s++) box(8 - s, 0.5, 2, 6, 0.25 + s * 0.5, FZ + 28 - s, concrete(0.6, 0.1));   // steps
   const door = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 0.4), new THREE.MeshBasicMaterial({ color: 0x050505 }));
-  door.position.set(6, 3, FZ + 26.6); scene.add(door);
-  solid(new THREE.Mesh(new THREE.BoxGeometry(1.6, 7, 1.6), concrete(0.2, 0.6))).position.set(-6, 3.5, FZ + 36);
+  door.position.set(6, 4, FZ + 27.1); scene.add(door);
+  box(1.6, 7, 1.6, -6, 3.5, FZ + 36, concrete(0.2, 0.6));               // lone post
 
-  // The pillars: tall concrete towers that flare out at the base, turned on a lathe.
-  const pillarAt = [[-34, -62, 58], [-50, -84, 46], [-24, -112, 40], [34, -60, 66], [52, -86, 52], [26, -114, 44], [-62, -112, 36]];
-  const pillarTops = [];
-  for (const [x, z, h] of pillarAt) {
-    const profile = [[8, 0], [6.6, 1.6], [5.4, 4], [4.6, 8], [4.3, 13], [4.3, h], [4.7, h], [4.7, h + 0.8], [0, h + 0.8]]
-      .map(([r, y]) => new THREE.Vector2(r, y));
-    solid(new THREE.Mesh(new THREE.LatheGeometry(profile, 48), concrete(2, h / 18))).position.set(x, 0, z);
-    pillarTops.push(new THREE.Vector3(x, h + 1, z));
+  // Lit slits in the front wall that flicker, as if someone is home.
+  const windows = [];
+  for (let k = 0; k < 10; k++) {
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 3.2), new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.8 }));
+    win.position.set(-24.3 + k * 5.4, 11, FZ + 20.05);
+    win.userData.phase = Math.random() * 100;
+    scene.add(win); windows.push(win);
   }
 
-  // ---- Transmutation circle on the sand, in front of the palace. ----
-  // Drawn in white; its colour comes from the material, so it can switch from red to blue when it activates.
+  // ---- Pillars: tall concrete towers with flared bases and a crown ring. ----
+  const pillarAt = [[-34, -62, 58], [-50, -84, 46], [-24, -112, 40], [34, -60, 66], [52, -86, 52], [26, -114, 44], [-62, -112, 36]];
+  for (const [x, z, h] of pillarAt) {
+    const profile = [[8, 0], [6.6, 1.6], [5.4, 4], [4.6, 8], [4.3, 13], [4.3, h - 3], [4.9, h - 2.6], [4.9, h - 1.6], [4.3, h - 1.2], [4.3, h], [4.7, h], [4.7, h + 0.8], [0, h + 0.8]]
+      .map(([r, y]) => new THREE.Vector2(r, y));
+    solid(new THREE.Mesh(new THREE.LatheGeometry(profile, 48), concrete(2, h / 18))).position.set(x, 0, z);
+  }
+
+  // ---- More buildings in the distance: a brutalist town around the palace. ----
+  const town = [
+    [-120, -170, 26, 18, 30, "dome"], [-85, -210, 14, 40, 14, "tower"], [-40, -230, 34, 14, 22, "flat"],
+    [40, -235, 22, 24, 20, "dome"], [95, -205, 16, 46, 16, "tower"], [135, -160, 30, 16, 26, "flat"],
+    [-175, -95, 24, 12, 34, "flat"], [170, -100, 18, 30, 18, "tower"], [0, -270, 50, 20, 30, "dome"],
+  ];
+  for (const [x, z, w, h, d, kind] of town) {
+    box(w, h, d, x, h / 2, z, concrete(w / 20, h / 16));
+    box(w + 1.5, 1, d + 1.5, x, h + 0.5, z, concrete(w / 20, 0.1, 0xbfc1bc));
+    if (kind === "dome") {
+      const dm = solid(new THREE.Mesh(new THREE.SphereGeometry(Math.min(w, d) / 2.2, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), concrete(2, 0.6)));
+      dm.scale.y = 0.45; dm.position.set(x, h + 1, z);
+    }
+    if (kind === "tower") {
+      solid(new THREE.Mesh(new THREE.CylinderGeometry(2, 2.6, 22, 16), concrete(0.6, 1.4))).position.set(x + w / 4, h + 11, z);
+      box(w * 0.7, 1.2, 3, x, h + 16, z, concrete(1, 0.1));               // bridge between tower and roof
+    }
+    for (let k = 0; k < Math.floor(w / 4); k++) {                          // a few slit windows
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.4), new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.5 }));
+      win.position.set(x - w / 2 + 2 + k * 4, h * 0.6, z + d / 2 + 0.05);
+      win.userData.phase = Math.random() * 100;
+      scene.add(win); windows.push(win);
+    }
+  }
+
+  // ---- The laboratory: a bunker with a glowing glass cube, a turning radar dish, a mast and server racks. ----
+  const lab = new THREE.Group();
+  lab.position.set(-58, 0, -38);
+  scene.add(lab);
+  box(16, 6, 11, 0, 3, 0, concrete(1.2, 0.4), lab);
+  box(17, 0.8, 12, 0, 6.4, 0, concrete(1.2, 0.1, 0xbfc1bc), lab);
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 6), new THREE.MeshStandardMaterial({ color: 0x9fdcff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.3, emissive: 0x0c3446 }));
+  glass.position.set(-3, 9.8, 0); lab.add(glass);
+  const glassEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(6, 6, 6)), new THREE.LineBasicMaterial({ color: LAB, transparent: true, opacity: 0.7 }));
+  glassEdges.position.copy(glass.position); lab.add(glassEdges);
+  const specimen = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 1), new THREE.MeshBasicMaterial({ color: LAB, wireframe: true }));
+  specimen.position.copy(glass.position); lab.add(specimen);
+  const labLight = new THREE.PointLight(LAB, 2.2, 40);
+  labLight.position.copy(glass.position); lab.add(labLight);
+  // Radar dish on a post, slowly scanning.
+  box(0.6, 6, 0.6, 5, 9.4, 1, concrete(0.1, 0.4), lab);
+  const dish = new THREE.Group(); dish.position.set(5, 12.6, 1); lab.add(dish);
+  const bowl = solid(new THREE.Mesh(new THREE.SphereGeometry(3.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 3), new THREE.MeshStandardMaterial({ color: 0xd8dcda, roughness: 0.5, side: THREE.DoubleSide })), dish);
+  bowl.rotation.x = -Math.PI / 2.4;
+  const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3, 6), new THREE.MeshStandardMaterial({ color: 0x777777 }));
+  feed.rotation.x = Math.PI / 2.4; feed.position.set(0, 0.6, 1.3); dish.add(feed);
+  // Antenna mast with a blinking red light.
+  box(0.3, 14, 0.3, 7, 13, -4, new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.6, roughness: 0.4 }), lab);
+  const beacon = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: RED, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  beacon.position.set(7, 20.3, -4); beacon.scale.set(2.4, 2.4, 1); lab.add(beacon);
+  // Server racks outside the door with rows of blinking status lights.
+  const leds = [];
+  for (let r = 0; r < 3; r++) {
+    box(1.8, 4, 1.4, -6 + r * 2.4, 2, 6.6, new THREE.MeshStandardMaterial({ color: 0x1a1d1f, roughness: 0.6, metalness: 0.4 }), lab);
+    for (let k = 0; k < 6; k++) {
+      const led = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.12), new THREE.MeshBasicMaterial({ color: k % 3 ? 0x6dff9a : LAB }));
+      led.position.set(-6 + r * 2.4, 0.8 + k * 0.55, 7.32); led.userData.phase = Math.random() * 100;
+      lab.add(led); leds.push(led);
+    }
+  }
+  // A ring of glowing symbols turning slowly above the glass cube: the data being studied.
+  const symbols = ["§", "Art.", "{ }", "∑", "%", "01", "Δ", "⚖"];
+  const holo = new THREE.Group(); holo.position.set(-3, 15.5, 0); lab.add(holo);
+  symbols.forEach((sym, k) => {
+    const tex = canvasTexture(128, 128, (g, s) => {
+      g.fillStyle = "#9feeff"; g.font = "bold 54px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(sym, s / 2, s / 2);
+    });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const a = (k / symbols.length) * Math.PI * 2;
+    sp.position.set(Math.cos(a) * 5, 0, Math.sin(a) * 5); sp.scale.set(2.4, 2.4, 1);
+    holo.add(sp);
+  });
+
+  // ---- Quartz trees: pale, glassy, leafless trees with forked branches, scattered everywhere. ----
+  const quartz = new THREE.MeshStandardMaterial({ color: 0xe6eef0, roughness: 0.25, metalness: 0.1, emissive: 0x1b2224 });
+  function branchOut(parent, len, radius, depth) {
+    const seg = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.6, radius, len, 6), quartz);
+    seg.position.y = len / 2; seg.castShadow = true;
+    const joint = new THREE.Group(); joint.position.y = len;
+    parent.add(seg, joint);
+    if (depth === 0) return;
+    const forks = depth > 1 ? 3 : 2;
+    for (let f = 0; f < forks; f++) {
+      const arm = new THREE.Group();
+      arm.rotation.set(0, (f / forks) * Math.PI * 2 + Math.random(), 0.45 + Math.random() * 0.45);
+      joint.add(arm);
+      branchOut(arm, len * (0.55 + Math.random() * 0.2), radius * 0.6, depth - 1);
+    }
+  }
+  const TREES = small ? 18 : 36;
+  for (let k = 0; k < TREES; k++) {
+    let x, z;
+    do { x = (Math.random() - 0.5) * 460; z = -260 + Math.random() * 300; }
+    while (Math.abs(x) < 80 && z < -20 && z > -150 || Math.hypot(x, z + 24) < 26 || Math.hypot(x + 58, z + 38) < 16);   // keep clear of palace, circle and lab
+    const tree = new THREE.Group();
+    branchOut(tree, 4 + Math.random() * 3, 0.55, 3);
+    tree.position.set(x, 0, z); tree.rotation.y = Math.random() * Math.PI;
+    tree.scale.setScalar(0.8 + Math.random() * 0.7);
+    scene.add(tree);
+  }
+
+  // ---- Transmutation circle carved in the sand, which lights up when it activates. ----
   const circleTex = canvasTexture(1024, 1024, (g, s) => {
     const c = s / 2;
     g.strokeStyle = g.fillStyle = "#fff"; g.lineCap = "round"; g.lineJoin = "round";
     const ring = (r, w) => { g.lineWidth = w; g.beginPath(); g.arc(c, c, r * s, 0, Math.PI * 2); g.stroke(); };
     const at = (a, r) => [c + Math.cos(a) * r * s, c + Math.sin(a) * r * s];
     const poly = (n, r, turn) => { g.beginPath(); for (let k = 0; k <= n; k++) g[k ? "lineTo" : "moveTo"](...at(turn + (k / n) * Math.PI * 2, r)); g.stroke(); };
-
     ring(0.485, 7); ring(0.455, 3); ring(0.33, 5); ring(0.30, 2); ring(0.14, 4);
-    // Outer band: alchemical signs for the seven classical metals, spaced around.
     g.font = "bold 44px serif"; g.textAlign = "center"; g.textBaseline = "middle";
     const metals = ["☉", "☽", "☿", "♀", "♂", "♃", "♄"];
     for (let k = 0; k < 28; k++) {
@@ -390,10 +483,8 @@ function buildScene() {
       else { g.lineWidth = 3; g.beginPath(); g.moveTo(-14, -6); g.lineTo(14, -6); g.moveTo(-8, 6); g.lineTo(8, 6); g.stroke(); }
       g.restore();
     }
-    // Hexagram (two triangles) and an inscribed square.
     g.lineWidth = 5; poly(3, 0.33, -Math.PI / 2); poly(3, 0.33, Math.PI / 2);
     g.lineWidth = 3; poly(4, 0.30, Math.PI / 4);
-    // Small circles at the six star points, each holding an element sign (fire, water, air, earth).
     for (let k = 0; k < 6; k++) {
       const a = -Math.PI / 2 + (k / 6) * Math.PI * 2, [x, y] = at(a, 0.33);
       g.lineWidth = 4; g.beginPath(); g.arc(x, y, 34, 0, Math.PI * 2); g.stroke();
@@ -401,38 +492,24 @@ function buildScene() {
       g.beginPath(); g.moveTo(x, y + (up ? -16 : 16)); g.lineTo(x - 15, y + (up ? 12 : -12)); g.lineTo(x + 15, y + (up ? 12 : -12)); g.closePath(); g.stroke();
       if (bar) { g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); g.stroke(); }
     }
-    // Centre emblem: a serpent winding up a cross, a crown above (after the old Flamel emblem).
     g.lineWidth = 6;
     g.beginPath(); g.moveTo(c, c - 110); g.lineTo(c, c + 110); g.moveTo(c - 55, c - 50); g.lineTo(c + 55, c - 50); g.stroke();
     g.lineWidth = 5; g.beginPath();
-    for (let t = 0; t <= 1.001; t += 0.02) {
-      const y = c + 95 - t * 170, x = c + Math.sin(t * Math.PI * 3) * 34;
-      g[t ? "lineTo" : "moveTo"](x, y);
-    }
+    for (let t = 0; t <= 1.001; t += 0.02) { const y = c + 95 - t * 170, x = c + Math.sin(t * Math.PI * 3) * 34; g[t ? "lineTo" : "moveTo"](x, y); }
     g.stroke();
-    g.beginPath(); g.arc(c + Math.sin(Math.PI * 3) * 34, c - 75, 8, 0, Math.PI * 2); g.fill();   // serpent's head
+    g.beginPath(); g.arc(c + Math.sin(Math.PI * 3) * 34, c - 75, 8, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.moveTo(c - 30, c - 118); g.lineTo(c - 30, c - 140); g.lineTo(c - 15, c - 128); g.lineTo(c, c - 146);
-    g.lineTo(c + 15, c - 128); g.lineTo(c + 30, c - 140); g.lineTo(c + 30, c - 118); g.closePath(); g.stroke();   // crown
+    g.lineTo(c + 15, c - 128); g.lineTo(c + 30, c - 140); g.lineTo(c + 30, c - 118); g.closePath(); g.stroke();
   });
-  const circleMat = new THREE.MeshBasicMaterial({ map: circleTex, color: RED, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 });
   const carved = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ map: circleTex, color: 0x2a2420, transparent: true, opacity: 0.55, depthWrite: false }));
   carved.rotation.x = -Math.PI / 2; carved.position.set(0, 0.2, -24); scene.add(carved);
+  const circleMat = new THREE.MeshBasicMaterial({ map: circleTex, color: 0xa8ecff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 });
   const circle = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), circleMat);
-  circle.rotation.x = -Math.PI / 2;
-  circle.position.set(0, 0.25, -24);
-  scene.add(circle);
-  const circleLight = new THREE.PointLight(RED, 0, 60);
-  circleLight.position.set(0, 4, -24);
-  scene.add(circleLight);
+  circle.rotation.x = -Math.PI / 2; circle.position.set(0, 0.25, -24); scene.add(circle);
+  const circleLight = new THREE.PointLight(0x9fe6ff, 0, 60);
+  circleLight.position.set(0, 4, -24); scene.add(circleLight);
 
-  const col = new THREE.Color();
-
-  // ---- Reiatsu: glowing spirit particles rising everywhere. ----
-  const dotTex = canvasTexture(64, 64, (g, s) => {
-    const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.3, "rgba(255,255,255,.5)"); grad.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = grad; g.fillRect(0, 0, s, s);
-  });
+  // ---- Reiatsu: lots of glowing spirit particles rising and swaying. ----
   const COUNT = small ? 1000 : 2600;
   const pos = new Float32Array(COUNT * 3), cols = new Float32Array(COUNT * 3), speed = new Float32Array(COUNT);
   for (let k = 0; k < COUNT; k++) {
@@ -444,77 +521,61 @@ function buildScene() {
   const dotGeo = new THREE.BufferGeometry();
   dotGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   dotGeo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
-  const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 1.3, opacity: 0.85, map: dotTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-  scene.add(dots);
+  scene.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 1.3, opacity: 0.85, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })));
 
-  // Reiatsu columns: pillars of energy with streaks scrolling upward.
-  const streakTex = pixelTexture(128, 256, (x, y) => {
-    const n = fbm(x / 5, y / 60, 3);
-    const a = Math.max(0, n - 0.45) * 3;
-    return [255, 255, 255, Math.min(255, a * 255)];
+  // A column of reiatsu that rises from the circle when it activates.
+  const streakTex = pixelTexture(128, 256, (x, y) => [255, 255, 255, Math.min(255, Math.max(0, fbm(x / 5, y / 60, 3) - 0.45) * 3 * 255)]);
+  streakTex.wrapS = streakTex.wrapT = THREE.RepeatWrapping; streakTex.repeat.set(3, 1);
+  const columnMat = new THREE.MeshBasicMaterial({ map: streakTex, color: SPIRIT, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const column = new THREE.Mesh(new THREE.CylinderGeometry(9, 12.6, 40, 32, 1, true), columnMat);
+  column.position.set(0, 20, -24); scene.add(column);
+
+  // ---- Whirlwind: a dust devil wandering across the sand, wide at the top, narrow at the bottom. ----
+  const SWIRL = small ? 500 : 1300, swirl = [];
+  const swirlPos = new Float32Array(SWIRL * 3);
+  for (let k = 0; k < SWIRL; k++) swirl.push({ h: Math.random() * 38, a: Math.random() * Math.PI * 2, r: Math.random() });
+  const swirlGeo = new THREE.BufferGeometry();
+  swirlGeo.setAttribute("position", new THREE.BufferAttribute(swirlPos, 3));
+  scene.add(new THREE.Points(swirlGeo, new THREE.PointsMaterial({ size: 0.9, color: 0xc9c4b8, map: glowTex, transparent: true, opacity: 0.55, depthWrite: false })));
+  const whirl = new THREE.Vector3();
+
+  // ---- Regulation papers: sheets blowing across the sand, some caught in the whirlwind. ----
+  const paperTex = canvasTexture(128, 170, (g, w, h) => {
+    g.fillStyle = "#efece4"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#2b2b2b"; g.font = "bold 13px serif"; g.textAlign = "center";
+    g.fillText("REGULATION", w / 2, 20); g.font = "bold 11px serif"; g.fillText("Article " + (1 + Math.floor(Math.random() * 90)), w / 2, 36);
+    g.fillStyle = "#8a8780";
+    for (let y = 50; y < h - 14; y += 9) g.fillRect(12, y, w - 24 - (y % 27 === 5 ? 30 : 0), 3);
+    g.fillStyle = "#b03a3f"; g.font = "bold 22px serif"; g.fillText("§", w - 18, h - 10);
   });
-  streakTex.wrapS = streakTex.wrapT = THREE.RepeatWrapping;
-  const columns = [];
-  const addColumn = (x, z, r, h, color) => {
-    const map = streakTex.clone(); map.needsUpdate = true; map.repeat.set(3, 1);
-    const mat = new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.4, h, 32, 1, true), mat);
-    mesh.position.set(x, h / 2, z);
-    scene.add(mesh); columns.push(mesh);
-    return mesh;
-  };
-  const circleColumn = addColumn(0, -24, 9, 40, SPIRIT);
-
-  // ---- Scenery that makes the desert feel inhabited. ----
-  // Quartz trees: pale, glassy, leafless trees scattered across the sand.
-  const quartz = new THREE.MeshStandardMaterial({ color: 0xe6eef0, roughness: 0.25, metalness: 0.1, emissive: 0x1b2224 });
-  const treeAt = [[-95, -40], [-130, -110], [-170, -60], [90, -35], [125, -120], [165, -70], [-60, 5], [70, 10], [-210, -160], [210, -150], [-40, -170], [45, -175]];
-  for (const [x, z] of treeAt) {
-    const tree = new THREE.Group(), h = 7 + Math.random() * 6;
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.6, h, 6), quartz);
-    trunk.position.y = h / 2; tree.add(trunk);
-    for (let b = 0; b < 4; b++) {
-      const len = 2.5 + Math.random() * 3.5;
-      const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, len, 5), quartz);
-      branch.position.y = h * (0.55 + b * 0.12);
-      branch.rotation.set(0, b * 1.7 + Math.random(), 0.7 + Math.random() * 0.4);
-      branch.translateY(len / 2);
-      tree.add(branch);
-    }
-    tree.position.set(x, 0, z); tree.rotation.y = Math.random() * Math.PI;
-    tree.traverse((m) => { m.castShadow = true; });
-    scene.add(tree);
+  const PAPERS = small ? 24 : 60, papers = [];
+  const paperMat = new THREE.MeshStandardMaterial({ map: paperTex, side: THREE.DoubleSide, roughness: 0.9 });
+  for (let k = 0; k < PAPERS; k++) {
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.75), paperMat);
+    sheet.castShadow = true;
+    sheet.position.set((Math.random() - 0.5) * 300, 0.4 + Math.random() * 10, -150 + Math.random() * 190);
+    sheet.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+    sheet.userData = { vx: 0, vy: 0, vz: 0, spin: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.08) };
+    scene.add(sheet); papers.push(sheet);
   }
 
-  // Lit slits in the palace walls that flicker now and then, as if someone is home.
-  const windows = [];
-  for (let k = 0; k < 9; k++) {
-    const mat = new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.8 });
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 3.2), mat);
-    win.position.set(-26 + k * 6.5, 10, FZ + 20.05);
-    win.userData.phase = Math.random() * 100;
-    scene.add(win); windows.push(win);
-  }
-
-  // Giants on the horizon: tall dark figures with white masks, walking slowly through the fog.
+  // ---- Giants on the horizon: tall dark figures with white masks, walking slowly through the fog. ----
   const giants = [];
   const shadowMat = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 1 });
   const maskMat = new THREE.MeshStandardMaterial({ color: 0xf2f0eb, roughness: 0.6, emissive: 0x333333 });
   for (let k = 0; k < 3; k++) {
     const giant = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.ConeGeometry(10, 75, 24), shadowMat);
-    body.position.y = 37;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(5.5, 16, 12), shadowMat);
-    head.position.y = 76;
+    const body = new THREE.Mesh(new THREE.ConeGeometry(10, 75, 24), shadowMat); body.position.y = 37;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(5.5, 16, 12), shadowMat); head.position.y = 76;
     const mask = new THREE.Mesh(new THREE.SphereGeometry(4.6, 16, 12, 0, Math.PI), maskMat);
     mask.scale.set(1, 1.15, 0.6); mask.position.set(0, 76, 3.2);
     giant.add(body, head, mask);
-    giant.position.set(-260 + k * 210 + Math.random() * 60, 0, -330 - Math.random() * 60);
+    giant.position.set(-260 + k * 210 + Math.random() * 60, 0, -360 - Math.random() * 60);
     giant.userData = { speed: 0.02 + Math.random() * 0.02, phase: Math.random() * 10 };
     scene.add(giant); giants.push(giant);
   }
 
-  // Low sand gusts sweeping across the ground.
+  // ---- Low sand gusts sweeping across the ground. ----
   const gustTex = pixelTexture(256, 64, (x, y) => {
     const n = fbm(x / 22, y / 8, 4), edge = Math.sin((y / 64) * Math.PI) * Math.sin((x / 256) * Math.PI);
     return [205, 205, 198, Math.min(255, Math.max(0, n - 0.4) * 2 * edge * 255)];
@@ -528,31 +589,42 @@ function buildScene() {
     scene.add(gust); gusts.push(gust);
   }
 
-  // Shooting stars: a short bright streak crossing the sky.
-  const starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
-  const starMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false });
-  scene.add(new THREE.Line(starGeo, starMat));
-  let star = null, nextStar = 1500;
+  // ---- Shooting stars: a pool of streaks with glowing heads; one every few seconds, or a shower. ----
+  const stars = [];
+  for (let k = 0; k < 10; k++) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false }));
+    const head = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xdff4ff, transparent: true, opacity: 0, fog: false, blending: THREE.AdditiveBlending, depthWrite: false }));
+    head.scale.set(7, 7, 1);
+    scene.add(line, head);
+    stars.push({ line, head, live: false });
+  }
+  function launchStar(t, delay = 0) {
+    const s = stars.find((st) => !st.live);
+    if (!s) return;
+    s.live = true; s.start = t + delay; s.dur = 600 + Math.random() * 500;
+    s.from = new THREE.Vector3(-320 + Math.random() * 640, 200 + Math.random() * 140, -470 + Math.random() * 60);
+    s.dir = new THREE.Vector3(Math.random() < 0.5 ? -1 : 1, -0.35 - Math.random() * 0.3, 0.1).normalize();
+    s.len = 200 + Math.random() * 160;
+  }
+  let nextStar = 1200;
 
-  // Lightning inside the clouds: a quick double flicker that lights up the sky.
+  // ---- Lightning inside the clouds: a quick double flicker that lights up the sky. ----
   const flashLight = new THREE.DirectionalLight(0xcfe2ff, 0);
-  flashLight.position.set(0, 200, -300);
-  scene.add(flashLight);
+  flashLight.position.set(0, 200, -300); scene.add(flashLight);
   let flashStart = -1, nextFlash = 4000;
 
-  // ---- Events, taking turns every few seconds: a Cero, the circle activating, a Garganta opening. ----
-  // Cero: a red glow that charges on a pillar top, then a beam that fires across the sky.
-  const ceroCharge = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: RED, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
-  scene.add(ceroCharge);
-  const beamMat = new THREE.MeshBasicMaterial({ color: 0xff3b44, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-  const glowMat = beamMat.clone();
-  const beam = new THREE.Group();
-  beam.add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 16, 1, true), beamMat));
-  beam.add(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1, 16, 1, true), glowMat));
-  scene.add(beam);
-  const ceroLight = new THREE.PointLight(RED, 0, 200);
-  scene.add(ceroLight);
+  // ---- Garganta: a black rift tearing open in the sky, then sealing again. ----
+  const riftTex = canvasTexture(128, 512, (g, w, h) => {
+    g.beginPath(); g.moveTo(w / 2, 0);
+    for (let y = 0; y <= h; y += 32) g.lineTo(w / 2 + ((Math.random() - 0.5) * 0.5 + 0.12) * w * Math.sin((y / h) * Math.PI), y);
+    for (let y = h; y >= 0; y -= 32) g.lineTo(w / 2 - ((Math.random() - 0.5) * 0.5 + 0.12) * w * Math.sin((y / h) * Math.PI), y);
+    g.closePath(); g.shadowColor = "#7fb8ff"; g.shadowBlur = 24; g.fillStyle = "#020205"; g.fill();
+  });
+  const riftMat = new THREE.MeshBasicMaterial({ map: riftTex, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const rift = new THREE.Mesh(new THREE.PlaneGeometry(1, 4), riftMat);
+  scene.add(rift);
 
   // Transmutation: jagged blue lightning arcs jumping above the circle.
   const ARCS = 10, SEGS = 8;
@@ -575,71 +647,38 @@ function buildScene() {
     arcGeo.attributes.position.needsUpdate = true;
   }
 
-  // Garganta: a black rift tearing open in the sky, then sealing again.
-  const riftTex = canvasTexture(128, 512, (g, w, h) => {
-    g.beginPath(); g.moveTo(w / 2, 0);
-    for (let y = 0; y <= h; y += 32) g.lineTo(w / 2 + (Math.random() - 0.5) * w * 0.5 * Math.sin((y / h) * Math.PI) + w * 0.12 * Math.sin((y / h) * Math.PI), y);
-    for (let y = h; y >= 0; y -= 32) g.lineTo(w / 2 - (Math.random() - 0.5) * w * 0.5 * Math.sin((y / h) * Math.PI) - w * 0.12 * Math.sin((y / h) * Math.PI), y);
-    g.closePath();
-    g.shadowColor = "#7fb8ff"; g.shadowBlur = 24; g.fillStyle = "#020205"; g.fill();
-  });
-  const riftMat = new THREE.MeshBasicMaterial({ map: riftTex, transparent: true, opacity: 0, fog: false, depthWrite: false });
-  const rift = new THREE.Mesh(new THREE.PlaneGeometry(1, 4), riftMat);
-  scene.add(rift);
+  // ---- Events, taking turns every few seconds. ----
+  const events = ["transmute", "meteors", "garganta"];
+  let event = null, eventStart = 0, nextEvent = 2500, eventIndex = 0;
 
-  const events = ["transmute", "cero", "garganta"];
-  let attack = null, attackStart = 0, nextAttack = 2500, attackIndex = 0;
-
-  function startAttack(t) {
-    attack = events[attackIndex++ % events.length];
-    attackStart = t;
-    if (attack === "cero") {
-      const from = pillarTops[Math.floor(Math.random() * pillarTops.length)].clone();
-      const to = from.clone().add(new THREE.Vector3(from.x > 0 ? -320 : 320, 60 + Math.random() * 60, 120));
-      ceroCharge.position.copy(from); ceroLight.position.copy(from);
-      const dir = to.clone().sub(from), len = dir.length();
-      beam.position.copy(from.clone().add(to).multiplyScalar(0.5));
-      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-      beam.scale.set(1, len, 1);
-    }
-    if (attack === "garganta") {
+  function startEvent(t) {
+    event = events[eventIndex++ % events.length];
+    eventStart = t;
+    if (event === "meteors") { for (let k = 0; k < 7; k++) launchStar(t, k * 260 + Math.random() * 200); event = null; }
+    if (event === "garganta") {
       rift.position.set(-160 + Math.random() * 320, 110 + Math.random() * 50, -380);
       rift.rotation.z = (Math.random() - 0.5) * 0.5;
     }
   }
 
-  function runAttack(t) {
-    const e = t - attackStart;
-    if (attack === "cero") {
-      // 0.7 s charge, 0.9 s beam, 0.5 s fade.
-      const charge = Math.min(1, e / 700), fire = e > 700, fade = e > 1600 ? Math.min(1, (e - 1600) / 500) : 0;
-      ceroCharge.material.opacity = charge * (1 - fade);
-      const sz = 4 + charge * 16 + Math.sin(e * 0.05) * 2;
-      ceroCharge.scale.set(sz, sz, 1);
-      beamMat.opacity = fire ? (1 - fade) * 0.95 : 0;
-      glowMat.opacity = fire ? (1 - fade) * 0.35 : 0;
-      ceroLight.intensity = (charge * 2 + (fire ? 6 : 0)) * (1 - fade);
-      if (fade >= 1) { attack = null; ceroCharge.material.opacity = 0; ceroLight.intensity = 0; }
-    } else if (attack === "transmute") {
-      // The circle turns blue-white, lightning crackles, a column of energy rises; 1.6 s.
+  function runEvent(t) {
+    const e = t - eventStart;
+    if (event === "transmute") {
+      // The circle lights up blue-white, lightning crackles, a column of reiatsu rises; 1.6 s.
       const k = Math.min(1, e / 1600), pulse = Math.sin(k * Math.PI);
-      circleMat.color.setHex(pulse > 0.15 ? 0xa8ecff : RED);
-      circleMat.opacity = pulse;
-      circleLight.color.setHex(0x9fe6ff); circleLight.intensity = pulse * 6;
-      arcMat.opacity = pulse;
+      circleMat.opacity = pulse; circleLight.intensity = pulse * 6; arcMat.opacity = pulse; columnMat.opacity = pulse * 0.3;
       if (Math.random() < 0.5) jolt();
-      circleColumn.material.opacity = pulse * 0.3;
-      if (k >= 1) { attack = null; circleMat.color.setHex(RED); circleMat.opacity = 0; circleLight.intensity = 0; arcMat.opacity = 0; circleColumn.material.opacity = 0; }
-    } else if (attack === "garganta") {
+      if (k >= 1) { event = null; circleMat.opacity = 0; circleLight.intensity = 0; arcMat.opacity = 0; columnMat.opacity = 0; }
+    } else if (event === "garganta") {
       // Tears open over 0.6 s, stays open 1.6 s, seals over 0.6 s.
       const open = Math.min(1, e / 600), close = e > 2200 ? Math.min(1, (e - 2200) / 600) : 0, w = open * (1 - close);
-      rift.scale.set(4 + w * 22, 30, 1);
-      riftMat.opacity = w;
-      if (close >= 1) { attack = null; riftMat.opacity = 0; }
+      rift.scale.set(4 + w * 22, 30, 1); riftMat.opacity = w;
+      if (close >= 1) { event = null; riftMat.opacity = 0; }
     }
   }
 
-  // Everything that moves all the time.
+  // ---- Everything that moves all the time. ----
+  const WIND = 0.06;
   function ambient(t) {
     for (const cl of clouds) { cl.position.x += cl.userData.speed; if (cl.position.x > 520) cl.position.x = -520; }
     for (const gust of gusts) { gust.position.x += gust.userData.speed; if (gust.position.x > 230) gust.position.x = -230; }
@@ -647,7 +686,15 @@ function buildScene() {
       g.position.x += g.userData.speed; if (g.position.x > 320) g.position.x = -320;
       g.position.y = Math.abs(Math.sin(t * 0.0015 + g.userData.phase)) * 1.2;   // heavy footsteps
     }
-    for (const w of windows) w.material.opacity = 0.55 + 0.35 * Math.max(0, Math.sin(t * 0.002 + w.userData.phase)) * (Math.sin(t * 0.03 + w.userData.phase) > -0.95 ? 1 : 0.2);
+    for (const w of windows) w.material.opacity = 0.45 + 0.4 * Math.max(0, Math.sin(t * 0.002 + w.userData.phase)) * (Math.sin(t * 0.03 + w.userData.phase) > -0.95 ? 1 : 0.2);
+
+    // Laboratory: the specimen turns, the dish scans, the beacon blinks, the racks flicker, the symbols orbit.
+    specimen.rotation.set(t * 0.0007, t * 0.001, 0);
+    dish.rotation.y = Math.sin(t * 0.0004) * 1.4;
+    beacon.material.opacity = Math.sin(t * 0.004) > 0.6 ? 1 : 0.1;
+    for (const led of leds) led.visible = Math.sin(t * 0.01 + led.userData.phase * 7) > -0.3;
+    holo.rotation.y = t * 0.0005;
+    labLight.intensity = 2 + Math.sin(t * 0.003) * 0.4;
 
     // Reiatsu rises and sways; each particle starts again at the sand when it reaches the top.
     for (let k = 0; k < COUNT; k++) {
@@ -657,19 +704,52 @@ function buildScene() {
       if (pos[k * 3 + 1] > 70) pos[k * 3 + 1] = 0;
     }
     dotGeo.attributes.position.needsUpdate = true;
-    for (const c of columns) c.material.map.offset.y -= 0.004;
+    streakTex.offset.y -= 0.004;
+
+    // Whirlwind: the centre wanders in a slow loop in front of the palace; dust spins faster near the ground.
+    whirl.set(Math.sin(t * 0.00006) * 60, 0, -10 + Math.cos(t * 0.000047) * 34);
+    for (let k = 0; k < SWIRL; k++) {
+      const p = swirl[k];
+      p.h += 0.05 + p.r * 0.05; if (p.h > 38) p.h = 0;
+      p.a += 0.12 / (1 + p.h * 0.08);
+      const rad = 0.8 + p.h * 0.32 + p.r * 2.2;
+      swirlPos[k * 3] = whirl.x + Math.cos(p.a) * rad + Math.sin(p.h * 0.2 + t * 0.001) * 1.5;   // slight bend in the funnel
+      swirlPos[k * 3 + 1] = p.h;
+      swirlPos[k * 3 + 2] = whirl.z + Math.sin(p.a) * rad;
+    }
+    swirlGeo.attributes.position.needsUpdate = true;
+
+    // Papers: blown by the wind and fluttering; near the whirlwind they get pulled in, spun up and flung out.
+    for (const sheet of papers) {
+      const d = sheet.userData, dx = sheet.position.x - whirl.x, dz = sheet.position.z - whirl.z, dist = Math.hypot(dx, dz);
+      if (dist < 16 && sheet.position.y < 40) {
+        d.vx += (-dz / dist) * 0.06 - (dx / dist) * 0.02;
+        d.vz += (dx / dist) * 0.06 - (dz / dist) * 0.02;
+        d.vy += 0.025;
+      } else {
+        d.vx += (WIND * 4 - d.vx) * 0.02;
+        d.vz += (-d.vz) * 0.02;
+        d.vy -= 0.006;
+        if (Math.random() < 0.003) d.vy += 0.25;                                // a gust lifts it again
+      }
+      d.vx *= 0.97; d.vy *= 0.97; d.vz *= 0.97;
+      sheet.position.x += d.vx; sheet.position.y += d.vy; sheet.position.z += d.vz;
+      if (sheet.position.y < 0.3) { sheet.position.y = 0.3; d.vy = 0; d.vx *= 0.8; }
+      else { sheet.rotation.x += d.spin.x + d.vy * 0.05; sheet.rotation.y += d.spin.y; sheet.rotation.z += d.spin.z + Math.sin(t * 0.004 + d.spin.x * 100) * 0.02; }
+      if (sheet.position.x > 170) sheet.position.x = -170;
+    }
 
     // Shooting stars.
-    if (!star && t > nextStar) {
-      const from = new THREE.Vector3(-300 + Math.random() * 600, 200 + Math.random() * 120, -450);
-      star = { from, dir: new THREE.Vector3(Math.random() < 0.5 ? -1 : 1, -0.45, 0).normalize(), start: t };
-    }
-    if (star) {
-      const k = (t - star.start) / 700, head = star.from.clone().addScaledVector(star.dir, k * 260), tail = head.clone().addScaledVector(star.dir, -30);
-      starGeo.attributes.position.array.set([tail.x, tail.y, tail.z, head.x, head.y, head.z]);
-      starGeo.attributes.position.needsUpdate = true;
-      starMat.opacity = Math.sin(Math.min(1, k) * Math.PI);
-      if (k >= 1) { star = null; starMat.opacity = 0; nextStar = t + 2500 + Math.random() * 4000; }
+    if (t > nextStar) { launchStar(t); nextStar = t + 1500 + Math.random() * 3000; }
+    for (const s of stars) {
+      if (!s.live || t < s.start) continue;
+      const k = (t - s.start) / s.dur;
+      const head = s.from.clone().addScaledVector(s.dir, k * s.len), tail = head.clone().addScaledVector(s.dir, -40);
+      s.line.geometry.attributes.position.array.set([tail.x, tail.y, tail.z, head.x, head.y, head.z]);
+      s.line.geometry.attributes.position.needsUpdate = true;
+      const fade = Math.sin(Math.min(1, k) * Math.PI);
+      s.line.material.opacity = fade; s.head.material.opacity = fade; s.head.position.copy(head);
+      if (k >= 1) { s.live = false; s.line.material.opacity = 0; s.head.material.opacity = 0; }
     }
 
     // Lightning in the clouds.
@@ -682,20 +762,22 @@ function buildScene() {
     }
   }
 
-  // ---- Camera path: the points it flies through as you scroll from top (0) to bottom (1). ----
+  // ---- Camera path: the points it moves through as you scroll from top (0) to bottom (1). ----
   const path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 8, 45),       // standing in the sand, palace ahead (like the reference)
+    new THREE.Vector3(0, 8, 45),       // standing in the sand, palace ahead
     new THREE.Vector3(-14, 26, 10),    // rising over the transmutation circle
-    new THREE.Vector3(-70, 14, -20),   // walking round to the side of the palace
-    new THREE.Vector3(-30, 40, 45),    // stepping back for a wide view
-    new THREE.Vector3(0, 95, 30),      // overhead
+    new THREE.Vector3(-34, 12, -6),    // dropping down beside the laboratory
+    new THREE.Vector3(-82, 16, -40),   // walking round to the side of the palace
+    new THREE.Vector3(-30, 44, 50),    // stepping back for a wide view of the town
+    new THREE.Vector3(0, 100, 30),     // overhead
   ]);
   const look = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 30, -85),
     new THREE.Vector3(0, 0, -24),
+    new THREE.Vector3(-58, 8, -38),
     new THREE.Vector3(0, 14, -85),
-    new THREE.Vector3(0, 10, -70),
-    new THREE.Vector3(0, 0, -60),
+    new THREE.Vector3(0, 10, -110),
+    new THREE.Vector3(0, 0, -70),
   ]);
 
   let progress = 0, target = 0, mx = 0, my = 0;
@@ -725,12 +807,12 @@ function buildScene() {
       camera.position.add(sway);
     }
     camera.lookAt(look.getPoint(progress));
-
     if (!still) {
-      circle.rotation.z = t * 0.00006;
       ambient(t);
-      if (t > nextAttack && !attack) { startAttack(t); nextAttack = t + 7000 + Math.random() * 4000; }
-      if (attack) runAttack(t);
+      if (t > nextEvent && !event) { startEvent(t); nextEvent = t + 7000 + Math.random() * 4000; }
+      if (event) runEvent(t);
+    } else if (t === 0) {
+      ambient(0);
     }
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

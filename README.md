@@ -9,6 +9,9 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `data/` — datasets built from public sources, each with a data dictionary
 - `scripts/` — small Python scripts (run from the repo root)
 - `site/` — page templates (the map template, the lab home page and the 404 page)
+- `content/beyond-statutes/` — the Beyond Statutes notes, one Markdown file each. Start a file with a
+  `---` header (`title`, `rank`, `tag`), write paragraphs, and link to another note with `[[Its title]]`.
+  The build makes a page per note with its links and backlinks, and fills the home page's chapter list.
 - `.github/workflows/pages.yml` — publishes the website at https://statuta.id
 
 ## Experiments

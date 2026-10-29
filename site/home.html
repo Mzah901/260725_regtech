@@ -195,6 +195,7 @@ and the tide keeps coming.</p>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const small = innerWidth < 700;   // phones get fewer particles and no shadows
 
 // ---- 1. Opening poem: type it out one letter at a time, then leave a blinking cursor. ----
 const poem = document.getElementById("poem");
@@ -214,164 +215,387 @@ if (still) {
 // ---- 2. The 3D scene (three.js). If WebGL is unavailable the page still works, just without it. ----
 if (window.THREE) { try { buildScene(); } catch (e) { console.warn("3D scene skipped:", e); } }
 
+// Smooth random noise, used to paint concrete, sand and clouds. Same input always gives the same output.
+function noise2(x, y) {
+  const hash = (i, j) => { const s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return s - Math.floor(s); };
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+// "Fractal" noise: several layers of noise at finer and finer scales, for natural-looking texture.
+function fbm(x, y, layers = 5) {
+  let sum = 0, amp = 0.5, freq = 1;
+  for (let k = 0; k < layers; k++) { sum += amp * noise2(x * freq, y * freq); amp *= 0.5; freq *= 2; }
+  return sum;
+}
+
 function buildScene() {
-  const RED = 0xC8262E, BONE = 0xF2F0EB;
+  const RED = 0xE0242E, BONE = 0xF2F0EB, SPIRIT = 0xBFE9FF;
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x0B0B0B);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // film-like contrast and colour
+  renderer.toneMappingExposure = 0.9;
+  renderer.shadowMap.enabled = !small;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0B0B0B, 0.009);
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 600);
+  scene.fog = new THREE.FogExp2(0x2a3133, 0.0065);
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1200);
   scene.add(camera);
 
-  // Light: dim fill plus cold moonlight from the upper right.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-  const moonLight = new THREE.DirectionalLight(0xdfe6ff, 0.9);
-  moonLight.position.set(40, 60, -80);
-  scene.add(moonLight);
-
-  // Helper: draw something on a 2D canvas and use it as a texture.
-  function canvasTexture(size, paint) {
+  // Helper: paint on a 2D canvas and use it as a texture.
+  function canvasTexture(w, h, paint, color = true) {
     const c = document.createElement("canvas");
-    c.width = c.height = size;
-    paint(c.getContext("2d"), size);
-    return new THREE.CanvasTexture(c);
+    c.width = w; c.height = h;
+    paint(c.getContext("2d"), w, h);
+    const tex = new THREE.CanvasTexture(c);
+    if (color) tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  // Helper: fill every pixel from a function returning [r, g, b, a].
+  function pixelTexture(w, h, fn) {
+    return canvasTexture(w, h, (g) => {
+      const img = g.createImageData(w, h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const [r, gg, b, a] = fn(x, y), i = (y * w + x) * 4;
+        img.data[i] = r; img.data[i + 1] = gg; img.data[i + 2] = b; img.data[i + 3] = a;
+      }
+      g.putImageData(img, 0, 0);
+    });
   }
 
-  // Desert floor.
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshStandardMaterial({ color: 0x1a1714, roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
+  // ---- Light: cold sky light from above, and a moon-coloured key light that casts shadows. ----
+  scene.add(new THREE.HemisphereLight(0x9fb3b8, 0x2b2a26, 0.75));
+  const key = new THREE.DirectionalLight(0xe4eef0, 1.25);
+  key.position.set(-70, 120, 90);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 10, far: 400 });
+  scene.add(key);
 
-  // Crescent moon: a white disc with an offset disc cut out of it.
-  const moonTex = canvasTexture(256, (g, s) => {
-    g.fillStyle = "#f4f1ea"; g.beginPath(); g.arc(s / 2, s / 2, s * 0.42, 0, Math.PI * 2); g.fill();
-    g.globalCompositeOperation = "destination-out";
-    g.beginPath(); g.arc(s * 0.62, s * 0.42, s * 0.38, 0, Math.PI * 2); g.fill();
+  // ---- Sky: a dark gradient dome, heavy clouds, and an eclipse-like crescent moon. ----
+  const skyTex = canvasTexture(4, 256, (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, "#07090a"); grad.addColorStop(0.55, "#1d2426"); grad.addColorStop(1, "#3c4648");
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
   });
-  const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false }));
-  moon.position.set(55, 70, -200); moon.scale.set(30, 30, 1);
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false }));
+  scene.add(sky);
+
+  const cloudTex = pixelTexture(256, 128, (x, y) => {
+    const n = fbm(x / 40, y / 40, 5);
+    const edge = Math.sin((y / 128) * Math.PI) * Math.sin((x / 256) * Math.PI);   // fade at the borders
+    const a = Math.max(0, n - 0.42) * 2.4 * edge;
+    const shade = 40 + n * 70;
+    return [shade, shade + 4, shade + 6, Math.min(255, a * 255)];
+  });
+  const clouds = [];
+  for (let k = 0; k < 9; k++) {
+    const cl = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: 0.85, fog: false, depthWrite: false }));
+    cl.position.set(-420 + k * 105 + Math.random() * 40, 120 + Math.random() * 140, -520 - Math.random() * 120);
+    cl.scale.set(380, 190, 1);
+    cl.userData.speed = 0.02 + Math.random() * 0.03;
+    scene.add(cl); clouds.push(cl);
+  }
+
+  const moonTex = canvasTexture(512, 512, (g, w) => {
+    const c = w / 2;
+    const glow = g.createRadialGradient(c, c, w * 0.12, c, c, w * 0.5);
+    glow.addColorStop(0, "rgba(220,235,240,.55)"); glow.addColorStop(1, "rgba(220,235,240,0)");
+    g.fillStyle = glow; g.fillRect(0, 0, w, w);
+    g.fillStyle = "#fbfaf6"; g.beginPath(); g.arc(c, c, w * 0.16, 0, Math.PI * 2); g.fill();
+    g.globalCompositeOperation = "destination-out";
+    g.beginPath(); g.arc(c + w * 0.045, c - w * 0.03, w * 0.145, 0, Math.PI * 2); g.fill();
+  });
+  const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false, transparent: true, depthWrite: false }));
+  moon.position.set(0, 210, -560); moon.scale.set(170, 170, 1);
   scene.add(moon);
 
-  // The white fortress: a wide dome on a drum, ringed by thin towers.
-  const white = new THREE.MeshStandardMaterial({ color: BONE, roughness: 0.6, emissive: 0x5a5852 });
-  const fortress = new THREE.Group();
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(20, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), white);
-  dome.position.y = 5;
-  const drum = new THREE.Mesh(new THREE.CylinderGeometry(20, 21, 5, 48), white);
-  drum.position.y = 2.5;
-  fortress.add(dome, drum);
-  for (let k = 0; k < 7; k++) {
-    const h = 26 + (k % 3) * 9, angle = (k / 7) * Math.PI * 2 + 0.3;
-    const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.1, h, 12), white);
-    tower.position.set(Math.cos(angle) * 30, h / 2, Math.sin(angle) * 30);
-    fortress.add(tower);
-  }
-  fortress.position.set(0, 0, -75);
-  scene.add(fortress);
-
-  // Transmutation circle on the ground: rings, a six-pointed star, and law/tech/finance symbols.
-  const circleTex = canvasTexture(1024, (g, s) => {
-    const c = s / 2;
-    g.strokeStyle = "#ff4a52"; g.fillStyle = "#ff4a52"; g.lineWidth = 6;
-    const ring = (r, w) => { g.lineWidth = w; g.beginPath(); g.arc(c, c, r, 0, Math.PI * 2); g.stroke(); };
-    ring(s * 0.47, 8); ring(s * 0.43, 3); ring(s * 0.30, 4); ring(s * 0.12, 4);
-    // Words around the outer band.
-    const words = "EQUIVALENT EXCHANGE · LEX · CODE · CAPITAL · EVIDENCE · INTEGRITY · ";
-    g.font = "bold 30px monospace"; g.textAlign = "center"; g.textBaseline = "middle";
-    for (let k = 0; k < words.length; k++) {
-      const a = (k / words.length) * Math.PI * 2;
-      g.save(); g.translate(c + Math.cos(a) * s * 0.45, c + Math.sin(a) * s * 0.45); g.rotate(a + Math.PI / 2);
-      g.fillText(words[k], 0, 0); g.restore();
-    }
-    // Two overlapping triangles.
-    g.lineWidth = 5;
-    for (const turn of [0, Math.PI]) {
-      g.beginPath();
-      for (let k = 0; k <= 3; k++) {
-        const a = turn - Math.PI / 2 + (k / 3) * Math.PI * 2;
-        g[k ? "lineTo" : "moveTo"](c + Math.cos(a) * s * 0.30, c + Math.sin(a) * s * 0.30);
-      }
-      g.stroke();
-    }
-    // Symbols at the six star points: law, tech, finance.
-    g.font = "bold 64px serif";
-    ["§", "⚖", "{ }", "∑", "$", "Δ"].forEach((sym, k) => {
-      const a = -Math.PI / 2 + (k / 6) * Math.PI * 2;
-      g.fillText(sym, c + Math.cos(a) * s * 0.37, c + Math.sin(a) * s * 0.37);
-    });
-    g.font = "bold 120px serif"; g.fillText("§", c, c + 6);
+  // ---- Ground: rolling pale sand. ----
+  const sandTex = pixelTexture(256, 256, (x, y) => {
+    const n = fbm(x / 18, y / 18, 4) * 50 + Math.random() * 18;
+    const v = 150 + n;
+    return [v, v + 4, v + 4, 255];
   });
-  const circleMat = new THREE.MeshBasicMaterial({ map: circleTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 });
-  const circle = new THREE.Mesh(new THREE.PlaneGeometry(34, 34), circleMat);
-  circle.rotation.x = -Math.PI / 2;
-  circle.position.set(0, 0.08, -28);
-  scene.add(circle);
+  sandTex.wrapS = sandTex.wrapT = THREE.RepeatWrapping; sandTex.repeat.set(60, 60);
+  const groundGeo = new THREE.PlaneGeometry(1600, 1600, 160, 160);
+  const gp = groundGeo.attributes.position;
+  for (let k = 0; k < gp.count; k++) {
+    const x = gp.getX(k), y = gp.getY(k);
+    const nearFortress = Math.max(0, 1 - Math.hypot(x, y + 70) / 140);   // flatter around the buildings
+    gp.setZ(k, (fbm(x / 60, y / 60, 4) - 0.5) * 9 * (1 - nearFortress));
+  }
+  groundGeo.computeVertexNormals();
+  const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ map: sandTex, roughness: 1, color: 0xd6dbd9 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
 
-  // Stock-chart skyline: candlesticks on a random walk that trends upward.
-  const candles = 34, chart = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.5 }), candles * 2);
-  const m4 = new THREE.Matrix4(), col = new THREE.Color();
+  // ---- Concrete: grain, stains, horizontal formwork lines and rain streaks. ----
+  const concreteTex = pixelTexture(512, 512, (x, y) => {
+    let v = 120 + (fbm(x / 70, y / 70, 5) - 0.5) * 70 + (Math.random() - 0.5) * 22;
+    if (y % 64 < 2) v -= 22;                                                 // formwork joints
+    const streak = fbm(x / 6, 0.5, 2);                                       // vertical rain stains
+    if (streak > 0.62) v -= (streak - 0.62) * 160 * (1 - y / 700);
+    return [v, v + 2, v + 1, 255];
+  });
+  concreteTex.wrapS = concreteTex.wrapT = THREE.RepeatWrapping;
+  const concrete = (rx, ry) => {
+    const map = concreteTex.clone(); map.needsUpdate = true; map.repeat.set(rx, ry);
+    return new THREE.MeshStandardMaterial({ map, bumpMap: map, bumpScale: 0.6, roughness: 0.95, color: 0xaeb0ab });
+  };
+  const solid = (mesh) => { mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh; };
+
+  // The palace: a massive block with a low dome, three vents on top and a small gatehouse.
+  const FZ = -85;
+  solid(new THREE.Mesh(new THREE.BoxGeometry(60, 16, 40), concrete(3, 1))).position.set(0, 8, FZ);
+  const dome = solid(new THREE.Mesh(new THREE.SphereGeometry(26, 64, 24, 0, Math.PI * 2, 0, Math.PI / 2), concrete(4, 1)));
+  dome.scale.set(1, 0.32, 0.72); dome.position.set(0, 16, FZ);
+  for (let k = -1; k <= 1; k++) solid(new THREE.Mesh(new THREE.BoxGeometry(1.6, 4, 1.6), concrete(0.3, 0.5))).position.set(k * 2.6, 25.5, FZ);
+  solid(new THREE.Mesh(new THREE.BoxGeometry(12, 9, 7), concrete(1, 0.6))).position.set(4, 4.5, FZ + 23);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 0.4), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+  door.position.set(6, 3, FZ + 26.6); scene.add(door);
+  solid(new THREE.Mesh(new THREE.BoxGeometry(1.6, 7, 1.6), concrete(0.2, 0.6))).position.set(-6, 3.5, FZ + 36);
+
+  // The pillars: tall concrete towers that flare out at the base, turned on a lathe.
+  const pillarAt = [[-34, -62, 58], [-50, -84, 46], [-24, -112, 40], [34, -60, 66], [52, -86, 52], [26, -114, 44], [-62, -112, 36]];
+  const pillarTops = [];
+  for (const [x, z, h] of pillarAt) {
+    const profile = [[8, 0], [6.6, 1.6], [5.4, 4], [4.6, 8], [4.3, 13], [4.3, h], [4.7, h], [4.7, h + 0.8], [0, h + 0.8]]
+      .map(([r, y]) => new THREE.Vector2(r, y));
+    solid(new THREE.Mesh(new THREE.LatheGeometry(profile, 48), concrete(2, h / 18))).position.set(x, 0, z);
+    pillarTops.push(new THREE.Vector3(x, h + 1, z));
+  }
+
+  // ---- Transmutation circle on the sand, in front of the palace. ----
+  // Drawn in white; its colour comes from the material, so it can switch from red to blue when it activates.
+  const circleTex = canvasTexture(1024, 1024, (g, s) => {
+    const c = s / 2;
+    g.strokeStyle = g.fillStyle = "#fff"; g.lineCap = "round"; g.lineJoin = "round";
+    const ring = (r, w) => { g.lineWidth = w; g.beginPath(); g.arc(c, c, r * s, 0, Math.PI * 2); g.stroke(); };
+    const at = (a, r) => [c + Math.cos(a) * r * s, c + Math.sin(a) * r * s];
+    const poly = (n, r, turn) => { g.beginPath(); for (let k = 0; k <= n; k++) g[k ? "lineTo" : "moveTo"](...at(turn + (k / n) * Math.PI * 2, r)); g.stroke(); };
+
+    ring(0.485, 7); ring(0.455, 3); ring(0.33, 5); ring(0.30, 2); ring(0.14, 4);
+    // Outer band: alchemical signs for the seven classical metals, spaced around.
+    g.font = "bold 44px serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    const metals = ["☉", "☽", "☿", "♀", "♂", "♃", "♄"];
+    for (let k = 0; k < 28; k++) {
+      const a = (k / 28) * Math.PI * 2;
+      g.save(); g.translate(...at(a, 0.393)); g.rotate(a + Math.PI / 2);
+      if (k % 4 === 0) g.fillText(metals[(k / 4) % 7], 0, 0);
+      else { g.lineWidth = 3; g.beginPath(); g.moveTo(-14, -6); g.lineTo(14, -6); g.moveTo(-8, 6); g.lineTo(8, 6); g.stroke(); }
+      g.restore();
+    }
+    // Hexagram (two triangles) and an inscribed square.
+    g.lineWidth = 5; poly(3, 0.33, -Math.PI / 2); poly(3, 0.33, Math.PI / 2);
+    g.lineWidth = 3; poly(4, 0.30, Math.PI / 4);
+    // Small circles at the six star points, each holding an element sign (fire, water, air, earth).
+    for (let k = 0; k < 6; k++) {
+      const a = -Math.PI / 2 + (k / 6) * Math.PI * 2, [x, y] = at(a, 0.33);
+      g.lineWidth = 4; g.beginPath(); g.arc(x, y, 34, 0, Math.PI * 2); g.stroke();
+      const up = k % 2 === 0, bar = k % 3 === 2;
+      g.beginPath(); g.moveTo(x, y + (up ? -16 : 16)); g.lineTo(x - 15, y + (up ? 12 : -12)); g.lineTo(x + 15, y + (up ? 12 : -12)); g.closePath(); g.stroke();
+      if (bar) { g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); g.stroke(); }
+    }
+    // Centre emblem: a serpent winding up a cross, a crown above (after the old Flamel emblem).
+    g.lineWidth = 6;
+    g.beginPath(); g.moveTo(c, c - 110); g.lineTo(c, c + 110); g.moveTo(c - 55, c - 50); g.lineTo(c + 55, c - 50); g.stroke();
+    g.lineWidth = 5; g.beginPath();
+    for (let t = 0; t <= 1.001; t += 0.02) {
+      const y = c + 95 - t * 170, x = c + Math.sin(t * Math.PI * 3) * 34;
+      g[t ? "lineTo" : "moveTo"](x, y);
+    }
+    g.stroke();
+    g.beginPath(); g.arc(c + Math.sin(Math.PI * 3) * 34, c - 75, 8, 0, Math.PI * 2); g.fill();   // serpent's head
+    g.beginPath(); g.moveTo(c - 30, c - 118); g.lineTo(c - 30, c - 140); g.lineTo(c - 15, c - 128); g.lineTo(c, c - 146);
+    g.lineTo(c + 15, c - 128); g.lineTo(c + 30, c - 140); g.lineTo(c + 30, c - 118); g.closePath(); g.stroke();   // crown
+  });
+  const circleMat = new THREE.MeshBasicMaterial({ map: circleTex, color: RED, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.7 });
+  const circle = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), circleMat);
+  circle.rotation.x = -Math.PI / 2;
+  circle.position.set(0, 0.25, -24);
+  scene.add(circle);
+  const circleLight = new THREE.PointLight(RED, 0, 60);
+  circleLight.position.set(0, 4, -24);
+  scene.add(circleLight);
+
+  // ---- Stock-chart skyline off to the right: concrete candlesticks, red ones for down days. ----
+  const candles = 30, chart = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.8 }), candles * 2);
+  const m4 = new THREE.Matrix4(), col = new THREE.Color(), q0 = new THREE.Quaternion();
   let price = 6;
   for (let k = 0; k < candles; k++) {
-    const open = price, close = Math.max(2, price + (Math.random() - 0.38) * 4);
-    const hi = Math.max(open, close) + Math.random() * 2, lo = Math.max(0.5, Math.min(open, close) - Math.random() * 2);
-    const x = 28 + k * 1.9, z = -95, up = close >= open;
-    col.set(up ? BONE : RED);
-    m4.compose(new THREE.Vector3(x, (open + close) / 2, z), new THREE.Quaternion(), new THREE.Vector3(1.2, Math.max(0.4, Math.abs(close - open)), 1.2));
+    const open = price, close = Math.max(2, price + (Math.random() - 0.38) * 5);
+    const hi = Math.max(open, close) + Math.random() * 2.5, lo = Math.max(0.5, Math.min(open, close) - Math.random() * 2.5);
+    const x = 70 + k * 2.6, z = -20, up = close >= open;
+    col.set(up ? 0xcfd1cc : RED);
+    m4.compose(new THREE.Vector3(x, (open + close) / 2, z), q0, new THREE.Vector3(1.6, Math.max(0.5, Math.abs(close - open)), 1.6));
     chart.setMatrixAt(k * 2, m4); chart.setColorAt(k * 2, col);
-    m4.compose(new THREE.Vector3(x, (hi + lo) / 2, z), new THREE.Quaternion(), new THREE.Vector3(0.15, hi - lo, 0.15));
+    m4.compose(new THREE.Vector3(x, (hi + lo) / 2, z), q0, new THREE.Vector3(0.2, hi - lo, 0.2));
     chart.setMatrixAt(k * 2 + 1, m4); chart.setColorAt(k * 2 + 1, col);
     price = close;
   }
+  chart.castShadow = true;
   scene.add(chart);
 
-  // Floating symbols drifting in the air.
-  const glyphs = ["§", "⚖", "{ }", "∑", "$", "%", "Art.1", "</>"].map((sym) => canvasTexture(128, (g, s) => {
-    g.fillStyle = "rgba(242,240,235,.9)"; g.font = "bold 52px serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText(sym, s / 2, s / 2);
-  }));
-  const floaters = [];
-  for (let k = 0; k < 26; k++) {
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glyphs[k % glyphs.length], transparent: true, opacity: 0.45 }));
-    sp.position.set((Math.random() - 0.5) * 120, 6 + Math.random() * 30, -130 + Math.random() * 140);
-    sp.scale.set(4, 4, 1);
-    sp.userData.phase = Math.random() * Math.PI * 2;
-    scene.add(sp); floaters.push(sp);
-  }
-
-  // Pixel particles: small cubes rising from the sand, a few of them red.
-  const COUNT = 600;
-  const cubes = new THREE.InstancedMesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshBasicMaterial(), COUNT);
-  const parts = [];
+  // ---- Reiatsu: glowing spirit particles rising everywhere. ----
+  const dotTex = canvasTexture(64, 64, (g, s) => {
+    const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.3, "rgba(255,255,255,.5)"); grad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grad; g.fillRect(0, 0, s, s);
+  });
+  const COUNT = small ? 900 : 2200;
+  const pos = new Float32Array(COUNT * 3), cols = new Float32Array(COUNT * 3), speed = new Float32Array(COUNT);
   for (let k = 0; k < COUNT; k++) {
-    parts.push({ x: (Math.random() - 0.5) * 140, y: Math.random() * 45, z: -140 + Math.random() * 170, v: 0.02 + Math.random() * 0.06, spin: Math.random() * 6 });
-    cubes.setColorAt(k, col.set(Math.random() < 0.05 ? RED : BONE));
+    pos[k * 3] = (Math.random() - 0.5) * 260; pos[k * 3 + 1] = Math.random() * 90; pos[k * 3 + 2] = -180 + Math.random() * 230;
+    speed[k] = 0.03 + Math.random() * 0.12;
+    col.set(Math.random() < 0.08 ? RED : SPIRIT);
+    cols[k * 3] = col.r; cols[k * 3 + 1] = col.g; cols[k * 3 + 2] = col.b;
   }
-  scene.add(cubes);
+  const dotGeo = new THREE.BufferGeometry();
+  dotGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  dotGeo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
+  const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 1.1, map: dotTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(dots);
 
-  // The red slash: a thin bar fixed in front of the camera that flashes across now and then.
-  const slashMat = new THREE.MeshBasicMaterial({ color: RED, transparent: true, opacity: 0, depthTest: false });
-  const slash = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.012), slashMat);
-  slash.position.set(0, 0, -1.5); slash.renderOrder = 10;
-  camera.add(slash);
-  let slashStart = -1, nextSlash = 2500;
+  // Reiatsu columns: pillars of energy with streaks scrolling upward.
+  const streakTex = pixelTexture(128, 256, (x, y) => {
+    const n = fbm(x / 5, y / 60, 3);
+    const a = Math.max(0, n - 0.45) * 3;
+    return [255, 255, 255, Math.min(255, a * 255)];
+  });
+  streakTex.wrapS = streakTex.wrapT = THREE.RepeatWrapping;
+  const columns = [];
+  const addColumn = (x, z, r, h, color) => {
+    const map = streakTex.clone(); map.needsUpdate = true; map.repeat.set(3, 1);
+    const mat = new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.4, h, 32, 1, true), mat);
+    mesh.position.set(x, h / 2, z);
+    scene.add(mesh); columns.push(mesh);
+    return mesh;
+  };
+  const circleColumn = addColumn(0, -24, 11, 90, SPIRIT);
+  const domeColumn = addColumn(0, FZ, 5, 160, SPIRIT);
 
-  // Camera path: the points it flies through as you scroll from top (0) to bottom (1).
+  // ---- Attacks, cycling every few seconds: Getsuga Tenshō, a Cero, and the circle activating. ----
+  // Getsuga: a black crescent with a red edge, sweeping across the view.
+  const getsugaTex = canvasTexture(512, 256, (g, w, h) => {
+    const cx = w / 2, cy = h * 1.05;
+    g.shadowColor = "#ff2a35"; g.shadowBlur = 40;
+    g.fillStyle = "#ff2a35";
+    g.beginPath(); g.ellipse(cx, cy, w * 0.48, h * 0.95, 0, Math.PI, 0); g.ellipse(cx, cy + h * 0.16, w * 0.44, h * 0.78, 0, 0, Math.PI, true); g.fill();
+    g.shadowBlur = 0; g.fillStyle = "#050505";
+    g.beginPath(); g.ellipse(cx, cy + 6, w * 0.465, h * 0.9, 0, Math.PI, 0); g.ellipse(cx, cy + h * 0.17, w * 0.45, h * 0.8, 0, 0, Math.PI, true); g.fill();
+  });
+  const getsugaMat = new THREE.MeshBasicMaterial({ map: getsugaTex, transparent: true, opacity: 0, depthTest: false, depthWrite: false });
+  const getsuga = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), getsugaMat);
+  getsuga.renderOrder = 20;
+  camera.add(getsuga);
+
+  // Cero: a red glow that charges on a pillar top, then a beam that fires across the sky.
+  const ceroCharge = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: RED, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(ceroCharge);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xff3b44, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const glowMat = beamMat.clone();
+  const beam = new THREE.Group();
+  beam.add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 16, 1, true), beamMat));
+  beam.add(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1, 16, 1, true), glowMat));
+  scene.add(beam);
+  const ceroLight = new THREE.PointLight(RED, 0, 200);
+  scene.add(ceroLight);
+
+  // Transmutation: jagged blue lightning arcs jumping above the circle.
+  const ARCS = 10, SEGS = 8;
+  const arcGeo = new THREE.BufferGeometry();
+  arcGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(ARCS * SEGS * 2 * 3), 3));
+  const arcMat = new THREE.LineBasicMaterial({ color: 0xa8ecff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+  const arcs = new THREE.LineSegments(arcGeo, arcMat);
+  scene.add(arcs);
+  function jolt() {
+    const p = arcGeo.attributes.position.array;
+    let i = 0;
+    for (let a = 0; a < ARCS; a++) {
+      const ang = Math.random() * Math.PI * 2, r = 4 + Math.random() * 16;
+      let x = Math.cos(ang) * r, y = 0.3, z = -24 + Math.sin(ang) * r;
+      for (let s = 0; s < SEGS; s++) {
+        const nx = x + (Math.random() - 0.5) * 3, ny = y + Math.random() * 2.2, nz = z + (Math.random() - 0.5) * 3;
+        p.set([x, y, z, nx, ny, nz], i); i += 6;
+        x = nx; y = ny; z = nz;
+      }
+    }
+    arcGeo.attributes.position.needsUpdate = true;
+  }
+
+  const attacks = ["getsuga", "cero", "transmute"];
+  let attack = null, attackStart = 0, nextAttack = 2200, attackIndex = 0, cero = null;
+
+  function startAttack(t) {
+    attack = attacks[attackIndex++ % attacks.length];
+    attackStart = t;
+    if (attack === "getsuga") {
+      getsuga.rotation.z = -0.25 + Math.random() * 0.5;
+    }
+    if (attack === "cero") {
+      const from = pillarTops[Math.floor(Math.random() * pillarTops.length)].clone();
+      const to = from.clone().add(new THREE.Vector3(from.x > 0 ? -320 : 320, 60 + Math.random() * 60, 120));
+      cero = { from, to };
+      ceroCharge.position.copy(from); ceroLight.position.copy(from);
+      const dir = to.clone().sub(from), len = dir.length();
+      beam.position.copy(from.clone().add(to).multiplyScalar(0.5));
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      beam.scale.set(1, len, 1);
+    }
+  }
+
+  function runAttack(t) {
+    const e = t - attackStart;
+    if (attack === "getsuga") {
+      // Sweeps from left to right in front of the camera over 0.9 s.
+      const k = Math.min(1, e / 900);
+      getsuga.position.set(-14 + k * 28, -1 + k * 2, -12);
+      getsuga.scale.set(9 + k * 4, 9 + k * 4, 1);
+      getsugaMat.opacity = Math.sin(k * Math.PI);
+      if (k >= 1) attack = null;
+    } else if (attack === "cero") {
+      // 0.7 s charge, 0.9 s beam, 0.5 s fade.
+      const charge = Math.min(1, e / 700), fire = e > 700 ? Math.min(1, (e - 700) / 900) : 0, fade = e > 1600 ? Math.min(1, (e - 1600) / 500) : 0;
+      ceroCharge.material.opacity = charge * (1 - fade);
+      const sz = 4 + charge * 16 + Math.sin(e * 0.05) * 2;
+      ceroCharge.scale.set(sz, sz, 1);
+      beamMat.opacity = fire > 0 ? (1 - fade) * 0.95 : 0;
+      glowMat.opacity = fire > 0 ? (1 - fade) * 0.35 : 0;
+      ceroLight.intensity = (charge * 2 + (fire > 0 ? 6 : 0)) * (1 - fade);
+      if (fade >= 1) { attack = null; ceroCharge.material.opacity = 0; ceroLight.intensity = 0; }
+    } else if (attack === "transmute") {
+      // The circle turns blue-white, lightning crackles, a column of energy rises; 1.6 s.
+      const k = Math.min(1, e / 1600), pulse = Math.sin(k * Math.PI);
+      circleMat.color.setHex(pulse > 0.15 ? 0xa8ecff : RED);
+      circleMat.opacity = 0.7 + pulse * 0.3;
+      circleLight.color.setHex(0x9fe6ff); circleLight.intensity = pulse * 6;
+      arcMat.opacity = pulse;
+      if (Math.random() < 0.5) jolt();
+      circleColumn.material.opacity = pulse * 0.5;
+      if (k >= 1) { attack = null; circleMat.color.setHex(RED); circleMat.opacity = 0.7; circleLight.intensity = 0; arcMat.opacity = 0; circleColumn.material.opacity = 0; }
+    }
+  }
+
+  // ---- Camera path: the points it flies through as you scroll from top (0) to bottom (1). ----
   const path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 6, 34),      // desert, fortress ahead
-    new THREE.Vector3(-6, 18, 4),     // rising above the transmutation circle
-    new THREE.Vector3(14, 12, -40),   // turning towards the chart skyline
-    new THREE.Vector3(40, 10, -66),   // alongside the candlesticks
-    new THREE.Vector3(10, 60, -10),   // pulling up for an overhead view
+    new THREE.Vector3(0, 8, 45),       // standing in the sand, palace ahead (like the reference)
+    new THREE.Vector3(-14, 34, 8),     // rising over the transmutation circle
+    new THREE.Vector3(40, 22, 40),     // swinging right towards the chart skyline
+    new THREE.Vector3(60, 46, 70),     // wide view of everything
+    new THREE.Vector3(0, 110, 40),     // overhead
   ]);
   const look = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 12, -75),
-    new THREE.Vector3(0, 0, -28),
-    new THREE.Vector3(40, 8, -95),
-    new THREE.Vector3(70, 14, -95),
-    new THREE.Vector3(10, 0, -60),
+    new THREE.Vector3(0, 30, -85),
+    new THREE.Vector3(0, 0, -24),
+    new THREE.Vector3(100, 8, -20),
+    new THREE.Vector3(10, 14, -70),
+    new THREE.Vector3(0, 0, -60),
   ]);
 
   let progress = 0, target = 0;
@@ -384,46 +608,36 @@ function buildScene() {
   function resize() {
     renderer.setSize(innerWidth, innerHeight, false);
     camera.aspect = innerWidth / innerHeight;
-    camera.fov = innerWidth < 600 ? 70 : 55;   // wider view on phones
+    camera.fov = innerWidth < 600 ? 72 : 55;   // wider view on phones
     camera.updateProjectionMatrix();
     readScroll();
   }
   addEventListener("resize", resize);
   resize();
 
-  const tmp = new THREE.Object3D();
   function frame(t) {
     progress += (target - progress) * (still ? 1 : 0.06);   // ease towards the scroll position
     camera.position.copy(path.getPoint(progress));
     camera.lookAt(look.getPoint(progress));
 
     if (!still) {
-      circle.rotation.z = t * 0.00008;
-      // The circle glows brightest while the camera is above it.
-      circleMat.opacity = 0.35 + 0.65 * Math.max(0, 1 - Math.abs(progress - 0.25) / 0.25);
-      for (const sp of floaters) sp.position.y += Math.sin(t * 0.0006 + sp.userData.phase) * 0.01;
-      for (let k = 0; k < COUNT; k++) {
-        const p = parts[k];
-        p.y += p.v; if (p.y > 45) p.y = 0;
-        tmp.position.set(p.x, p.y, p.z);
-        tmp.rotation.set(t * 0.001 + p.spin, t * 0.0013 + p.spin, 0);
-        tmp.updateMatrix();
-        cubes.setMatrixAt(k, tmp.matrix);
-      }
-      cubes.instanceMatrix.needsUpdate = true;
+      circle.rotation.z = t * 0.00006;
+      for (const cl of clouds) { cl.position.x += cl.userData.speed; if (cl.position.x > 520) cl.position.x = -520; }
 
-      // Slash: grows across the view in 0.15 s, then fades over 0.6 s.
-      if (t > nextSlash) { slashStart = t; nextSlash = t + 5000 + Math.random() * 3000; slash.rotation.z = 0.3 + Math.random() * 0.4; }
-      if (slashStart >= 0) {
-        const e = t - slashStart;
-        slash.scale.x = Math.min(1, e / 150) * 4;
-        slashMat.opacity = e < 150 ? 1 : Math.max(0, 1 - (e - 150) / 600);
-        if (slashMat.opacity === 0) slashStart = -1;
-      }
-    } else if (t === 0) {
+      // Spirit particles rise and sway; they start again at the sand when they reach the top.
       for (let k = 0; k < COUNT; k++) {
-        tmp.position.set(parts[k].x, parts[k].y, parts[k].z); tmp.updateMatrix(); cubes.setMatrixAt(k, tmp.matrix);
+        pos[k * 3 + 1] += speed[k];
+        pos[k * 3] += Math.sin(t * 0.0008 + k) * 0.02;
+        if (pos[k * 3 + 1] > 90) pos[k * 3 + 1] = 0;
       }
+      dotGeo.attributes.position.needsUpdate = true;
+
+      // The column above the dome breathes slowly; streaks scroll upward in both columns.
+      domeColumn.material.opacity = 0.12 + 0.1 * Math.sin(t * 0.0012);
+      for (const c of columns) c.material.map.offset.y -= 0.004;
+
+      if (t > nextAttack && !attack) { startAttack(t); nextAttack = t + 4500 + Math.random() * 2500; }
+      if (attack) runAttack(t);
     }
     renderer.render(scene, camera);
     requestAnimationFrame(frame);

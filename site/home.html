@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a fixed 3D night scene fills the window behind the page. Scrolling flies the camera
-   from a concrete palace, over a transmutation circle, round to its side. The text sits
+   from a concrete palace in a living desert, over a transmutation circle, round to its side. The text sits
    on dark glass panels above it. Black and white with one red accent. Dark only. */
 :root {
   --bg: #0B0B0B; --ink: #F2F0EB; --muted: #9A968F; --line: rgba(242, 240, 235, .12);
@@ -433,18 +433,18 @@ function buildScene() {
     grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.3, "rgba(255,255,255,.5)"); grad.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = grad; g.fillRect(0, 0, s, s);
   });
-  const COUNT = small ? 400 : 900;
+  const COUNT = small ? 1000 : 2600;
   const pos = new Float32Array(COUNT * 3), cols = new Float32Array(COUNT * 3), speed = new Float32Array(COUNT);
   for (let k = 0; k < COUNT; k++) {
-    pos[k * 3] = (Math.random() - 0.5) * 260; pos[k * 3 + 1] = Math.random() * 50; pos[k * 3 + 2] = -180 + Math.random() * 230;
-    speed[k] = 0.005 + Math.random() * 0.03;
-    col.set(Math.random() < 0.03 ? RED : (Math.random() < 0.25 ? SPIRIT : 0x8f9694));
+    pos[k * 3] = (Math.random() - 0.5) * 260; pos[k * 3 + 1] = Math.random() * 70; pos[k * 3 + 2] = -180 + Math.random() * 230;
+    speed[k] = 0.02 + Math.random() * 0.07;
+    col.set(Math.random() < 0.04 ? RED : (Math.random() < 0.7 ? SPIRIT : 0x8f9694));
     cols[k * 3] = col.r; cols[k * 3 + 1] = col.g; cols[k * 3 + 2] = col.b;
   }
   const dotGeo = new THREE.BufferGeometry();
   dotGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   dotGeo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
-  const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 0.6, opacity: 0.7, map: dotTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 1.3, opacity: 0.85, map: dotTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   scene.add(dots);
 
   // Reiatsu columns: pillars of energy with streaks scrolling upward.
@@ -465,20 +465,83 @@ function buildScene() {
   };
   const circleColumn = addColumn(0, -24, 9, 40, SPIRIT);
 
-  // ---- Attacks, cycling every few seconds: Getsuga Tenshō, a Cero, and the circle activating. ----
-  // Getsuga: a black crescent with a red edge, sweeping across the view.
-  const getsugaTex = canvasTexture(512, 256, (g, w, h) => {
-    const cx = w / 2, cy = h * 1.05;
-    g.shadowColor = "#ff2a35"; g.shadowBlur = 40;
-    g.fillStyle = "#ff2a35";
-    g.beginPath(); g.ellipse(cx, cy, w * 0.48, h * 0.95, 0, Math.PI, 0); g.ellipse(cx, cy + h * 0.16, w * 0.44, h * 0.78, 0, 0, Math.PI, true); g.fill();
-    g.shadowBlur = 0; g.fillStyle = "#050505";
-    g.beginPath(); g.ellipse(cx, cy + 6, w * 0.465, h * 0.9, 0, Math.PI, 0); g.ellipse(cx, cy + h * 0.17, w * 0.45, h * 0.8, 0, 0, Math.PI, true); g.fill();
-  });
-  const getsugaMat = new THREE.MeshBasicMaterial({ map: getsugaTex, transparent: true, opacity: 0, depthWrite: false, fog: false });
-  const getsuga = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), getsugaMat);
-  scene.add(getsuga);
+  // ---- Scenery that makes the desert feel inhabited. ----
+  // Quartz trees: pale, glassy, leafless trees scattered across the sand.
+  const quartz = new THREE.MeshStandardMaterial({ color: 0xe6eef0, roughness: 0.25, metalness: 0.1, emissive: 0x1b2224 });
+  const treeAt = [[-95, -40], [-130, -110], [-170, -60], [90, -35], [125, -120], [165, -70], [-60, 5], [70, 10], [-210, -160], [210, -150], [-40, -170], [45, -175]];
+  for (const [x, z] of treeAt) {
+    const tree = new THREE.Group(), h = 7 + Math.random() * 6;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.6, h, 6), quartz);
+    trunk.position.y = h / 2; tree.add(trunk);
+    for (let b = 0; b < 4; b++) {
+      const len = 2.5 + Math.random() * 3.5;
+      const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, len, 5), quartz);
+      branch.position.y = h * (0.55 + b * 0.12);
+      branch.rotation.set(0, b * 1.7 + Math.random(), 0.7 + Math.random() * 0.4);
+      branch.translateY(len / 2);
+      tree.add(branch);
+    }
+    tree.position.set(x, 0, z); tree.rotation.y = Math.random() * Math.PI;
+    tree.traverse((m) => { m.castShadow = true; });
+    scene.add(tree);
+  }
 
+  // Lit slits in the palace walls that flicker now and then, as if someone is home.
+  const windows = [];
+  for (let k = 0; k < 9; k++) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.8 });
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 3.2), mat);
+    win.position.set(-26 + k * 6.5, 10, FZ + 20.05);
+    win.userData.phase = Math.random() * 100;
+    scene.add(win); windows.push(win);
+  }
+
+  // Giants on the horizon: tall dark figures with white masks, walking slowly through the fog.
+  const giants = [];
+  const shadowMat = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 1 });
+  const maskMat = new THREE.MeshStandardMaterial({ color: 0xf2f0eb, roughness: 0.6, emissive: 0x333333 });
+  for (let k = 0; k < 3; k++) {
+    const giant = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.ConeGeometry(10, 75, 24), shadowMat);
+    body.position.y = 37;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(5.5, 16, 12), shadowMat);
+    head.position.y = 76;
+    const mask = new THREE.Mesh(new THREE.SphereGeometry(4.6, 16, 12, 0, Math.PI), maskMat);
+    mask.scale.set(1, 1.15, 0.6); mask.position.set(0, 76, 3.2);
+    giant.add(body, head, mask);
+    giant.position.set(-260 + k * 210 + Math.random() * 60, 0, -330 - Math.random() * 60);
+    giant.userData = { speed: 0.02 + Math.random() * 0.02, phase: Math.random() * 10 };
+    scene.add(giant); giants.push(giant);
+  }
+
+  // Low sand gusts sweeping across the ground.
+  const gustTex = pixelTexture(256, 64, (x, y) => {
+    const n = fbm(x / 22, y / 8, 4), edge = Math.sin((y / 64) * Math.PI) * Math.sin((x / 256) * Math.PI);
+    return [205, 205, 198, Math.min(255, Math.max(0, n - 0.4) * 2 * edge * 255)];
+  });
+  const gusts = [];
+  for (let k = 0; k < 10; k++) {
+    const gust = new THREE.Sprite(new THREE.SpriteMaterial({ map: gustTex, transparent: true, opacity: 0.35, depthWrite: false }));
+    gust.position.set(-200 + Math.random() * 400, 1.5 + Math.random() * 2, -150 + Math.random() * 190);
+    gust.scale.set(60, 6, 1);
+    gust.userData.speed = 0.25 + Math.random() * 0.35;
+    scene.add(gust); gusts.push(gust);
+  }
+
+  // Shooting stars: a short bright streak crossing the sky.
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3));
+  const starMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false });
+  scene.add(new THREE.Line(starGeo, starMat));
+  let star = null, nextStar = 1500;
+
+  // Lightning inside the clouds: a quick double flicker that lights up the sky.
+  const flashLight = new THREE.DirectionalLight(0xcfe2ff, 0);
+  flashLight.position.set(0, 200, -300);
+  scene.add(flashLight);
+  let flashStart = -1, nextFlash = 4000;
+
+  // ---- Events, taking turns every few seconds: a Cero, the circle activating, a Garganta opening. ----
   // Cero: a red glow that charges on a pillar top, then a beam that fires across the sky.
   const ceroCharge = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: RED, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
   scene.add(ceroCharge);
@@ -496,8 +559,7 @@ function buildScene() {
   const arcGeo = new THREE.BufferGeometry();
   arcGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(ARCS * SEGS * 2 * 3), 3));
   const arcMat = new THREE.LineBasicMaterial({ color: 0xa8ecff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
-  const arcs = new THREE.LineSegments(arcGeo, arcMat);
-  scene.add(arcs);
+  scene.add(new THREE.LineSegments(arcGeo, arcMat));
   function jolt() {
     const p = arcGeo.attributes.position.array;
     let i = 0;
@@ -513,46 +575,50 @@ function buildScene() {
     arcGeo.attributes.position.needsUpdate = true;
   }
 
-  const attacks = ["transmute", "cero", "getsuga"];
-  let attack = null, attackStart = 0, nextAttack = 2200, attackIndex = 0, cero = null;
+  // Garganta: a black rift tearing open in the sky, then sealing again.
+  const riftTex = canvasTexture(128, 512, (g, w, h) => {
+    g.beginPath(); g.moveTo(w / 2, 0);
+    for (let y = 0; y <= h; y += 32) g.lineTo(w / 2 + (Math.random() - 0.5) * w * 0.5 * Math.sin((y / h) * Math.PI) + w * 0.12 * Math.sin((y / h) * Math.PI), y);
+    for (let y = h; y >= 0; y -= 32) g.lineTo(w / 2 - (Math.random() - 0.5) * w * 0.5 * Math.sin((y / h) * Math.PI) - w * 0.12 * Math.sin((y / h) * Math.PI), y);
+    g.closePath();
+    g.shadowColor = "#7fb8ff"; g.shadowBlur = 24; g.fillStyle = "#020205"; g.fill();
+  });
+  const riftMat = new THREE.MeshBasicMaterial({ map: riftTex, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const rift = new THREE.Mesh(new THREE.PlaneGeometry(1, 4), riftMat);
+  scene.add(rift);
+
+  const events = ["transmute", "cero", "garganta"];
+  let attack = null, attackStart = 0, nextAttack = 2500, attackIndex = 0;
 
   function startAttack(t) {
-    attack = attacks[attackIndex++ % attacks.length];
+    attack = events[attackIndex++ % events.length];
     attackStart = t;
-    if (attack === "getsuga") {
-      
-    }
     if (attack === "cero") {
       const from = pillarTops[Math.floor(Math.random() * pillarTops.length)].clone();
       const to = from.clone().add(new THREE.Vector3(from.x > 0 ? -320 : 320, 60 + Math.random() * 60, 120));
-      cero = { from, to };
       ceroCharge.position.copy(from); ceroLight.position.copy(from);
       const dir = to.clone().sub(from), len = dir.length();
       beam.position.copy(from.clone().add(to).multiplyScalar(0.5));
       beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
       beam.scale.set(1, len, 1);
     }
+    if (attack === "garganta") {
+      rift.position.set(-160 + Math.random() * 320, 110 + Math.random() * 50, -380);
+      rift.rotation.z = (Math.random() - 0.5) * 0.5;
+    }
   }
 
   function runAttack(t) {
     const e = t - attackStart;
-    if (attack === "getsuga") {
-      // Flies low across the desert behind the circle over 1.6 s, always facing the viewer.
-      const k = Math.min(1, e / 1600);
-      getsuga.position.set(-220 + k * 440, 14 + k * 10, -150);
-      getsuga.quaternion.copy(camera.quaternion);
-      getsuga.scale.set(70, 35, 1);
-      getsugaMat.opacity = Math.sin(k * Math.PI) * 0.9;
-      if (k >= 1) attack = null;
-    } else if (attack === "cero") {
+    if (attack === "cero") {
       // 0.7 s charge, 0.9 s beam, 0.5 s fade.
-      const charge = Math.min(1, e / 700), fire = e > 700 ? Math.min(1, (e - 700) / 900) : 0, fade = e > 1600 ? Math.min(1, (e - 1600) / 500) : 0;
+      const charge = Math.min(1, e / 700), fire = e > 700, fade = e > 1600 ? Math.min(1, (e - 1600) / 500) : 0;
       ceroCharge.material.opacity = charge * (1 - fade);
       const sz = 4 + charge * 16 + Math.sin(e * 0.05) * 2;
       ceroCharge.scale.set(sz, sz, 1);
-      beamMat.opacity = fire > 0 ? (1 - fade) * 0.95 : 0;
-      glowMat.opacity = fire > 0 ? (1 - fade) * 0.35 : 0;
-      ceroLight.intensity = (charge * 2 + (fire > 0 ? 6 : 0)) * (1 - fade);
+      beamMat.opacity = fire ? (1 - fade) * 0.95 : 0;
+      glowMat.opacity = fire ? (1 - fade) * 0.35 : 0;
+      ceroLight.intensity = (charge * 2 + (fire ? 6 : 0)) * (1 - fade);
       if (fade >= 1) { attack = null; ceroCharge.material.opacity = 0; ceroLight.intensity = 0; }
     } else if (attack === "transmute") {
       // The circle turns blue-white, lightning crackles, a column of energy rises; 1.6 s.
@@ -564,6 +630,55 @@ function buildScene() {
       if (Math.random() < 0.5) jolt();
       circleColumn.material.opacity = pulse * 0.3;
       if (k >= 1) { attack = null; circleMat.color.setHex(RED); circleMat.opacity = 0; circleLight.intensity = 0; arcMat.opacity = 0; circleColumn.material.opacity = 0; }
+    } else if (attack === "garganta") {
+      // Tears open over 0.6 s, stays open 1.6 s, seals over 0.6 s.
+      const open = Math.min(1, e / 600), close = e > 2200 ? Math.min(1, (e - 2200) / 600) : 0, w = open * (1 - close);
+      rift.scale.set(4 + w * 22, 30, 1);
+      riftMat.opacity = w;
+      if (close >= 1) { attack = null; riftMat.opacity = 0; }
+    }
+  }
+
+  // Everything that moves all the time.
+  function ambient(t) {
+    for (const cl of clouds) { cl.position.x += cl.userData.speed; if (cl.position.x > 520) cl.position.x = -520; }
+    for (const gust of gusts) { gust.position.x += gust.userData.speed; if (gust.position.x > 230) gust.position.x = -230; }
+    for (const g of giants) {
+      g.position.x += g.userData.speed; if (g.position.x > 320) g.position.x = -320;
+      g.position.y = Math.abs(Math.sin(t * 0.0015 + g.userData.phase)) * 1.2;   // heavy footsteps
+    }
+    for (const w of windows) w.material.opacity = 0.55 + 0.35 * Math.max(0, Math.sin(t * 0.002 + w.userData.phase)) * (Math.sin(t * 0.03 + w.userData.phase) > -0.95 ? 1 : 0.2);
+
+    // Reiatsu rises and sways; each particle starts again at the sand when it reaches the top.
+    for (let k = 0; k < COUNT; k++) {
+      pos[k * 3] += 0.015 + Math.sin(t * 0.0008 + k) * 0.03;
+      pos[k * 3 + 1] += speed[k];
+      if (pos[k * 3] > 130) pos[k * 3] = -130;
+      if (pos[k * 3 + 1] > 70) pos[k * 3 + 1] = 0;
+    }
+    dotGeo.attributes.position.needsUpdate = true;
+    for (const c of columns) c.material.map.offset.y -= 0.004;
+
+    // Shooting stars.
+    if (!star && t > nextStar) {
+      const from = new THREE.Vector3(-300 + Math.random() * 600, 200 + Math.random() * 120, -450);
+      star = { from, dir: new THREE.Vector3(Math.random() < 0.5 ? -1 : 1, -0.45, 0).normalize(), start: t };
+    }
+    if (star) {
+      const k = (t - star.start) / 700, head = star.from.clone().addScaledVector(star.dir, k * 260), tail = head.clone().addScaledVector(star.dir, -30);
+      starGeo.attributes.position.array.set([tail.x, tail.y, tail.z, head.x, head.y, head.z]);
+      starGeo.attributes.position.needsUpdate = true;
+      starMat.opacity = Math.sin(Math.min(1, k) * Math.PI);
+      if (k >= 1) { star = null; starMat.opacity = 0; nextStar = t + 2500 + Math.random() * 4000; }
+    }
+
+    // Lightning in the clouds.
+    if (flashStart < 0 && t > nextFlash) flashStart = t;
+    if (flashStart >= 0) {
+      const e = t - flashStart, f = (e < 90 ? 1 : e < 180 ? 0.2 : e < 280 ? 0.8 : Math.max(0, 1 - (e - 280) / 250));
+      flashLight.intensity = f * 1.6;
+      for (const cl of clouds) cl.material.color.setScalar(1 + f * 1.5);
+      if (e > 530) { flashStart = -1; flashLight.intensity = 0; for (const cl of clouds) cl.material.color.setScalar(1); nextFlash = t + 6000 + Math.random() * 7000; }
     }
   }
 
@@ -613,21 +728,8 @@ function buildScene() {
 
     if (!still) {
       circle.rotation.z = t * 0.00006;
-      for (const cl of clouds) { cl.position.x += cl.userData.speed; if (cl.position.x > 520) cl.position.x = -520; }
-
-      // Spirit particles rise and sway; they start again at the sand when they reach the top.
-      for (let k = 0; k < COUNT; k++) {
-        pos[k * 3] += 0.04 + Math.sin(t * 0.0008 + k) * 0.02;   // carried by the wind
-        pos[k * 3 + 1] += speed[k];
-        if (pos[k * 3] > 130) pos[k * 3] = -130;
-        if (pos[k * 3 + 1] > 50) pos[k * 3 + 1] = 0;
-      }
-      dotGeo.attributes.position.needsUpdate = true;
-
-      // The column above the dome breathes slowly; streaks scroll upward in both columns.
-      for (const c of columns) c.material.map.offset.y -= 0.004;
-
-      if (t > nextAttack && !attack) { startAttack(t); nextAttack = t + 10000 + Math.random() * 4000; }
+      ambient(t);
+      if (t > nextAttack && !attack) { startAttack(t); nextAttack = t + 7000 + Math.random() * 4000; }
       if (attack) runAttack(t);
     }
     renderer.render(scene, camera);

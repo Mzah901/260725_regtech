@@ -1,7 +1,7 @@
 # Legal Industry Map (pilot)
 
 **Date:** 2026-10-11
-**Status:** Pilot built. Waiting for owner review.
+**Status:** Pilot built. Owner-reviewed 2026-10-31 (6-row sample).
 **Merged with:** "Legal Startup Reverse Engineer" idea. This dataset is the base for later deep dives on 2–3 companies.
 
 **Interactive map:** https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw (claude.ai artifact). Website version: https://statuta.id/legal-industry-map/ (live once GitHub Pages is switched on)
@@ -77,4 +77,4 @@ Result of the first pass: 1 field error in 6 rows (1 of about 40 fields checked)
 
 ## What the owner reviewed and approved
 
-_Claude's source check done 2026-10-31 (table above). Pending owner confirmation, and a manual check of row 13 (Lupl)._
+Reviewed and approved by the owner on 2026-10-31: the 6-row source check above (1 field error in about 40, fixed). Still open: row 13 (Lupl) funding is unverified and stays marked confidence = Low until a working source is found.

@@ -61,10 +61,20 @@ Pasal.id is also a data source for this lab, and this is disclosed in its row.
 - Record errors per field (founded, category, funding, last round, valuation, status) in the table below.
 - Rows with any error get fixed, and the error rate is reported in this log.
 
+Sample drawn on 2026-10-31 with Python `random.sample`, seed 20261031: rows 3, 8, 10, 13, 24, 25.
+First pass by Claude (fetching each row's own source URLs); the owner confirms below.
+
 | Row id | Fields checked | Errors found | Fixed? |
 |---|---|---|---|
-| | | | |
+| 3 Easybiz | founded, category, status | None (2015 launch confirmed by source, 1 Apr 2015) | n/a |
+| 8 Privy | founded, funding, last round | **founded** was empty; CB Insights source gives 2016. Funding USD 66.9M and USD 48M Series C (KKR, Nov 2022) match | Yes |
+| 10 Mekari Sign | founded, category, status | None (launch Jan 2023 confirmed) | n/a |
+| 13 Lupl | funding, last round | **Not verifiable**: Global Legal Post source returns 403; the Legal Business source only confirms a 2020 launch, not the USD 14M / 25M figures | Open: owner to check |
+| 24 Eudia | funding, last round | None. "Up to" USD 105M Series A, Feb 2025, as the notes say | n/a |
+| 25 Casetext | valuation, last round, founded | None. USD 650M, announced 26 Jun 2023; founded 2013 now confirmed by source (note updated) | Note updated |
+
+Result of the first pass: 1 field error in 6 rows (1 of about 40 fields checked), plus 1 row whose funding figures could not be traced to a working source.
 
 ## What the owner reviewed and approved
 
-_Pending owner review._
+_Claude's source check done 2026-10-31 (table above). Pending owner confirmation, and a manual check of row 13 (Lupl)._

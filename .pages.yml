@@ -1,0 +1,31 @@
+# Pages CMS (https://pagescms.org): edit the Beyond Statutes notes in a browser form.
+# Saving commits the .md file to GitHub, which rebuilds and publishes statuta.id.
+content:
+  - name: notes
+    label: Beyond Statutes
+    type: collection
+    path: content/beyond-statutes
+    filename: "{primary}.md"
+    view:
+      fields: [rank, title, tag]
+      sort: [rank]
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+        description: End with a full stop, like the others. Other notes link here with [[this exact title]].
+      - name: rank
+        label: Chapter number
+        type: number
+        required: true
+      - name: tag
+        label: Tag
+        type: select
+        required: true
+        options:
+          values: [LAW, POLICY, TECH, FINANCE, LIFE]
+      - name: body
+        label: Text
+        type: text
+        description: Blank line between paragraphs. Link another note with [[Its title.]] — a title that doesn't exist stops the publish (the old site stays up).

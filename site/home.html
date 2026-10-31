@@ -372,11 +372,30 @@ function buildScene() {
   }
 
   // ---- Pillars: tall concrete towers with flared bases and a crown ring. ----
-  const pillarAt = [[-34, -62, 58], [-50, -84, 46], [-24, -112, 40], [34, -60, 66], [52, -86, 52], [26, -114, 44], [-62, -112, 36]];
-  for (const [x, z, h] of pillarAt) {
+  // Each one is a step in your career, with its years floating above the crown: the taller, the more recent.
+  // Hover shows the role, click opens the Experience list on the About page.
+  const pillarAt = [
+    [-34, -62, 58, "2024–26", "Regulatory Compliance Specialist · Hukumonline"],
+    [-50, -84, 46, "2022–23", "Researcher · Indonesian Center for Legislative Drafting"],
+    [-24, -112, 40, "2022", "Researcher · Perludem"],
+    [34, -60, 66, "2026–", "Regulatory Compliance Coordinator · Hukumonline"],
+    [52, -86, 52, "2022–24", "Legal Analyst, then Research Assistant · Swasaba Research Initiative"],
+    [26, -114, 44, "2022", "Legal Intern · DG of Legislation, Ministry of Law and Human Rights"],
+    [-62, -112, 36, "2019–23", "Law (constitutional law) · Universitas Gadjah Mada"],
+  ];
+  const pillars = [];
+  for (const [x, z, h, years, role] of pillarAt) {
     const profile = [[8, 0], [6.6, 1.6], [5.4, 4], [4.6, 8], [4.3, 13], [4.3, h - 3], [4.9, h - 2.6], [4.9, h - 1.6], [4.3, h - 1.2], [4.3, h], [4.7, h], [4.7, h + 0.8], [0, h + 0.8]]
       .map(([r, y]) => new THREE.Vector2(r, y));
-    solid(new THREE.Mesh(new THREE.LatheGeometry(profile, 48), concrete(2, h / 18))).position.set(x, 0, z);
+    const pillar = new THREE.Group(); pillar.position.set(x, 0, z); scene.add(pillar);
+    solid(new THREE.Mesh(new THREE.LatheGeometry(profile, 48), concrete(2, h / 18)), pillar);
+    const yearTex = canvasTexture(256, 96, (g, w) => {
+      g.fillStyle = "#c4202b"; g.fillRect(w / 2 - 28, 8, 56, 4);
+      g.fillStyle = "#f2f0eb"; g.font = "bold 52px Georgia, serif"; g.textAlign = "center"; g.fillText(years, w / 2, 76);
+    });
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: yearTex, transparent: true, fog: false, depthWrite: false }));
+    label.scale.set(14, 5.25, 1); label.position.y = h + 6; pillar.add(label);
+    pillars.push({ obj: pillar, label: `${years} · ${role}`, href: "/about/#experience", outside: true });
   }
 
   // ---- More buildings in the distance: a brutalist town around the palace. ----
@@ -1317,22 +1336,24 @@ function buildScene() {
     { obj: laptop, label: "Lab →", href: "/lab/" },
     { obj: tablet, label: "House rules ↓", href: "#rules" },
     { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", href: "/about/#awards" },
-    { obj: cups[1], label: "1st · Legal essay, Universitas Internasional Batam", href: "/about/#awards" },
-    { obj: cups[2], label: "1st · Article, Pancasila Festival, Universitas Jember 2021", href: "/about/#awards" },
+    { obj: cups[1], label: "1st + best presentation · Paper, Universitas Internasional Batam", href: "/about/#awards" },
+    { obj: cups[2], label: "1st + best paper · Pancasila Festival, Universitas Jember 2021", href: "/about/#awards" },
     { obj: cups[3], label: "2nd · Constitutional Law Festival, Universitas Brawijaya 2021", href: "/about/#awards" },
     { obj: journals, label: "5 published papers →", href: "/about/#publications" },
     { obj: diploma, label: "Law, Universitas Gadjah Mada →", href: "/about/#education" },
     { obj: cork, label: "Projects →", href: "/about/#projects" },
     { obj: guitar, label: "Play a chord ♪", play: true },
+    ...pillars,
   ];
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   let hovered = null;
   function pick(ev) {
-    if (ev.target !== canvas || roomVisible() === false) return null;
+    if (ev.target !== canvas) return null;
+    const live = clickables.filter((c) => !c.outside === roomVisible());   // room objects in the room, pillars outside
     ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    for (const hit of ray.intersectObjects(clickables.map((c) => c.obj), true)) {
-      const found = clickables.find((c) => { let o = hit.object; while (o) { if (o === c.obj) return true; o = o.parent; } return false; });
+    for (const hit of ray.intersectObjects(live.map((c) => c.obj), true)) {
+      const found = live.find((c) => { let o = hit.object; while (o) { if (o === c.obj) return true; o = o.parent; } return false; });
       if (found) return found;
     }
     return null;

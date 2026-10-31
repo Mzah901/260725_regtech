@@ -1656,7 +1656,7 @@ function buildScene() {
     { obj: diploma, label: "Law, Universitas Gadjah Mada →", href: "/about/#education" },
     { obj: cork, label: "Projects →", href: "/about/#projects" },
     { obj: satchel, label: "I always try to be useful and driven by real-world impact. I hope my experiments and portfolio open more doors to impactful work for the world.", href: "/about/#experience" },
-    { obj: guitar, label: "Play a chord ♪", play: true },
+    { obj: guitar, label: "Play ♪", play: true },
     ...pillars,
   ];
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -1687,22 +1687,34 @@ function buildScene() {
     else location.href = c.href;
   });
 
-  // Guitar: a G major chord, each string synthesised by the Karplus–Strong method
+  // Guitar: a short original fingerpicked phrase over Am – G – F – E (the old Andalusian cadence), ending in a quick
+  // strummed E chord. Each note is synthesised by the Karplus–Strong method
   // (a burst of noise fed through a short delay loop, which rings like a plucked string).
-  let audio = null;
+  let audio = null, busyUntil = 0;
+  const pluck = (freq, at, vol = 0.16, ring = 2.2) => {
+    const rate = audio.sampleRate, len = Math.floor(rate * ring), data = new Float32Array(len), period = Math.round(rate / freq);
+    for (let n = 0; n < period; n++) data[n] = Math.random() * 2 - 1;
+    for (let n = period; n < len; n++) data[n] = 0.996 * 0.5 * (data[n - period] + data[n - period + 1]);
+    const buf = audio.createBuffer(1, len, rate); buf.copyToChannel(data, 0);
+    const src = audio.createBufferSource(), gain = audio.createGain();
+    src.buffer = buf; gain.gain.value = vol;
+    src.connect(gain).connect(audio.destination); src.start(at);
+  };
+  // Each chord: bass, fifth, octave, third, top note, third (string frequencies in Hz).
+  const PHRASE = [[110, 164.81, 220, 261.63, 329.63, 261.63],    // Am
+                  [98, 146.83, 196, 246.94, 293.66, 246.94],      // G
+                  [87.31, 130.81, 174.61, 220, 261.63, 220],      // F
+                  [82.41, 123.47, 164.81, 207.65, 246.94, 207.65]]; // E
+  const E_CHORD = [82.41, 123.47, 164.81, 207.65, 246.94, 329.63];
   function strum() {
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    const rate = audio.sampleRate;
-    [98.0, 123.47, 146.83, 196.0, 246.94, 392.0].forEach((freq, i) => {
-      const len = Math.floor(rate * 2.5), data = new Float32Array(len), period = Math.round(rate / freq);
-      for (let n = 0; n < period; n++) data[n] = Math.random() * 2 - 1;
-      for (let n = period; n < len; n++) data[n] = 0.996 * 0.5 * (data[n - period] + data[n - period + 1]);
-      const buf = audio.createBuffer(1, len, rate); buf.copyToChannel(data, 0);
-      const src = audio.createBufferSource(), gain = audio.createGain();
-      src.buffer = buf; gain.gain.value = 0.18;
-      src.connect(gain).connect(audio.destination);
-      src.start(audio.currentTime + i * 0.035);
-    });
+    const t0 = audio.currentTime + 0.05;
+    if (t0 < busyUntil) return;   // let the phrase finish before it can start again
+    const step = 0.17;
+    PHRASE.forEach((notes, c) => notes.forEach((f, k) => pluck(f, t0 + (c * 6 + k) * step, k ? 0.13 : 0.18)));
+    const end = t0 + PHRASE.length * 6 * step;
+    [0, 0.12].forEach((d) => E_CHORD.forEach((f, k) => pluck(f, end + d + k * 0.018, 0.12, 3)));   // rasgueado: two fast strums
+    busyUntil = end + 1;
   }
 
   // ---- Day to night as you scroll: afternoon sun in the room, Hueco Mundo night outside. ----

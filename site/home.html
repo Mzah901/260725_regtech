@@ -38,7 +38,7 @@ a { color: inherit; text-decoration: underline; text-decoration-color: var(--mut
 a:hover, a:focus-visible { text-decoration-color: var(--red); color: #fff; outline: none; }
 
 .intro, section, .poem a { pointer-events: auto; }
-.obj-tip { position: fixed; z-index: 5; pointer-events: none; background: rgba(11,11,11,.85); border: 1px solid var(--red); padding: 4px 10px; font-size: 12px; }
+.obj-tip { position: fixed; z-index: 5; pointer-events: none; background: rgba(11,11,11,.85); border: 1px solid var(--red); padding: 4px 10px; font-size: 12px; max-width: 320px; line-height: 1.5; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
 
 nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 3;
@@ -1447,6 +1447,18 @@ function buildScene() {
   const sling = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.21, 0.27, 0), new THREE.Vector3(-0.3, 0.05, 0.12), new THREE.Vector3(0, 0.005, 0.32), new THREE.Vector3(0.3, 0.05, 0.12), new THREE.Vector3(0.21, 0.27, 0)]);
   piece(new THREE.TubeGeometry(sling, 40, 0.008, 4), mat(0x3b2416, 0.6), 0, 0, 0, satchel);    // shoulder strap lying on the floor
   for (const sx of [-0.21, 0.21]) piece(new THREE.TorusGeometry(0.012, 0.003, 6, 10), brass, sx, 0.27, 0, satchel);
+  // A paper luggage tag tied to the handle: the short version of why this site exists (hover the bag for the full line).
+  const tagTex = canvasTexture(128, 200, (g, w, h) => {
+    g.fillStyle = "#efe6cf"; g.beginPath(); g.moveTo(20, 0); g.lineTo(w - 20, 0); g.lineTo(w, 22); g.lineTo(w, h); g.lineTo(0, h); g.lineTo(0, 22); g.closePath(); g.fill();
+    g.fillStyle = "#3a2a1c"; g.beginPath(); g.arc(w / 2, 20, 7, 0, Math.PI * 2); g.fill();   // eyelet
+    g.fillStyle = "#c4202b"; g.fillRect(16, 46, w - 32, 3);
+    g.fillStyle = "#2b2b2b"; g.font = "italic bold 21px Georgia, serif"; g.textAlign = "center";
+    ["be useful.", "make a", "real-world", "impact."].forEach((t, k) => g.fillText(t, w / 2, 82 + k * 28));
+  });
+  const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.11), mat(0xffffff, 0.8, { map: tagTex, transparent: true, side: THREE.DoubleSide }));
+  tag.position.set(0.12, 0.2, 0.082); tag.rotation.set(-0.05, -0.15, 0.12); satchel.add(tag);
+  const tie = new THREE.CatmullRomCurve3([new THREE.Vector3(0.065, 0.3, 0.03), new THREE.Vector3(0.1, 0.28, 0.07), new THREE.Vector3(0.115, 0.247, 0.082)]);
+  piece(new THREE.TubeGeometry(tie, 12, 0.0015, 4), mat(0xc4202b, 0.7), 0, 0, 0, satchel);   // red string
   piece(new THREE.CylinderGeometry(0.2, 0.17, 0.35, 16, 1, true), mat(0xd8e0d2, 0.95, { side: THREE.DoubleSide }), 1.35, RY + 0.175, WALL_Z + 1.35);
   const shelfWood = mat(0x6e4a2c, 0.7);
   const bookcase = new THREE.Group(); bookcase.position.set(ROOM_W / 2 - 0.16, RY, BACK_Z - 0.9); room.add(bookcase);
@@ -1643,6 +1655,7 @@ function buildScene() {
     { obj: journals, label: "Open 5 published papers", book: "papers" },
     { obj: diploma, label: "Law, Universitas Gadjah Mada →", href: "/about/#education" },
     { obj: cork, label: "Projects →", href: "/about/#projects" },
+    { obj: satchel, label: "I always try to be useful and driven by real-world impact. I hope my experiments and portfolio open more doors to impactful work for the world.", href: "/about/#experience" },
     { obj: guitar, label: "Play a chord ♪", play: true },
     ...pillars,
   ];

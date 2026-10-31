@@ -139,6 +139,31 @@ def sky_json(notes):
     return json.dumps({"nodes": nodes, "links": links}, ensure_ascii=False).replace("</", "<\\/")
 
 
+def books_json(notes, by_title):
+    """The flipbooks the home page opens: Beyond Statutes, the awards (trophies) and the papers (journal stack)."""
+    import build_notes
+    def items(section):
+        body = (PAGES_DIR / "about.md").read_text(encoding="utf-8").split(f"## {section}\n", 1)[1].split("\n## ", 1)[0]
+        for line in body.splitlines():
+            if m := re.match(r"- \*\*(.+?)\*\*[,.]?\s*(.*)", line):
+                yield m.group(1).rstrip("."), m.group(2)
+    papers = [{"k": f"Paper {i} of 5", "t": t, "h": f"<p>{inline(rest)}</p>", "w": re.findall(r"20\d\d", rest)[0]}
+              for i, (t, rest) in enumerate(items("Publications"), 1)]
+    awards = [{"k": "Honours", "t": t, "h": f"<p>{inline(rest[0].upper() + rest[1:])}</p>", "w": re.match(r"\d\w\w|", t).group() or "★"}
+              for t, rest in items("Awards")]
+    statutes = [{"k": f"CH.{n['rank']:02d} · {n['tag']}", "t": n["title"], "h": build_notes.to_html(n["body"], by_title),
+                 "a": f"/beyond-statutes/{n['slug']}/", "id": n["slug"], "w": n["rank"]} for n in notes]
+    books = {
+        "statutes": [{"cover": True, "t": "Beyond Statutes", "sub": "Mzah in journey"}] + statutes,
+        "papers": [{"cover": True, "t": "Published papers", "sub": "Constitutional law and lawmaking, 2023–2024"}] + papers,
+        "awards": [{"cover": True, "t": "Honours", "sub": "Writing and drafting competitions"}] + awards,
+    }
+    for book in books.values():
+        for p in book:
+            p["t"] = html.escape(p["t"])
+    return json.dumps(books, ensure_ascii=False).replace("</", "<\\/")
+
+
 def build(public_dir):
     experiments = sorted((read_experiment(p) for p in EXPERIMENTS_DIR.glob("*.md")), key=lambda e: e["file"], reverse=True)
     main = f"""
@@ -179,4 +204,7 @@ if __name__ == "__main__":
     ids = {x["id"] for x in sky["nodes"]}
     assert all(a in ids and b in ids for a, b in sky["links"]), "every link joins two stars"
     assert sum(x["kind"] == "concept" for x in sky["nodes"]) == 36, "every lesson became a star"
+    books = json.loads(books_json(*build_notes.read_notes()))
+    assert [len(books[b]) for b in ("statutes", "papers", "awards")] == [8, 6, 8], [len(b) for b in books.values()]
+    assert books["awards"][1]["t"] == "1st place" and "Universitas Indonesia" in books["awards"][1]["h"]
     print("build_lab self-check passed")

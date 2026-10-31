@@ -106,6 +106,7 @@ footer { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; paddi
   <ul>
     <li><a href="#chapters">chapters</a></li>
     <li><a href="/lab/">lab</a></li>
+    <li><a href="/about/">about</a></li>
     <li class="wide"><a href="#rules">rules</a></li>
     <li><a href="#data">data</a></li>
   </ul>
@@ -125,7 +126,7 @@ unfinished, for whoever comes next.</p>
     <p>Hello, I'm Hamzah.</p>
     <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
     <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
-    <p class="muted"><a href="https://github.com/Mzah901">github</a></p>
+    <p class="muted"><a href="/about/">publications, awards, projects</a> · <a href="https://github.com/Mzah901">github</a></p>
   </div>
 
   <section id="chapters">
@@ -1015,10 +1016,11 @@ function buildScene() {
   const marble = mat(0xf0ede6, 0.35), walnut = mat(0x4a2e1a, 0.5), ribbon = mat(0xc4202b, 0.7, { side: THREE.DoubleSide });
   const plaqueTex = canvasTexture(64, 40, (g, w, h) => { g.fillStyle = "#c9a54a"; g.fillRect(0, 0, w, h); g.fillStyle = "#6b5220"; for (let y = 10; y < 34; y += 7) g.fillRect(8, y, w - 16, 2); });
   const trophies = new THREE.Group(); trophies.position.set(0.36, SHELF_Y + 0.0125, WALL_Z + 0.16); room.add(trophies);
+  const cups = [];   // one per award, left to right (see the clickables list)
   const cupProfile = [[0, 0], [0.026, 0], [0.026, 0.006], [0.008, 0.012], [0.006, 0.03], [0.016, 0.04], [0.036, 0.07], [0.046, 0.105], [0.05, 0.13], [0.053, 0.134], [0.049, 0.136]]
     .map(([r, y]) => new THREE.Vector2(r, y));
   [[0, 0.36], [0.24, 0.46], [0.5, 0.3], [0.74, 0.4]].forEach(([x, h], k) => {
-    const tr = new THREE.Group(); tr.position.set(x, 0, (k % 2) * 0.02); tr.rotation.y = (k - 1.5) * 0.12; trophies.add(tr);
+    const tr = new THREE.Group(); tr.position.set(x, 0, (k % 2) * 0.02); tr.rotation.y = (k - 1.5) * 0.12; trophies.add(tr); cups.push(tr);
     block(0.12, 0.03, 0.12, walnut, 0, 0.015, 0, tr);                                   // stepped base
     block(0.09, 0.05, 0.09, marble, 0, 0.055, 0, tr);
     const plaque = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.035), mat(0xffffff, 0.3, { map: plaqueTex, metalness: 0.5 }));
@@ -1256,9 +1258,10 @@ function buildScene() {
     const ball = piece(new THREE.IcosahedronGeometry(0.035, 0), mat(0xeeeae2, 0.9, { flatShading: true }), x, RY + y, WALL_Z + z);
     ball.rotation.set(Math.random() * 3, Math.random() * 3, 0);
   }
-  let stackY = RY + 0.3;   // on top of the box
-  [[0x2f3a56, 0.04], [0xd7d0bf, 0.03], [0x5b2a2a, 0.05], [0x2c4a3a, 0.035]].forEach(([c, th], k) => {
-    block(0.2, th, 0.27, mat(c, 0.8), -0.64 + (k % 2) * 0.012, stackY + th / 2, WALL_Z + 0.32).rotation.y = (k - 1.5) * 0.08;
+  let stackY = RY + 0.3;   // on top of the box: five journals, one per published paper
+  const journals = new THREE.Group(); room.add(journals);
+  [[0x2f3a56, 0.04], [0xd7d0bf, 0.03], [0x5b2a2a, 0.05], [0x2c4a3a, 0.035], [0xe9e4d8, 0.03]].forEach(([c, th], k) => {
+    block(0.2, th, 0.27, mat(c, 0.8), -0.64 + (k % 2) * 0.012, stackY + th / 2, WALL_Z + 0.32, journals).rotation.y = (k - 2) * 0.08;
     stackY += th;
   });
   for (const sx of [-1, 1]) {
@@ -1309,10 +1312,17 @@ function buildScene() {
   const tip = document.createElement("div");
   tip.className = "obj-tip"; tip.hidden = true; document.body.appendChild(tip);
   const clickables = [
-    { obj: books, label: "Beyond Statutes →", href: "/beyond-statutes/" },
-    { obj: laptop, label: "Experiments ↓", href: "#experiments" },
+    { obj: memoir, label: "Beyond Statutes →", href: "/beyond-statutes/" },   // before books: the memoir sits inside that group
+    { obj: books, label: "Lessons learned →", href: "/lessons/" },
+    { obj: laptop, label: "Lab →", href: "/lab/" },
     { obj: tablet, label: "House rules ↓", href: "#rules" },
-    { obj: trophies, label: "GitHub →", href: "https://github.com/Mzah901" },
+    { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", href: "/about/#awards" },
+    { obj: cups[1], label: "1st · Legal essay, Universitas Internasional Batam", href: "/about/#awards" },
+    { obj: cups[2], label: "1st · Article, Pancasila Festival, Universitas Jember 2021", href: "/about/#awards" },
+    { obj: cups[3], label: "2nd · Constitutional Law Festival, Universitas Brawijaya 2021", href: "/about/#awards" },
+    { obj: journals, label: "5 published papers →", href: "/about/#publications" },
+    { obj: diploma, label: "Law, Universitas Gadjah Mada →", href: "/about/#education" },
+    { obj: cork, label: "Projects →", href: "/about/#projects" },
     { obj: guitar, label: "Play a chord ♪", play: true },
   ];
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();

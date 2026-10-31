@@ -1,15 +1,15 @@
-"""Build the Lab page (statuta.id/lab/): every experiment log, plus the Python learning log.
+"""Build the Lab page (statuta.id/lab/) from the experiment logs, and the plain pages in content/pages/.
 
 How it works (plain language):
 1. Read every .md file in experiments/. Each log has a # title, **Date:** and **Status:** lines,
    and ## sections. The page shows the question, the result, the known limits and whether
    I have reviewed it yet; the full log stays on GitHub.
-2. Read content/learning/python.md: "- [x]" is a finished session, "- [ ]" is not done yet.
-   Ticking a box there is all it takes to move the progress bar.
-3. Put both into the same page template as the Beyond Statutes notes.
+2. Each file in content/pages/ (about.md, lessons.md) becomes its own page: about.md → statuta.id/about/.
+   "## Heading" starts a section; its id is the heading in lower case, so /about/#awards jumps there.
+3. All of them use the same page template as the Beyond Statutes notes.
 
 Only a small part of Markdown is supported: paragraphs, "- " and "1. " lists, **bold**,
-`code` and [links](url). That is all the logs use in the sections shown.
+`code`, _italic_ and [links](url), plus "## " headings in content/pages/.
 """
 
 import html
@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 EXPERIMENTS_DIR = ROOT / "experiments"
-LEARNING = ROOT / "content" / "learning" / "python.md"
+PAGES_DIR = ROOT / "content" / "pages"
 TEMPLATE = ROOT / "site" / "note.html"
 LOG_URL = "https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/experiments/"
 
@@ -32,7 +32,8 @@ def inline(text):
     text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"`(.+?)`", r"<code>\1</code>", text)
     text = re.sub(r"(?<!\w)_(.+?)_(?!\w)", r"<i>\1</i>", text)
-    text = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', text)
+    text = re.sub(r"(?<![\w*])\*([^*]+)\*(?![\w*])", r"<i>\1</i>", text)
+    text = re.sub(r"\[([^\]]+)\]\(((?:https?://|/)[^)\s]+)\)", r'<a href="\2">\1</a>', text)
     return re.sub(r"(?<![\"'>])(https?://[^\s<)]+)", r'<a href="\1">\1</a>', text)
 
 
@@ -90,46 +91,41 @@ def experiment_html(e):
 </article>"""
 
 
-def learning_html():
-    text = LEARNING.read_text(encoding="utf-8")
-    _, header, body = text.split("---", 2)
-    meta = {k.strip(): v.strip() for k, v in (l.split(":", 1) for l in header.strip().splitlines())}
-    done = len(re.findall(r"^- \[x\]", body, re.M | re.I))
-    total = len(re.findall(r"^- \[[ x]\]", body, re.M | re.I))
-    out = [f'<h1 class="small">{html.escape(meta["title"])}</h1>',
-           f'<p class="progress"><span style="width:{100 * done / total:.0f}%"></span></p>',
-           f'<p class="ch">{done} / {total} sessions done</p>']
-    if meta.get("repo"):
-        out.append(f'<p class="muted">Code: <a href="{meta["repo"]}">{html.escape(meta["repo"])}</a></p>')
-    for line in body.strip().splitlines():
+def plain_page(path):
+    """A content/pages/ file: header with the title, then paragraphs, lists and ## sections."""
+    _, header, body = path.read_text(encoding="utf-8").split("---", 2)
+    title = header.split("title:", 1)[1].strip()
+    out, chunk = [f'<p class="crumb"><a href="/">statuta.id</a> / {html.escape(title.lower())}</p>', f"<h1>{html.escape(title)}</h1>"], []
+    for line in body.strip().splitlines() + ["## "]:
         if line.startswith("## "):
-            out.append(f"<h2>{html.escape(line[3:])}</h2>")
-        elif m := re.match(r"- \[([ xX])\] (.+)", line):
-            mark, cls = ("✓", "done") if m.group(1) != " " else ("·", "todo")
-            out.append(f'<p class="session {cls}"><span aria-hidden="true">{mark}</span> {inline(m.group(2))}</p>')
-        elif line.strip():
-            out.append(f"<p>{inline(line)}</p>")
-    return "\n".join(out), done, total
+            out.append(blocks(chunk)); chunk = []
+            if line[3:]:
+                out.append(f'<h2 id="{line[3:].strip().lower().replace(" ", "-")}">{html.escape(line[3:].strip())}</h2>')
+        else:
+            chunk.append(line)
+    return title, "\n".join(out)
 
 
 def build(public_dir):
     experiments = sorted((read_experiment(p) for p in EXPERIMENTS_DIR.glob("*.md")), key=lambda e: e["file"], reverse=True)
-    learning, done, total = learning_html()
     main = f"""
 <p class="crumb"><a href="/">statuta.id</a> / lab</p>
 <h1>Lab</h1>
 <p class="muted">What I tried, what came out, and what is still wrong with it. Every result is a draft until I have checked it by hand.</p>
 <h2 id="experiments">Experiments</h2>
 {"".join(experiment_html(e) for e in experiments)}
-<section id="learning">
-{learning}
-</section>
 """
     page = TEMPLATE.read_text(encoding="utf-8").replace("__TITLE__ · Beyond Statutes", "Lab · Regulatory AI Labs")
     out = public_dir / "lab"
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(page.replace("__TITLE__", "Lab").replace("__MAIN__", main), encoding="utf-8")
-    print(f"Lab: {len(experiments)} experiments, Python {done}/{total} sessions")
+    for path in sorted(PAGES_DIR.glob("*.md")):
+        title, body = plain_page(path)
+        (public_dir / path.stem).mkdir(exist_ok=True)
+        (public_dir / path.stem / "index.html").write_text(
+            TEMPLATE.read_text(encoding="utf-8").replace("__TITLE__ · Beyond Statutes", f"{title} · Regulatory AI Labs")
+            .replace("__TITLE__", html.escape(title)).replace("__MAIN__", f'<div class="page">{body}</div>'), encoding="utf-8")
+    print(f"Lab: {len(experiments)} experiments; pages: {', '.join(p.stem for p in PAGES_DIR.glob('*.md'))}")
 
 
 if __name__ == "__main__":
@@ -140,6 +136,9 @@ if __name__ == "__main__":
                    '<ol class="refs">\n<li>first</li>\n</ol>'), got
     assert inline("_Pending._ snake_case") == "<i>Pending.</i> snake_case"
     assert inline("[x](https://e.com)") == '<a href="https://e.com">x</a>'
+    assert inline("[Lab](/lab/)") == '<a href="/lab/">Lab</a>'
     e = read_experiment(EXPERIMENTS_DIR / "2026-10-11-legal-industry-map.md")
     assert list(e["sections"]) == ["Question", "Result", "Known limits", "Human review"], list(e["sections"])
+    title, body = plain_page(PAGES_DIR / "about.md")
+    assert '<h2 id="awards">Awards</h2>' in body and "<i>Jurnal Konstitusi</i>" in body, body[:400]
     print("build_lab self-check passed")

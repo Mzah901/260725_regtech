@@ -1,0 +1,42 @@
+---
+title: Lessons learned
+---
+One concept a day, picked by Claude in my morning briefing to match what I was working through. Each one is from a different field. Here is the one-line version of what I kept.
+
+## The concepts
+- **Little's Law** · Operations. How long work takes depends on how much is open at once, not on how fast you work.
+- **Hysteresis** · Physics. Output depends on history, not only on the present; removing the input doesn't take you back to the start.
+- **Goodhart's Law** · Economics. When a measure becomes a target, people optimise the number instead of the goal.
+- **Activation energy** · Chemistry. A big payoff doesn't start a reaction; the cost of the first minute does. Lower it with a catalyst, not willpower.
+- **Bright-line rule vs standard** · Law. A standard leaves the decision to whoever applies it. If that is you at your weakest, you wrote a permission, not a rule.
+- **Ergodicity** · Probability. The population average is not one person's path over time. A thesis can be right and you can still hit a loss you can't come back from; only position size protects you.
+- **Disposition effect** · Behavioral finance. We sell winners too early and hold losers too long because the purchase price becomes the anchor. Ask: with cash today, would I buy this?
+- **Bus factor** · Computing. How many people could leave before a project stalls. Knowledge that isn't written down is only borrowed.
+- **Entropy** · Physics. Systems and unwritten know-how drift into disorder without active effort. Nothing breaks them; they are just left alone.
+- **Herfindahl–Hirschman Index** · Competition law. Concentration is the sum of squared shares, and 10,000 divided by it is how many independent bets you really hold.
+- **Intolerance of uncertainty** · Psychology. What hurts is not the bad outcome but not knowing. The fix is a response that works in every case, not certainty.
+- **Bayes and the likelihood ratio** · Probability. Odds after = odds before × likelihood ratio. Use the cheap signals you already have before paying for an expensive test.
+- **Zeigarnik effect** · Psychology. Open tasks keep pinging working memory. Give each one a slot, a person, or a deliberate cross-out.
+- **Delimiter collision** · Computing. When the separator also appears inside the data, the system misreads it. Wrap the data (quoting); don't edit it.
+- **Becker's deterrence model** · Law and economics. Compliance depends more on the certainty of being caught than on the size of the penalty. A rule nobody enforces has an expected sanction of zero.
+- **Rate-determining step** · Chemistry. The slowest step sets the overall speed. Speeding up the fast steps only builds a queue.
+- **Curse of knowledge** · Psychology. Once you know, you can't remember not knowing. Write guides from where beginners get stuck, not from how you built the thing.
+- **Chain of custody** · Law of evidence. Evidence is worth its content times your ability to prove it is intact. Work without a handover log becomes untrustworthy.
+- **Work = force × distance** · Physics. Effort only counts when something moves toward the goal. Effort with no output, or sideways to the goal, is zero.
+- **Pre-mortem** · Decision science. Assume the plan has already failed and explain why. We are better at explaining the past than predicting the future.
+- **Precision vs recall** · Statistics. "Accurate" is two numbers: how clean the output is and how complete it is. In compliance, a missed obligation costs more than a false alarm.
+- **Planning fallacy** · Decision science. Estimates built from your own task list are too optimistic. Use how long similar work actually took.
+- **Index effect and forced selling** · Finance. A price can fall because someone has to sell, not because the value fell. Separate flows from fundamentals.
+- **Implementation intentions** · Psychology. An intention without a trigger is a hope. Write "if [situation], then [action under two minutes]".
+- **Implied repeal and saving clauses** · Legisprudence. "Repealed" is the headline. The transitional provisions decide which obligations survive and silent conflicts decide which die, so read the end of a regulation first.
+- **Regression to the mean** · Statistics. An extreme result is signal plus noise, and the next one drifts back to average. Don't judge from one peak or one trough.
+- **Inter-rater reliability** · Psychometrics. Before measuring a machine's accuracy, check that the humans agree. Low agreement means the categories are unclear, not that the machine is wrong.
+- **Test oracle problem** · Computing. Running a test is cheap; knowing the right answer is expensive. Without an answer key fixed before you see the output, it's a demo, not a validation.
+- **Le Chatelier's principle** · Chemistry. A system in balance shifts to absorb a disturbance. New rules get routed around by the cheapest path, so make the cheapest path the right one.
+- **BATNA** · Negotiation. Bargaining power comes from your alternative if the deal fails, not from the quality of your argument. Don't bluff.
+- **Signaling theory** · Economics. When one side knows more, cheap claims prove nothing. Only signals that are costly to fake are credible.
+- **Thrashing** · Operating systems. When active projects exceed what fits in memory, time goes to reloading context and output collapses. Park some on purpose.
+- **Testing effect** · Cognitive psychology. Pulling knowledge out of memory lasts far longer than rereading, which only feels like understanding.
+- **Network effects** · Economics. A tool's value grows with its users, and below a critical mass it dies slowly.
+- **Metal fatigue** · Materials science. Things break from small loads repeated, not one big load. Size of the load × number of cycles sets the lifespan.
+- **Shapley value** · Game theory. Your contribution is the value you add on average across every order of joining. Credit is what would be lost if you left, not how visible you are.

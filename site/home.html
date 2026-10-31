@@ -1687,39 +1687,63 @@ function buildScene() {
     else location.href = c.href;
   });
 
-  // Guitar: a strummed Britpop chord loop (Em7 – G – Dsus4 – A7sus4 with a capo on the 2nd fret, the progression
-  // Oasis made famous; no melody), ending on a ringing Em7. Each string is synthesised by the Karplus–Strong method
-  // (a burst of noise fed through a short delay loop, which rings like a plucked string).
-  let audio = null, busyUntil = 0;
-  const pluck = (freq, at, vol = 0.16, ring = 2.2) => {
+  // Guitar: about 10 seconds of a strummed Britpop chord loop (Em7 – G – Dsus4 – A7sus4, capo on the 2nd fret, the
+  // progression Oasis made famous; chords only, no melody), ending on a ringing Em7.
+  // Each string is synthesised by the Karplus–Strong method (a burst of noise fed through a short delay loop, which
+  // rings like a plucked string), then sent through a guitar-body boost, a little brightness and a small room echo.
+  let audio = null, out = null, busyUntil = 0;
+  const ringing = [];   // what each of the 6 strings is playing, so a new strum cuts off the old note like a real string
+  function setupAudio() {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    const body = audio.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 190; body.Q.value = 1.2; body.gain.value = 5;
+    const air = audio.createBiquadFilter(); air.type = "highshelf"; air.frequency.value = 3200; air.gain.value = 4;
+    const room = audio.createConvolver(), len = audio.sampleRate * 1.2, ir = audio.createBuffer(2, len, audio.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let n = 0; n < len; n++) d[n] = (Math.random() * 2 - 1) * Math.pow(1 - n / len, 3.5); }
+    room.buffer = ir;
+    const wet = audio.createGain(); wet.gain.value = 0.18;
+    const comp = audio.createDynamicsCompressor();
+    out = audio.createGain();
+    out.connect(body).connect(air).connect(comp).connect(audio.destination);
+    air.connect(room).connect(wet).connect(comp);
+  }
+  const pluck = (string, freq, at, vol, ring = 1.6) => {
     const rate = audio.sampleRate, len = Math.floor(rate * ring), data = new Float32Array(len), period = Math.round(rate / freq);
     for (let n = 0; n < period; n++) data[n] = Math.random() * 2 - 1;
-    for (let n = period; n < len; n++) data[n] = 0.996 * 0.5 * (data[n - period] + data[n - period + 1]);
+    for (let n = period; n < len; n++) data[n] = 0.9985 * (0.62 * data[n - period] + 0.38 * data[n - period + 1]);   // steel strings: bright, long
     const buf = audio.createBuffer(1, len, rate); buf.copyToChannel(data, 0);
     const src = audio.createBufferSource(), gain = audio.createGain();
-    src.buffer = buf; gain.gain.value = vol;
-    src.connect(gain).connect(audio.destination); src.start(at);
+    src.buffer = buf; gain.gain.setValueAtTime(vol, at);
+    src.connect(gain).connect(out); src.start(at);
+    const prev = ringing[string];
+    if (prev) prev.gain.setTargetAtTime(0, at, 0.012);   // the old note on this string stops
+    ringing[string] = gain;
   };
   const CAPO = Math.pow(2, 2 / 12);   // capo on the 2nd fret raises every string two semitones
-  const CHORDS = [[82.41, 123.47, 164.81, 196, 293.66, 392],   // Em7
-                  [98, 123.47, 146.83, 196, 293.66, 392],       // G
-                  [146.83, 220, 293.66, 392],                   // Dsus4
-                  [110, 164.81, 196, 293.66, 392]];             // A7sus4
-  const PATTERN = ["D", "D", "U", "U", "D", "U"];   // strums per chord, on a 16th-note grid
-  const GRID = [0, 0.345, 0.517, 0.69, 0.86, 1.035];   // seconds into the bar (about 87 bpm)
-  // Down strokes sweep low to high at full volume; up strokes catch the top strings, quieter.
-  const sweep = (notes, dir, at, vol, ring) => (dir === "D" ? notes : notes.slice(-4).reverse())
-    .forEach((f, k) => pluck(f * CAPO, at + k * 0.011, dir === "D" ? vol : vol * 0.6, ring));
+  // Low E to high e; null = string not played. The top two strings stay on the same notes in every chord.
+  const CHORDS = { Em7: [82.41, 123.47, 164.81, 196, 293.66, 392], G: [98, 123.47, 146.83, 196, 293.66, 392],
+                   Dsus4: [null, null, 146.83, 220, 293.66, 392], A7sus4: [null, 110, 164.81, 196, 293.66, 392] };
+  const SONG = ["Em7", "G", "Dsus4", "A7sus4", "Em7", "G"];
+  const SIXTEENTH = 60 / 87 / 4;   // 87 bpm
+  // Over two beats (8 sixteenths): down on 1, down-up on the "&-a", up, down-up; the last up already plays the next chord.
+  const PATTERN = [[0, "D"], [2, "D"], [3, "U"], [5, "U"], [6, "D"], [7, "U+"]];
+  const human = (x) => x + (Math.random() - 0.5) * x * 0.25;
+  function sweep(chord, dir, at, vol, ring) {
+    const strings = CHORDS[chord].map((f, k) => [k, f]).filter(([, f]) => f);
+    const order = dir === "D" ? strings : strings.slice(-4).reverse();
+    order.forEach(([k, f], i) => pluck(k, f * CAPO, at + i * (dir === "D" ? 0.012 : 0.008), human(dir === "D" ? vol : vol * 0.55), ring));
+  }
   function strum() {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = audio.currentTime + 0.05;
+    if (!audio) setupAudio();
+    if (audio.state === "suspended") audio.resume();
+    const t0 = audio.currentTime + 0.08;
     if (t0 < busyUntil) return;   // let it finish before it can start again
-    const LOOPS = 3;   // three times round the four chords plus the last ring: about 20 seconds
-    for (let r = 0; r < LOOPS; r++)
-      CHORDS.forEach((notes, c) => PATTERN.forEach((dir, k) => sweep(notes, dir, t0 + (r * 4 + c) * 1.38 + GRID[k], 0.1, 1.2)));
-    const end = t0 + LOOPS * CHORDS.length * 1.38;
-    sweep(CHORDS[0], "D", end, 0.12, 3.5);   // last Em7, left to ring
-    busyUntil = end + 1.5;
+    SONG.forEach((chord, c) => PATTERN.forEach(([slot, dir]) => {
+      const name = dir === "U+" ? (SONG[c + 1] || "Em7") : chord;   // anticipate the next chord on the last up-strum
+      sweep(name, dir[0], t0 + (c * 8 + slot) * SIXTEENTH + (Math.random() - 0.5) * 0.012, slot === 0 ? 0.13 : 0.1);
+    }));
+    const end = t0 + SONG.length * 8 * SIXTEENTH;
+    sweep("Em7", "D", end, 0.13, 2.8);   // last Em7, left to ring
+    busyUntil = end + 2;
   }
 
   // ---- Day to night as you scroll: afternoon sun in the room, Hueco Mundo night outside. ----

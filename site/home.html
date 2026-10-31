@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Regulatory AI Labs</title>
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://statuta.id/">
 <meta name="description" content="Independent research applying AI to Indonesian regulation, using public sources only.">
 <meta property="og:site_name" content="statuta.id">
@@ -41,7 +42,8 @@ a:hover, a:focus-visible { text-decoration-color: var(--red); color: #fff; outli
 nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 3;
   display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px;
   border-radius: 999px; background: rgba(30, 30, 29, .55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-nav .name { font-weight: 500; text-decoration: none; }
+nav .name { font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+nav .name img { border-radius: 5px; }
 nav ul { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
 nav ul a { color: var(--muted); text-decoration: none; }
 nav ul a:hover { color: var(--ink); }
@@ -115,14 +117,59 @@ footer { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; paddi
 #sky-cap b { color: var(--ink); font-family: var(--display); }
 .as-list { margin-top: 24px; } .as-list summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 24px; }
 @keyframes twinkle { 50% { opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor, .star .core { animation: none; } }
+/* Flipbook (Issuu-style): a cover, then two-page spreads; the turning page is a leaf with a front and a back. */
+.fb { position: fixed; inset: 0; z-index: 20; background: rgba(5, 5, 5, .88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: grid; place-items: center; padding: 56px 16px 72px; }
+.fb[hidden] { display: none; }
+.fb-stage { perspective: 2400px; width: min(980px, 100%); }
+.fb-book { position: relative; display: grid; grid-template-columns: 1fr 1fr; aspect-ratio: 1.45; max-height: calc(100vh - 140px); margin: 0 auto;
+  transition: transform .6s ease; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, .6)); }
+.fb-book.cover { transform: translateX(-25%); }
+.fb-page { position: relative; background: #f3eee2; color: #1d1b17; padding: 8% 9% 9%; overflow: hidden; font-size: 13px; line-height: 1.65; display: flex; flex-direction: column; }
+.fb-body { position: relative; flex: 1; overflow: auto; scrollbar-width: thin; }
+.fb-left { border-radius: 4px 0 0 4px; box-shadow: inset -26px 0 30px -24px rgba(0, 0, 0, .45); }
+.fb-right { border-radius: 0 4px 4px 0; box-shadow: inset 26px 0 30px -24px rgba(0, 0, 0, .45); }
+.fb-page.empty { visibility: hidden; }
+.fb-page.is-cover { background: #1d1e22; color: #c9a54a; display: flex; flex-direction: column; justify-content: center; }
+.fb-page.is-cover h2 { font-family: var(--display); font-size: clamp(26px, 4vw, 42px); line-height: 1.1; margin: 10px 0 0; color: #c9a54a; }
+.fb-page.is-cover p { margin-top: 18px !important; font-style: italic; font-family: var(--display); color: #c9a54a; margin: 0; }
+.fb-k { font-size: 11px; letter-spacing: .1em; color: #a01d24; }
+.fb-page h3 { font-family: var(--display); font-weight: 800; font-size: clamp(18px, 2.4vw, 24px); line-height: 1.2; margin: 6px 0 14px; }
+.fb-page p { margin: 0 0 12px; }
+.fb-page a { color: #a01d24; text-decoration-color: #a01d24; }
+.fb-page .fb-more { display: inline-block; margin-top: 6px; font-size: 12px; }
+.fb-w { position: absolute; right: 7%; bottom: 7%; font-family: var(--display); font-weight: 800; font-size: clamp(56px, 9vw, 110px); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(160, 29, 36, .22); transform: rotate(-8deg); pointer-events: none; }
+.fb-n { position: absolute; bottom: 3%; left: 0; right: 0; text-align: center; font-size: 11px; color: #8a8478; }
+.fb-leaf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.35, .1, .2, 1); z-index: 2; }
+.fb-leaf.fwd { left: 50%; transform-origin: left center; } .fb-leaf.bwd { left: 0; transform-origin: right center; }
+.fb-leaf .fb-page { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.fb-leaf .fb-back { transform: rotateY(180deg); }
+.fb-leaf.fwd.go { transform: rotateY(-180deg); } .fb-leaf.bwd.go { transform: rotateY(180deg); }
+.fb-btn { position: fixed; background: rgba(20, 20, 20, .8); color: var(--ink); border: 1px solid var(--line); font: inherit; font-size: 28px; line-height: 1;
+  width: 44px; height: 64px; cursor: pointer; border-radius: 6px; }
+.fb-btn:hover, .fb-btn:focus-visible { border-color: var(--red); outline: none; }
+.fb-prev { left: 12px; top: 50%; transform: translateY(-50%); } .fb-next { right: 12px; top: 50%; transform: translateY(-50%); }
+.fb-btn[disabled] { opacity: .25; cursor: default; }
+.fb-x { top: 12px; right: 12px; width: 44px; height: 44px; font-size: 24px; }
+.fb-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(560px, calc(100% - 32px)); display: flex; align-items: center; gap: 14px;
+  background: rgba(20, 20, 20, .85); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font-size: 12px; color: var(--muted); }
+.fb-count { color: var(--ink); min-width: 64px; }
+.fb-range { flex: 1; accent-color: var(--red); }
+.fb-brand { display: inline-flex; align-items: center; gap: 6px; } .fb-brand img { border-radius: 3px; }
+@media (max-width: 700px) {
+  .fb-book { grid-template-columns: 1fr; aspect-ratio: .7; } .fb-left { display: none; } .fb-book.cover { transform: none; }
+  .fb-right { border-radius: 4px; } .fb-leaf { width: 100%; } .fb-leaf.fwd { left: 0; } .fb-brand { display: none; }
+  .fb-prev, .fb-next { top: auto; bottom: 74px; transform: none; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor, .star .core { animation: none; } .fb-book, .fb-leaf { transition: none; } }
 </style>
 </head>
 <body>
 <canvas id="scene" aria-hidden="true"></canvas>
 
 <nav aria-label="Main">
-  <a class="name" href="#top">statuta.id</a>
+  <a class="name" href="#top"><img src="/logo.svg" alt="" width="22" height="22"> statuta.id</a>
   <ul>
     <li><a href="#chapters">chapters</a></li>
     <li><a href="/lab/">lab</a></li>
@@ -201,7 +248,18 @@ unfinished, for whoever comes next.</p>
 <footer>
   <span>Independent personal research. Not affiliated with or endorsed by any employer.</span>
   <span>Outputs are research artifacts, not legal or investment advice.</span>
+  <span>Design inspired by Tite Kubo (<i>Bleach</i>) and Hiromu Arakawa (<i>Fullmetal Alchemist: Brotherhood</i>).</span>
+  <span>Business inquiries: <a href="mailto:fulldragonalchemist@gmail.com">fulldragonalchemist@gmail.com</a></span>
 </footer>
+
+<div id="fb" class="fb" hidden role="dialog" aria-modal="true" aria-label="Book">
+  <button type="button" class="fb-btn fb-x" aria-label="Close book">×</button>
+  <button type="button" class="fb-btn fb-prev" aria-label="Previous page">‹</button>
+  <div class="fb-stage"><div class="fb-book"><div class="fb-page fb-left"></div><div class="fb-page fb-right"></div></div></div>
+  <button type="button" class="fb-btn fb-next" aria-label="Next page">›</button>
+  <div class="fb-bar"><span class="fb-count"></span><input type="range" class="fb-range" min="0" value="0" aria-label="Go to page"><span class="fb-brand"><img src="/logo.svg" alt="" width="16" height="16"> statuta.id</span></div>
+</div>
+<script type="application/json" id="books-data"><!--BOOKS--></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -222,6 +280,67 @@ if (still) {
   };
   setTimeout(type, 500);
 }
+
+// ---- Flipbook: opens a book (Beyond Statutes, awards, papers) over the page and turns its pages. ----
+const BOOKS = JSON.parse(document.getElementById("books-data").textContent);
+const openBook = (() => {
+  const fb = document.getElementById("fb"), book = fb.querySelector(".fb-book"), L = fb.querySelector(".fb-left"), Rt = fb.querySelector(".fb-right");
+  const prev = fb.querySelector(".fb-prev"), next = fb.querySelector(".fb-next"), count = fb.querySelector(".fb-count"), range = fb.querySelector(".fb-range");
+  const single = () => matchMedia("(max-width: 700px)").matches;
+  let pages = [], view = 0, busy = false, back = null;
+  // Spread n shows pages [2n-1, 2n]: the cover sits alone on the right, like a closed book. On phones: one page per view.
+  const spread = (n) => (single() ? [null, n] : [n ? 2 * n - 1 : null, 2 * n]).map((i) => (i != null && i < pages.length ? i : null));
+  const views = () => (single() ? pages.length : Math.floor(pages.length / 2) + 1);
+  const fill = (el, i) => {
+    const p = pages[i];
+    el.className = el.className.replace(/ ?(empty|is-cover)/g, "") + (p ? (p.cover ? " is-cover" : "") : " empty");
+    el.innerHTML = !p ? "" : p.cover ? `<span class="fb-k">STATUTA.ID</span><h2>${p.t}</h2><p>${p.sub}</p>`
+      : `${p.w ? `<span class="fb-w" aria-hidden="true">${p.w}</span>` : ""}<div class="fb-body"><span class="fb-k">${p.k}</span><h3>${p.t}</h3>${p.h}${p.a ? `<a class="fb-more" href="${p.a}">Read with its links →</a>` : ""}</div><span class="fb-n">${i + 1}</span>`;
+  };
+  function render() {
+    const [a, b] = spread(view);
+    fill(L, a); fill(Rt, b);
+    book.classList.toggle("cover", !single() && view === 0);
+    const shown = [a, b].filter((i) => i != null).map((i) => i + 1);
+    count.textContent = `${shown.join("–")} / ${pages.length}`;
+    range.max = views() - 1; range.value = view;
+    prev.disabled = view === 0; next.disabled = view >= views() - 1;
+  }
+  function turn(to) {
+    if (busy || to === view || to < 0 || to >= views()) return;
+    const fwd = to > view, [a, b] = spread(view), [c, d] = spread(to);
+    if (still || Math.abs(to - view) > 1) { view = to; return render(); }
+    busy = true;
+    const leaf = document.createElement("div"); leaf.className = "fb-leaf " + (fwd ? "fwd" : "bwd");
+    const front = document.createElement("div"), backFace = document.createElement("div");
+    front.className = "fb-page " + (fwd ? "fb-right" : "fb-left"); backFace.className = "fb-page fb-back " + (fwd ? "fb-left" : "fb-right");
+    if (single()) { fill(front, b); fill(backFace, d); fill(Rt, d); }
+    else if (fwd) { fill(front, b); fill(backFace, c); fill(Rt, d); }
+    else { fill(front, a); fill(backFace, d); fill(L, c); }
+    leaf.append(front, backFace); book.append(leaf);
+    if (!single()) book.classList.toggle("cover", to === 0);
+    requestAnimationFrame(() => requestAnimationFrame(() => leaf.classList.add("go")));
+    setTimeout(() => { leaf.remove(); view = to; busy = false; render(); }, 780);
+  }
+  prev.onclick = () => turn(view - 1); next.onclick = () => turn(view + 1);
+  range.oninput = () => turn(+range.value);
+  function close() { fb.hidden = true; document.documentElement.style.overflow = ""; if (back) back.focus(); }
+  fb.querySelector(".fb-x").onclick = close;
+  fb.addEventListener("click", (ev) => { if (ev.target === fb) close(); });
+  addEventListener("keydown", (ev) => {
+    if (fb.hidden) return;
+    if (ev.key === "Escape") close(); if (ev.key === "ArrowRight") turn(view + 1); if (ev.key === "ArrowLeft") turn(view - 1);
+  });
+  let sx = null;   // swipe left / right to turn
+  book.addEventListener("pointerdown", (ev) => (sx = ev.clientX));
+  book.addEventListener("pointerup", (ev) => { if (sx != null && Math.abs(ev.clientX - sx) > 40) turn(view + (ev.clientX < sx ? 1 : -1)); sx = null; });
+  return (name, page = 0) => {
+    pages = BOOKS[name]; back = document.activeElement;
+    view = single() ? page : Math.floor((page + 1) / 2);
+    fb.hidden = false; document.documentElement.style.overflow = "hidden";
+    render(); fb.querySelector(".fb-x").focus();
+  };
+})();
 
 // ---- Star map: a small force layout (stars push apart, links pull together), Obsidian-style. ----
 (function sky() {
@@ -248,7 +367,11 @@ if (still) {
     g.addEventListener("pointerenter", show); g.addEventListener("focus", show);
     g.addEventListener("pointerleave", hide); g.addEventListener("blur", hide);
     g.addEventListener("pointerdown", (ev) => { drag = { n, x: ev.clientX, y: ev.clientY, moved: false }; g.setPointerCapture(ev.pointerId); focus(n); });
-    g.addEventListener("click", (ev) => { if (drag && drag.moved) ev.preventDefault(); drag = null; });
+    g.addEventListener("click", (ev) => {
+      if ((drag && drag.moved) || n.kind === "note") ev.preventDefault();
+      if (n.kind === "note" && !(drag && drag.moved)) openBook("statutes", BOOKS.statutes.findIndex((p) => p.id === n.id));
+      drag = null;
+    });
   });
   let drag = null, heat = 1;
   svg.addEventListener("pointermove", (ev) => {
@@ -1215,9 +1338,63 @@ function buildScene() {
   block(0.07, 0.17, 0.02, mat(0x141414, 0.4), 0, 1.13, 0.085, guitar);              // headstock
   for (let s = 0; s < 6; s++) block(0.0015, 0.85, 0.0015, steel, -0.017 + s * 0.007, 0.62, 0.105, guitar);   // strings
   block(0.06, 0.012, 0.012, mat(0x2a1a10, 0.6), 0, 0.2, 0.107, guitar);             // bridge
+  block(0.04, 0.004, 0.006, mat(0xf3eee0, 0.4), 0, 0.207, 0.113, guitar);            // saddle
+  // Frets at their real spacing (each one 2^(1/12) closer to the bridge), dot inlays, nut, rosette, pickguard.
+  const nickel = mat(0xc9c9c4, 0.25, { metalness: 0.9 }), pearl = mat(0xf4f1ea, 0.3);
+  for (let k = 1; k <= 14; k++) {
+    const y = 1.05 - 0.85 * (1 - Math.pow(2, -k / 12)), yPrev = 1.05 - 0.85 * (1 - Math.pow(2, -(k - 1) / 12));
+    block(0.05, 0.0025, 0.003, nickel, 0, y, 0.1035, guitar);
+    for (const dx of k === 12 ? [-0.011, 0.011] : [3, 5, 7, 9].includes(k) ? [0] : [])
+      piece(new THREE.CylinderGeometry(0.0035, 0.0035, 0.001, 10), pearl, dx, (y + yPrev) / 2, 0.1028, guitar).rotation.x = Math.PI / 2;
+  }
+  block(0.05, 0.006, 0.008, mat(0xf3eee0, 0.4), 0, 1.052, 0.104, guitar);             // nut
+  piece(new THREE.TorusGeometry(0.053, 0.0045, 6, 40), mat(0x2b1a0e, 0.4), 0, 0.33, 0.1085, guitar);   // rosette
+  piece(new THREE.TorusGeometry(0.06, 0.0018, 6, 40), mat(0xc9b27a, 0.4), 0, 0.33, 0.1085, guitar);
+  const guard = new THREE.Shape(); guard.moveTo(0.03, 0.27); guard.bezierCurveTo(0.12, 0.22, 0.15, 0.3, 0.11, 0.36); guard.bezierCurveTo(0.08, 0.4, 0.06, 0.37, 0.05, 0.33); guard.closePath();
+  piece(new THREE.ShapeGeometry(guard), mat(0x3b1d12, 0.3, { side: THREE.DoubleSide }), 0, 0, 0.1084, guitar);   // tortoiseshell pickguard
+  for (let k = 0; k < 6; k++) {                                                         // tuning pegs, three a side
+    const sd = k < 3 ? -1 : 1, y = 1.09 + (k % 3) * 0.04;
+    piece(new THREE.CylinderGeometry(0.004, 0.004, 0.03, 8), nickel, sd * 0.045, y, 0.08, guitar).rotation.z = Math.PI / 2;
+    block(0.012, 0.018, 0.006, mat(0xe8e2d2, 0.4), sd * 0.064, y, 0.08, guitar);
+  }
+  block(0.065, 0.022, 0.03, mat(0x111111, 0.5), 0, 0.985, 0.104, guitar);              // capo on the second fret
+  const plectrum = new THREE.Shape(); plectrum.moveTo(0, 0.012); plectrum.quadraticCurveTo(0.012, 0.01, 0, -0.012); plectrum.quadraticCurveTo(-0.012, 0.01, 0, 0.012);
+  const pk = piece(new THREE.ShapeGeometry(plectrum), mat(0xc4202b, 0.4, { side: THREE.DoubleSide }), 0.012, 0.5, 0.107, guitar); pk.rotation.z = 0.5;   // pick tucked in the strings
 
-  // Bed corner on the left and the striped chair cushion in front of you.
-  block(0.9, 0.45, 2.0, mat(0x1f8a8f, 0.95), -1.25, RY + 0.225, BACK_Z - 1.0);
+  // The bed along the left wall: wooden frame on short legs, mattress, a rumpled duvet, pillows at the head (the far end),
+  // a striped blanket folded at the foot, and a book left open face down.
+  const bed = new THREE.Group(); bed.position.set(-1.25, RY, BACK_Z - 1.3); room.add(bed);
+  const oak = mat(0x8a5a35, 0.6);
+  block(0.96, 0.14, 2.04, oak, 0, 0.17, 0, bed);                                        // frame
+  for (const [x, z] of [[-0.44, -0.98], [0.44, -0.98], [-0.44, 0.98], [0.44, 0.98]]) block(0.06, 0.1, 0.06, oak, x, 0.05, z, bed);
+  block(0.9, 0.2, 1.98, mat(0xf1eee7, 0.95), 0, 0.34, 0, bed);                          // mattress with a white sheet
+  const duvetTex = canvasTexture(256, 256, (g, w, h) => {
+    g.fillStyle = "#1f7f86"; g.fillRect(0, 0, w, h);
+    g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 2;
+    for (let k = 32; k < w; k += 64) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, h); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(w, k); g.stroke(); }   // quilting
+    for (let k = 0; k < 2500; k++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.06})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  });
+  const duvetGeo = new THREE.BoxGeometry(0.98, 0.07, 1.45, 14, 1, 20), dp = duvetGeo.attributes.position;
+  for (let k = 0; k < dp.count; k++) {                                                   // rumple the top, let the sides droop
+    const x = dp.getX(k), y = dp.getY(k), z = dp.getZ(k);
+    if (y > 0) dp.setY(k, y + 0.03 * Math.sin(x * 9 + z * 4) * Math.cos(z * 7) + 0.02 * Math.sin(z * 13));
+    if (Math.abs(x) > 0.45) dp.setY(k, dp.getY(k) - 0.06);
+  }
+  duvetGeo.computeVertexNormals();
+  piece(duvetGeo, mat(0xffffff, 0.95, { map: duvetTex }), 0, 0.48, 0.1, bed);
+  for (const x of [-0.2, 0.2]) {
+    const pillow = piece(new THREE.SphereGeometry(0.2, 18, 10), mat(0xf6f3ec, 0.95), x, 0.5, 0.8, bed);
+    pillow.scale.set(1.05, 0.28, 0.6); pillow.rotation.y = x * 0.4;
+  }
+  const blanketTex = canvasTexture(128, 64, (g, w, h) => { for (let x = 0; x < w; x += 16) { g.fillStyle = x % 32 ? "#e7dcc1" : "#7a3b34"; g.fillRect(x, 0, 16, h); } });
+  block(0.92, 0.07, 0.34, mat(0xffffff, 0.95, { map: blanketTex }), 0, 0.475, -0.8, bed); // folded at the foot
+  for (const sd of [-1, 1]) {                                                            // open book, face down, spine up
+    const half = block(0.12, 0.008, 0.17, mat(0x2f3a56, 0.6), 0.1 + sd * 0.058, 0.545, -0.48, bed);
+    half.rotation.z = -sd * 0.28;
+  }
+  block(0.07, 0.008, 0.14, mat(0x161616, 0.3), 0.3, 0.535, -0.3, bed).rotation.y = 0.4;   // phone
+
+  // The striped chair cushion in front of you.
   const stripeTex = canvasTexture(128, 128, (g, w, h) => {
     for (let y = 0; y < h; y += 16) { g.fillStyle = y % 32 ? "#e7dcc1" : "#2d8f7b"; g.fillRect(0, y, w, 16); g.fillStyle = "rgba(120,90,40,.25)"; for (let x = 4; x < w; x += 10) g.fillRect(x, y + 6, 4, 4); }
   });
@@ -1245,9 +1422,6 @@ function buildScene() {
   const rug = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.0), mat(0xffffff, 1, { map: rugTex }));
   rug.rotation.x = -Math.PI / 2; rug.position.set(0.1, RY + 0.004, WALL_Z + 1.2); rug.receiveShadow = true; room.add(rug);
 
-  // Pillow and a folded blanket on the bed.
-  block(0.55, 0.12, 0.35, mat(0xf2efe8, 0.95), -1.25, RY + 0.51, BACK_Z - 0.25);
-  block(0.88, 0.06, 0.5, mat(0x3f6b8f, 0.95), -1.25, RY + 0.48, WALL_Z + 1.1);
 
   // Backpack slumped against the right desk leg, a fabric basket and a slim bookshelf by the right wall.
   const leatherTex = pixelTexture(128, 128, (x, y) => {
@@ -1453,15 +1627,15 @@ function buildScene() {
   const tip = document.createElement("div");
   tip.className = "obj-tip"; tip.hidden = true; document.body.appendChild(tip);
   const clickables = [
-    { obj: memoir, label: "Beyond Statutes →", href: "/beyond-statutes/" },   // before books: the memoir sits inside that group
+    { obj: memoir, label: "Open Beyond Statutes", book: "statutes" },   // before books: the memoir sits inside that group
     { obj: books, label: "Lessons learned →", href: "/lessons/" },
     { obj: laptop, label: "Lab →", href: "/lab/" },
     { obj: tablet, label: "House rules ↓", href: "#rules" },
-    { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", href: "/about/#awards" },
-    { obj: cups[1], label: "1st + best presentation · Paper, Universitas Internasional Batam", href: "/about/#awards" },
-    { obj: cups[2], label: "1st + best paper · Pancasila Festival, Universitas Jember 2021", href: "/about/#awards" },
-    { obj: cups[3], label: "2nd · Constitutional Law Festival, Universitas Brawijaya 2021", href: "/about/#awards" },
-    { obj: journals, label: "5 published papers →", href: "/about/#publications" },
+    { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", book: "awards", page: 1 },
+    { obj: cups[1], label: "1st + best presentation · Paper, Universitas Internasional Batam", book: "awards", page: 2 },
+    { obj: cups[2], label: "1st + best paper · Pancasila Festival, Universitas Jember 2021", book: "awards", page: 3 },
+    { obj: cups[3], label: "2nd · Constitutional Law Festival, Universitas Brawijaya 2021", book: "awards", page: 4 },
+    { obj: journals, label: "Open 5 published papers", book: "papers" },
     { obj: diploma, label: "Law, Universitas Gadjah Mada →", href: "/about/#education" },
     { obj: cork, label: "Projects →", href: "/about/#projects" },
     { obj: guitar, label: "Play a chord ♪", play: true },
@@ -1490,6 +1664,7 @@ function buildScene() {
     const c = pick(ev);
     if (!c) return;
     if (c.play) strum();
+    else if (c.book) openBook(c.book, c.page);
     else if (c.href.startsWith("#")) document.querySelector(c.href).scrollIntoView({ behavior: still ? "auto" : "smooth" });
     else location.href = c.href;
   });

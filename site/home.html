@@ -1511,7 +1511,7 @@ function buildScene() {
   const plate = mat(0xf4f2ee, 0.5);
   block(0.012, 0.11, 0.07, plate, ROOM_W / 2 - 0.006, RY + 0.3, WALL_Z + 0.5);           // socket
   block(0.012, 0.11, 0.07, plate, -ROOM_W / 2 + 0.006, RY + 1.2, BACK_Z - 0.2);          // light switch
-  // Band posters taped to the right wall. Original typographic designs (name, home town, year formed), not the bands' logos or artwork.
+  // Band posters taped to the right wall, each in the mood of an album. Original drawings: no band logos or album art copied.
   const poster = (paint) => canvasTexture(256, 360, (g, w, h) => {
     paint(g, w, h);
     for (let k = 0; k < 1800; k++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? "0,0,0" : "255,255,255"},${Math.random() * 0.05})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }   // print grain
@@ -1520,26 +1520,45 @@ function buildScene() {
     g.fillStyle = color; g.font = `${font} ${size}px Georgia, serif`; lines.forEach((t, k) => g.fillText(t, x, y + k * lh));
   };
   const posters = [
-    poster((g, w, h) => {   // Oasis: 90s Britpop, warm sun over a blue sky
-      g.fillStyle = "#1f3f78"; g.fillRect(0, 0, w, h);
-      g.fillStyle = "#f2a33a"; g.beginPath(); g.arc(w / 2, 150, 80, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#1f3f78"; for (let y = 150; y < 232; y += 12) g.fillRect(0, y, w, 5);   // sunset stripes
-      g.textAlign = "center"; stack(g, ["OASIS"], w / 2, 290, 62, 0, "#f6efe0");
-      stack(g, ["MANCHESTER · 1991"], w / 2, 325, 15, 0, "#f2a33a", "normal");
+    poster((g, w, h) => {   // Oasis, in the mood of (What's the Story) Morning Glory?: a city street at dusk, 90s film colours
+      const sky = g.createLinearGradient(0, 0, 0, 230); sky.addColorStop(0, "#1d3563"); sky.addColorStop(0.6, "#6d6f9a"); sky.addColorStop(1, "#e59a5a");
+      g.fillStyle = sky; g.fillRect(0, 0, w, 230);
+      g.fillStyle = "#2a2733"; g.beginPath(); g.moveTo(0, 230); g.lineTo(w, 230); g.lineTo(w, h); g.lineTo(0, h); g.fill();   // road
+      g.fillStyle = "#5c5560"; g.beginPath(); g.moveTo(w / 2 - 6, 230); g.lineTo(w / 2 + 6, 230); g.lineTo(w / 2 + 60, h); g.lineTo(w / 2 - 60, h); g.fill();
+      for (const side of [-1, 1]) for (let k = 0; k < 7; k++) {   // terraced houses shrinking toward the vanishing point
+        const x = side < 0 ? k * 17 : w - (k + 1) * 17, top = 120 + k * 13, base = 232 + (6 - k) * 4;
+        g.fillStyle = "#17151d"; g.fillRect(x, top, 17, base - top);
+        g.fillStyle = (k * 3 + side) % 4 ? "#2b2833" : "#f2c46b"; g.fillRect(x + 5, top + 12, 6, 7);   // a few lit windows
+      }
+      g.fillStyle = "#0e0d12"; g.fillRect(w / 2 - 14, 214, 3, 14); g.fillRect(w / 2 + 9, 216, 3, 12);   // two figures far down the street
+      g.textAlign = "center"; stack(g, ["OASIS"], w / 2, 62, 52, 0, "#f6efe0");
+      stack(g, ["MORNING GLORY · 1995"], w / 2, 334, 14, 0, "#f2c46b", "normal");
     }),
-    poster((g, w, h) => {   // Bring Me The Horizon: black, stacked type, an eclipse
-      g.fillStyle = "#0d0d0d"; g.fillRect(0, 0, w, h);
-      g.fillStyle = "#c4202b"; g.beginPath(); g.arc(w / 2, 110, 62, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#0d0d0d"; g.beginPath(); g.arc(w / 2 + 16, 100, 58, 0, Math.PI * 2); g.fill();
-      g.textAlign = "left"; stack(g, ["BRING", "ME THE", "HORIZON"], 26, 228, 38, 40, "#f2f0eb");
-      stack(g, ["SHEFFIELD · 2004"], 28, 338, 14, 0, "#c4202b", "normal");
+    poster((g, w, h) => {   // Bring Me The Horizon, in the mood of Sempiternal: the flower of life (an ancient public-domain pattern)
+      g.fillStyle = "#0b0b0b"; g.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = 150, r = 30;
+      g.strokeStyle = "rgba(242,240,235,.85)"; g.lineWidth = 1.4;
+      for (let q = -2; q <= 2; q++) for (let p = -2; p <= 2; p++) {   // circles on a hexagonal grid, kept inside the outer ring
+        const x = cx + r * (p + q / 2), y = cy + r * q * Math.sqrt(3) / 2;
+        if (Math.hypot(x - cx, y - cy) <= 2 * r + 1) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); }
+      }
+      g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, 3 * r, 0, Math.PI * 2); g.stroke();
+      g.textAlign = "center"; g.fillStyle = "#f2f0eb"; g.font = "bold 17px Georgia, serif";
+      g.fillText("B R I N G   M E   T H E", cx, 286); g.fillText("H O R I Z O N", cx, 310);
+      stack(g, ["SEMPITERNAL · 2013"], cx, 340, 11, 0, "#8d8a84", "normal");
     }),
-    poster((g, w, h) => {   // Linkin Park: grey concrete, red paint drips
-      g.fillStyle = "#d9d6cf"; g.fillRect(0, 0, w, h);
-      g.fillStyle = "#b3121b"; g.fillRect(24, 40, w - 48, 18);
-      for (let x = 30; x < w - 30; x += 17) g.fillRect(x, 58, 4, 10 + ((x * 7) % 46));   // drips
-      g.textAlign = "left"; stack(g, ["LINKIN", "PARK"], 24, 196, 50, 56, "#151515");
-      stack(g, ["AGOURA HILLS · 1996"], 26, 320, 15, 0, "#b3121b", "normal");
+    poster((g, w, h) => {   // Linkin Park, in the mood of Hybrid Theory: grey sketchbook paper, pencil scratches, a red mark
+      g.fillStyle = "#cfcbc2"; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "rgba(40,40,40,.35)"; g.lineWidth = 1;
+      for (let k = 0; k < 260; k++) {   // loose pencil hatching, denser in the middle
+        const x = 40 + Math.random() * 176, y = 50 + Math.random() * 190, l = 6 + Math.random() * 22;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + l * 0.7, y - l * 0.7); g.stroke();
+      }
+      g.strokeStyle = "rgba(20,20,20,.7)"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(128, 70); g.bezierCurveTo(70, 120, 190, 170, 120, 230); g.stroke();   // one bold gesture line
+      g.fillStyle = "#a8141c"; g.fillRect(150, 92, 54, 10);
+      g.textAlign = "left"; stack(g, ["LINKIN PARK"], 22, 292, 30, 0, "#1a1a1a");
+      stack(g, ["HYBRID THEORY · 2000"], 24, 322, 13, 0, "#a8141c", "normal");
     }),
   ];
   posters.forEach((tex, k) => {

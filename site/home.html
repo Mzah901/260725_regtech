@@ -95,7 +95,27 @@ footer { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; paddi
   .rank { font-size: 64px; } .chapters li { padding-right: 52px; }
   section { padding: 22px 18px; }
 }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor { animation: none; } }
+/* Star map: notes are red stars, sciences mid stars, concepts small stars; links are faint constellation lines. */
+#sky { margin: 18px -8px 0; }
+#sky-svg { width: 100%; height: auto; display: block; }
+#sky-svg line { stroke: rgba(242, 240, 235, .13); stroke-width: 1; }
+#sky-svg line.hi { stroke: rgba(255, 120, 126, .8); stroke-width: 1.4; }
+.star { cursor: pointer; outline: none; touch-action: none; }
+.star .core { fill: #F2F0EB; animation: twinkle 3.2s ease-in-out infinite; animation-delay: var(--d); }
+.star .halo { fill: url(#glow); }
+.star.note .core { fill: var(--red); } .star.note .halo { fill: url(#glow-red); }
+.star text { fill: var(--muted); font-family: var(--font); font-size: 11px; text-anchor: middle; pointer-events: none;
+  paint-order: stroke; stroke: rgba(11, 11, 11, .85); stroke-width: 3px; }
+.star.note text { fill: var(--ink); font-family: var(--display); font-size: 13px; }
+.star.science text { fill: var(--ink); letter-spacing: .06em; text-transform: uppercase; font-size: 10px; }
+.star.concept text { opacity: 0; }
+#sky-svg.focus .star { opacity: .18; } #sky-svg.focus .star.nb { opacity: 1; } #sky-svg.focus .star.nb text { opacity: 1; }
+#sky-svg.focus line { opacity: .25; } #sky-svg.focus line.hi { opacity: 1; }
+#sky-cap { min-height: 3.6em; margin: 4px 8px 0; color: #D4D1CB; font-size: 13px; }
+#sky-cap b { color: var(--ink); font-family: var(--display); }
+.as-list { margin-top: 24px; } .as-list summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+@keyframes twinkle { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor, .star .core { animation: none; } }
 </style>
 </head>
 <body>
@@ -132,7 +152,20 @@ unfinished, for whoever comes next.</p>
   <section id="chapters">
     <h2>Beyond Statutes</h2>
     <p class="lede">Notes from my journal. Law has never stopped evolving, from canon law to code, and neither should the way we work with it.</p>
+    <p class="muted sky-help">Red stars are my notes. Small stars are concepts I picked up, gathered round their science, and each science links to the notes it feeds. Hover or tap a star to read it, drag to rearrange.</p>
+    <div id="sky">
+      <svg id="sky-svg" viewBox="0 0 680 560" role="group" aria-label="Star map of notes and concepts">
+        <defs>
+          <radialGradient id="glow"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <radialGradient id="glow-red"><stop offset="0" stop-color="#ff4b55" stop-opacity=".7"/><stop offset="1" stop-color="#ff4b55" stop-opacity="0"/></radialGradient>
+        </defs>
+      </svg>
+      <p id="sky-cap" aria-live="polite">&nbsp;</p>
+    </div>
+    <script type="application/json" id="sky-data"><!--SKY--></script>
+    <details class="as-list"><summary>Read the notes as a list</summary>
     <!--CHAPTERS-->
+    </details>
   </section>
 
   <section id="experiments">
@@ -189,6 +222,95 @@ if (still) {
   };
   setTimeout(type, 500);
 }
+
+// ---- Star map: a small force layout (stars push apart, links pull together), Obsidian-style. ----
+(function sky() {
+  const svg = document.getElementById("sky-svg"), cap = document.getElementById("sky-cap");
+  const data = JSON.parse(document.getElementById("sky-data").textContent);
+  const W = 680, H = 560, NS = "http://www.w3.org/2000/svg", R = { note: 6.5, science: 4.5, concept: 2.4 }, W8 = { note: 2.6, science: 1.6, concept: 1 };   // W8: how hard a star pushes others away
+  const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const byId = new Map(data.nodes.map((n) => [n.id, n]));
+  data.nodes.forEach((n, i) => {   // start on a spiral so the layout is the same on every visit
+    const a = i * 2.4, r = 30 + i * 5;
+    Object.assign(n, { x: W / 2 + Math.cos(a) * r, y: H / 2 + Math.sin(a) * r * 0.8, vx: 0, vy: 0, nb: new Set([n.id]) });
+  });
+  const links = data.links.map(([a, b]) => ({ s: byId.get(a), t: byId.get(b) }));
+  links.forEach((l) => { l.s.nb.add(l.t.id); l.t.nb.add(l.s.id); });
+  const gl = svg.appendChild(el("g")), gn = svg.appendChild(el("g"));
+  links.forEach((l) => (l.el = gl.appendChild(el("line"))));
+  data.nodes.forEach((n, i) => {
+    const g = gn.appendChild(el(n.href ? "a" : "g", { class: "star " + n.kind, tabindex: 0, style: `--d:${(i * 0.37) % 3}s` }));
+    if (n.href) g.setAttribute("href", n.href);
+    g.append(el("circle", { class: "halo", r: R[n.kind] * 3.2 }), el("circle", { class: "core", r: R[n.kind] }));
+    g.appendChild(el("text", { y: -R[n.kind] - 6 })).textContent = n.label;
+    n.el = g;
+    const show = () => focus(n), hide = () => focus(null);
+    g.addEventListener("pointerenter", show); g.addEventListener("focus", show);
+    g.addEventListener("pointerleave", hide); g.addEventListener("blur", hide);
+    g.addEventListener("pointerdown", (ev) => { drag = { n, x: ev.clientX, y: ev.clientY, moved: false }; g.setPointerCapture(ev.pointerId); focus(n); });
+    g.addEventListener("click", (ev) => { if (drag && drag.moved) ev.preventDefault(); drag = null; });
+  });
+  let drag = null, heat = 1;
+  svg.addEventListener("pointermove", (ev) => {
+    if (!drag) return;
+    if (Math.hypot(ev.clientX - drag.x, ev.clientY - drag.y) > 4) drag.moved = true;
+    const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    drag.n.x = p.x; drag.n.y = p.y; drag.n.vx = drag.n.vy = 0; heat = Math.max(heat, 0.3); run();
+  });
+  svg.addEventListener("pointerup", () => { if (drag && !drag.moved && !drag.n.href) drag = null; setTimeout(() => (drag = null), 0); });
+  function focus(n) {
+    svg.classList.toggle("focus", !!n);
+    data.nodes.forEach((m) => m.el.classList.toggle("nb", !!n && n.nb.has(m.id)));
+    links.forEach((l) => l.el.classList.toggle("hi", !!n && (l.s === n || l.t === n)));
+    if (n) cap.innerHTML = "";
+    if (n) { const b = document.createElement("b"); b.textContent = n.label; cap.append(b, n.text ? " · " + n.text : n.kind === "science" ? ` · ${n.nb.size - 1} links` : ""); }
+  }
+  function tick() {
+    const ns = data.nodes;
+    for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {   // every pair pushes apart
+      const a = ns[i], b = ns[j], dx = b.x - a.x, dy = b.y - a.y, d2 = Math.max(dx * dx + dy * dy, 30), f = (900 * scale * scale * heat * W8[a.kind] * W8[b.kind]) / d2;
+      a.vx -= dx * f / 30; a.vy -= dy * f / 30; b.vx += dx * f / 30; b.vy += dy * f / 30;
+    }
+    for (const { s, t } of links) {                                                  // links pull to a set length
+      const len = scale * (s.kind === "concept" || t.kind === "concept" ? 34 : s.kind === "note" && t.kind === "note" ? 105 : 120);
+      const dx = t.x - s.x, dy = t.y - s.y, d = Math.hypot(dx, dy) || 1, f = ((d - len) / d) * 0.05;
+      s.vx += dx * f; s.vy += dy * f; t.vx -= dx * f; t.vy -= dy * f;
+    }
+    for (const n of ns) {
+      if (drag && drag.n === n) continue;
+      n.vx += (W / 2 - n.x) * 0.004; n.vy += (H / 2 - n.y) * 0.005;                   // gentle pull to the middle
+      n.x += n.vx *= 0.6; n.y += n.vy *= 0.6;
+      if (fitted) { n.x = Math.min(W - 20, Math.max(20, n.x)); n.y = Math.min(H - 14, Math.max(24, n.y)); }
+    }
+  }
+  function draw() {
+    for (const n of data.nodes) n.el.setAttribute("transform", `translate(${n.x.toFixed(1)},${n.y.toFixed(1)})`);
+    for (const l of links) { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); }
+  }
+  let running = false;
+  function run() {
+    if (running) return; running = true;
+    requestAnimationFrame(function step() {
+      tick(); draw(); heat *= 0.97;
+      if (heat > 0.02 || drag) requestAnimationFrame(step); else running = false;
+    });
+  }
+  let fitted = false, scale = 1;   // after fitting, distances shrink by `scale` so dragging keeps the same shape
+  for (let k = 0; k < 400; k++) tick();   // settle freely before the first paint, then scale it to fit the frame
+  const xs = data.nodes.map((n) => n.x), ys = data.nodes.map((n) => n.y);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), kx = (W - 150) / (Math.max(...xs) - x0), ky = (H - 70) / (Math.max(...ys) - y0), k = Math.min(kx, ky);
+  data.nodes.forEach((n) => { n.x = 75 + (n.x - x0) * kx; n.y = 40 + (n.y - y0) * ky; n.vx = n.vy = 0; });   // stretch to fill the frame
+  fitted = true; scale = k; heat = 0.05; draw();
+  // Note titles are long: if one would overlap another's, put it under its star instead of above.
+  const placed = [];
+  data.nodes.filter((n) => n.kind === "note").sort((a, b) => a.y - b.y).forEach((n) => {
+    const w = n.label.length * 3.4, box = (dy) => ({ l: n.x - w, r: n.x + w, t: n.y + dy - 12, b: n.y + dy });
+    const hits = (bx) => placed.some((p) => bx.l < p.r && bx.r > p.l && bx.t < p.b && bx.b > p.t);
+    let b = box(-R.note - 6);
+    if (hits(b)) { b = box(R.note + 18); n.el.querySelector("text").setAttribute("y", R.note + 18); }
+    placed.push(b);
+  });
+})();
 
 // ---- 2. The 3D scene (three.js). If WebGL is unavailable the page still works, just without it. ----
 if (window.THREE) { try { buildScene(); } catch (e) { console.warn("3D scene skipped:", e); } }

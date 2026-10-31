@@ -100,6 +100,7 @@ def main():
     build_lab.build(PUBLIC_DIR)
     shutil.copy(OG_IMAGE, PUBLIC_DIR / "og.png")
     home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)
+    home = home.replace("<!--SKY-->", build_lab.sky_json(build_notes.read_notes()[0]))
     (PUBLIC_DIR / "index.html").write_text(home, encoding="utf-8")
     shutil.copy(NOT_FOUND_PATH, PUBLIC_DIR / "404.html")
     (PUBLIC_DIR / "CNAME").write_text(CUSTOM_DOMAIN + "\n", encoding="utf-8")

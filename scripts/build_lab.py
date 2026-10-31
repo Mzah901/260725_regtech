@@ -13,6 +13,7 @@ Only a small part of Markdown is supported: paragraphs, "- " and "1. " lists, **
 """
 
 import html
+import json
 import re
 from pathlib import Path
 
@@ -106,6 +107,38 @@ def plain_page(path):
     return title, "\n".join(out)
 
 
+# Star map on the home page: each concept hangs off its science, and each science links to the
+# Beyond Statutes notes whose tag it feeds. The browser lays it out (see the sky script in site/home.html).
+SCIENCE = {"Operations": "Computing", "Computing": "Computing", "Operating systems": "Computing",
+           "Physics": "Physics", "Materials science": "Physics", "Chemistry": "Chemistry",
+           "Probability": "Mathematics", "Statistics": "Mathematics", "Game theory": "Mathematics",
+           "Economics": "Economics", "Finance": "Economics", "Behavioral finance": "Psychology",
+           "Psychology": "Psychology", "Cognitive psychology": "Psychology", "Decision science": "Psychology",
+           "Psychometrics": "Psychology", "Law": "Law", "Competition law": "Law", "Law and economics": "Law",
+           "Law of evidence": "Law", "Legisprudence": "Law", "Negotiation": "Law"}
+FEEDS = {"Law": ["LAW", "POLICY"], "Economics": ["FINANCE", "POLICY"], "Mathematics": ["FINANCE"],
+         "Computing": ["TECH"], "Psychology": ["LIFE"], "Physics": ["LIFE"], "Chemistry": ["LIFE"]}
+
+
+def sky_json(notes):
+    """Nodes and links for the star map, as JSON for the home page."""
+    nodes = [{"id": n["slug"], "label": n["title"].rstrip("."), "kind": "note", "href": f"/beyond-statutes/{n['slug']}/",
+              "text": n["body"].split("\n\n")[0].replace("[[", "").replace("]]", "")} for n in notes]
+    links = [[n["slug"], m["slug"]] for n in notes for m in n["links"]]
+    for line in (PAGES_DIR / "lessons.md").read_text(encoding="utf-8").splitlines():
+        m = re.match(r"- \*\*(.+?)\*\* · ([^.]+)\. (.+)", line)
+        if not m:
+            continue
+        name, field, text = m.groups()
+        sci = SCIENCE[field]   # a new field in lessons.md needs a line in SCIENCE above
+        if not any(x["id"] == sci for x in nodes):
+            nodes.append({"id": sci, "label": sci, "kind": "science", "href": "/lessons/"})
+            links += [[sci, n["slug"]] for n in notes if n["tag"] in FEEDS[sci]]
+        nodes.append({"id": name, "label": name, "kind": "concept", "text": f"{field}. {text}"})
+        links.append([sci, name])
+    return json.dumps({"nodes": nodes, "links": links}, ensure_ascii=False).replace("</", "<\\/")
+
+
 def build(public_dir):
     experiments = sorted((read_experiment(p) for p in EXPERIMENTS_DIR.glob("*.md")), key=lambda e: e["file"], reverse=True)
     main = f"""
@@ -141,4 +174,9 @@ if __name__ == "__main__":
     assert list(e["sections"]) == ["Question", "Result", "Known limits", "Human review"], list(e["sections"])
     title, body = plain_page(PAGES_DIR / "about.md")
     assert '<h2 id="awards">Awards</h2>' in body and "<i>Jurnal Konstitusi</i>" in body, body[:400]
+    import build_notes
+    sky = json.loads(sky_json(build_notes.read_notes()[0]))
+    ids = {x["id"] for x in sky["nodes"]}
+    assert all(a in ids and b in ids for a, b in sky["links"]), "every link joins two stars"
+    assert sum(x["kind"] == "concept" for x in sky["nodes"]) == 36, "every lesson became a star"
     print("build_lab self-check passed")

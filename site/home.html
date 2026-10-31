@@ -122,6 +122,10 @@ footer a { color: var(--ink); text-decoration-color: var(--red); }
 #sky-cap b { color: var(--ink); font-family: var(--display); }
 .as-list { margin-top: 24px; } .as-list summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 24px; }
 @keyframes twinkle { 50% { opacity: .55; } }
+.toast { position: fixed; left: 50%; bottom: 24px; z-index: 15; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
+  width: min(520px, calc(100% - 32px)); background: rgba(11, 11, 11, .92); border: 1px solid var(--red); padding: 12px 16px; font-size: 13px; line-height: 1.6; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast b { font-family: var(--display); }
 /* Flipbook (Issuu-style): a cover, then two-page spreads; the turning page is a leaf with a front and a back. */
 .fb { position: fixed; inset: 0; z-index: 20; background: rgba(5, 5, 5, .88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: grid; place-items: center; padding: 56px 16px 72px; }
@@ -198,7 +202,7 @@ unfinished, for whoever comes next.</p>
     <p>Hello, I'm Hamzah.</p>
     <p>Law graduate @ <a href="https://ugm.ac.id">Universitas Gadjah Mada</a>, working in Indonesian regulatory compliance.</p>
     <p>Currently building @ Regulatory AI Labs: AI that reads Indonesian regulations, measured against answers I check by hand.</p>
-    <p class="muted"><a href="/about/">publications, awards, projects</a> · <a href="https://github.com/Mzah901">github</a></p>
+    <p class="muted"><a href="/about/">publications, awards, projects</a> · <a href="/id/about/">bahasa indonesia</a> · <a href="https://github.com/Mzah901">github</a></p>
   </div>
 
   <section id="chapters">
@@ -269,7 +273,7 @@ unfinished, for whoever comes next.</p>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const small = innerWidth < 700;   // phones get fewer particles and no shadows
+const small = innerWidth < 700;   // phones: fewer particles, no shadows, fewer pixels, 30 fps
 
 // ---- 1. Opening poem: type it out one letter at a time, then leave a blinking cursor. ----
 const poem = document.getElementById("poem");
@@ -461,8 +465,8 @@ function fbm(x, y, layers = 5) {
 function buildScene() {
   const RED = 0xE0242E, SPIRIT = 0xBFE9FF, LAB = 0x7FE3FF;
   const canvas = document.getElementById("scene");
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, powerPreference: small ? "low-power" : "default" });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.25 : 2));   // phones draw fewer pixels
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;   // film-like contrast and colour
   renderer.toneMappingExposure = 0.9;
@@ -737,7 +741,7 @@ function buildScene() {
       branchOut(arm, len * (0.55 + Math.random() * 0.2), radius * 0.6, depth - 1);
     }
   }
-  const TREES = small ? 18 : 36;
+  const TREES = small ? 12 : 36;
   for (let k = 0; k < TREES; k++) {
     let x, z;
     do { x = (Math.random() - 0.5) * 460; z = -260 + Math.random() * 300; }
@@ -793,7 +797,7 @@ function buildScene() {
   circleLight.position.set(0, 4, -24); scene.add(circleLight);
 
   // ---- Reiatsu: lots of glowing spirit particles rising and swaying. ----
-  const COUNT = small ? 1000 : 2600;
+  const COUNT = small ? 600 : 2600;
   const pos = new Float32Array(COUNT * 3), cols = new Float32Array(COUNT * 3), speed = new Float32Array(COUNT);
   for (let k = 0; k < COUNT; k++) {
     pos[k * 3] = (Math.random() - 0.5) * 260; pos[k * 3 + 1] = Math.random() * 70; pos[k * 3 + 2] = -180 + Math.random() * 230;
@@ -815,7 +819,7 @@ function buildScene() {
   column.position.set(0, 20, -24); scene.add(column);
 
   // ---- Whirlwind: a dust devil wandering across the sand, wide at the top, narrow at the bottom. ----
-  const SWIRL = small ? 500 : 1300, swirl = [];
+  const SWIRL = small ? 300 : 1300, swirl = [];
   const swirlPos = new Float32Array(SWIRL * 3);
   for (let k = 0; k < SWIRL; k++) swirl.push({ h: Math.random() * 38, a: Math.random() * Math.PI * 2, r: Math.random() });
   const swirlGeo = new THREE.BufferGeometry();
@@ -832,7 +836,7 @@ function buildScene() {
     for (let y = 50; y < h - 14; y += 9) g.fillRect(12, y, w - 24 - (y % 27 === 5 ? 30 : 0), 3);
     g.fillStyle = "#b03a3f"; g.font = "bold 22px serif"; g.fillText("§", w - 18, h - 10);
   });
-  const PAPERS = small ? 24 : 60, papers = [];
+  const PAPERS = small ? 16 : 60, papers = [];
   const paperMat = new THREE.MeshStandardMaterial({ map: paperTex, side: THREE.DoubleSide, roughness: 0.9 });
   for (let k = 0; k < PAPERS; k++) {
     const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.75), paperMat);
@@ -933,13 +937,34 @@ function buildScene() {
 
   // ---- Events, taking turns every few seconds. ----
   const events = ["transmute", "meteors", "garganta"];
-  let event = null, eventStart = 0, nextEvent = 2500, eventIndex = 0;
+  let event = null, eventStart = 0, nextEvent = 2500, eventIndex = 0, riftHold = 2200;
+
+  // Easter eggs: start an event on demand (clicking the circle, typing "bankai"), and show a short message.
+  function forceEvent(name) {
+    if (event === "transmute" || event === "garganta") return;
+    eventIndex = events.indexOf(name); startEvent(performance.now()); nextEvent = performance.now() + 12000;
+    riftHold = name === "garganta" ? 9000 : 2200;
+  }
+  const toast = document.createElement("div"); toast.className = "toast"; toast.setAttribute("role", "status"); document.body.appendChild(toast);
+  let toastTimer = 0;
+  function say(html) { toast.innerHTML = html; toast.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("on"), 5500); }
+  let typed = "";
+  addEventListener("keydown", (ev) => {
+    if (ev.target.closest && ev.target.closest("input, textarea")) return;
+    typed = (typed + ev.key.toLowerCase()).slice(-6);
+    if (typed === "bankai") {
+      forceEvent("garganta");
+      for (let k = 0; k < 12; k++) launchStar(performance.now(), k * 140);
+      say("<b>卍解 · Bankai.</b> The sky over the desert tears open. Find the rift and click it before it seals.");
+    }
+  });
 
   function startEvent(t) {
     event = events[eventIndex++ % events.length];
     eventStart = t;
     if (event === "meteors") { for (let k = 0; k < 7; k++) launchStar(t, k * 260 + Math.random() * 200); event = null; }
     if (event === "garganta") {
+      riftHold = 2200;   // normal length; forceEvent() makes it longer afterwards
       rift.position.set(-160 + Math.random() * 320, 110 + Math.random() * 50, -380);
       rift.rotation.z = (Math.random() - 0.5) * 0.5;
     }
@@ -954,8 +979,8 @@ function buildScene() {
       if (Math.random() < 0.5) jolt();
       if (k >= 1) { event = null; circleMat.opacity = 0; circleLight.intensity = 0; arcMat.opacity = 0; columnMat.opacity = 0; }
     } else if (event === "garganta") {
-      // Tears open over 0.6 s, stays open 1.6 s, seals over 0.6 s.
-      const open = Math.min(1, e / 600), close = e > 2200 ? Math.min(1, (e - 2200) / 600) : 0, w = open * (1 - close);
+      // Tears open over 0.6 s, stays open (1.6 s, or longer after "bankai"), seals over 0.6 s.
+      const open = Math.min(1, e / 600), close = e > riftHold ? Math.min(1, (e - riftHold) / 600) : 0, w = open * (1 - close);
       rift.scale.set(4 + w * 22, 30, 1); riftMat.opacity = w;
       if (close >= 1) { event = null; riftMat.opacity = 0; }
     }
@@ -964,6 +989,11 @@ function buildScene() {
   // ---- Everything that moves all the time. ----
   const WIND = 0.06;
   function ambient(t) {
+    {   // the cat breathes; after a pet it lifts its head for a moment
+      catBody.scale.y = 0.55 + 0.025 * Math.sin(t * 0.0025);
+      const lift = Math.max(0, Math.sin(Math.min(1, (t - petAt) / 1600) * Math.PI));
+      catHead.rotation.z = lift * 0.5; catTail.rotation.z = 0.6 + lift * 0.35 * Math.sin(t * 0.02);
+    }
     for (const cl of clouds) { cl.position.x += cl.userData.speed; if (cl.position.x > 520) cl.position.x = -520; }
     for (const gust of gusts) { gust.position.x += gust.userData.speed; if (gust.position.x > 230) gust.position.x = -230; }
     for (const g of giants) {
@@ -1394,10 +1424,41 @@ function buildScene() {
   const blanketTex = canvasTexture(128, 64, (g, w, h) => { for (let x = 0; x < w; x += 16) { g.fillStyle = x % 32 ? "#e7dcc1" : "#7a3b34"; g.fillRect(x, 0, 16, h); } });
   block(0.92, 0.07, 0.34, mat(0xffffff, 0.95, { map: blanketTex }), 0, 0.475, -0.8, bed); // folded at the foot
   for (const sd of [-1, 1]) {                                                            // open book, face down, spine up
-    const half = block(0.12, 0.008, 0.17, mat(0x2f3a56, 0.6), 0.1 + sd * 0.058, 0.545, -0.48, bed);
+    const half = block(0.12, 0.008, 0.17, mat(0x2f3a56, 0.6), -0.22 + sd * 0.058, 0.545, -0.3, bed);
     half.rotation.z = -sd * 0.28;
   }
-  block(0.07, 0.008, 0.14, mat(0x161616, 0.3), 0.3, 0.535, -0.3, bed).rotation.y = 0.4;   // phone
+  block(0.07, 0.008, 0.14, mat(0x161616, 0.3), -0.02, 0.535, -0.12, bed).rotation.y = 0.4;   // phone
+  // A ginger cat curled up asleep on the duvet. It breathes; pet it and it lifts its head and meows.
+  const furTex = canvasTexture(128, 64, (g, w, h) => {
+    g.fillStyle = "#d9893f"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#b5672a"; for (let x = 4; x < w; x += 14) g.fillRect(x, 0, 6, h);   // tabby stripes
+    for (let k = 0; k < 600; k++) { g.fillStyle = `rgba(255,230,190,${Math.random() * 0.12})`; g.fillRect(Math.random() * w, Math.random() * h, 1, 2); }
+  });
+  const fur = mat(0xffffff, 0.95, { map: furTex }), cream = mat(0xf4e3c8, 0.95);
+  const cat = new THREE.Group(); cat.position.set(0.22, 0.52, -0.52); cat.rotation.y = 2.4; bed.add(cat);
+  const catBody = piece(new THREE.SphereGeometry(0.13, 20, 14), fur, 0, 0.055, 0, cat); catBody.scale.set(1.25, 0.55, 0.9);
+  const catTail = piece(new THREE.TorusGeometry(0.13, 0.022, 8, 24, Math.PI * 1.1), fur, 0, 0.03, 0, cat); catTail.rotation.set(Math.PI / 2, 0, 0.6);
+  const catHead = new THREE.Group(); catHead.position.set(0.14, 0.07, 0.07); cat.add(catHead);
+  piece(new THREE.SphereGeometry(0.06, 16, 12), fur, 0, 0, 0, catHead).scale.set(1, 0.85, 0.95);
+  piece(new THREE.SphereGeometry(0.03, 10, 8), cream, 0.035, -0.015, 0.02, catHead).scale.set(1, 0.7, 1);   // muzzle
+  for (const sz of [-1, 1]) {
+    const ear = piece(new THREE.ConeGeometry(0.022, 0.045, 4), fur, -0.005, 0.05, sz * 0.03, catHead); ear.rotation.x = sz * 0.3;
+    block(0.004, 0.003, 0.018, mat(0x2a1a10, 0.5), 0.052, 0.008, sz * 0.022, catHead);                        // closed eyes
+  }
+  piece(new THREE.SphereGeometry(0.006, 6, 6), mat(0xd98a8a, 0.5), 0.062, -0.006, 0.02, catHead);              // nose
+  let petAt = -1e9;
+  function meow() {
+    if (!audio) setupAudio();
+    if (audio.state === "suspended") audio.resume();
+    const t = audio.currentTime, osc = audio.createOscillator(), mouth = audio.createBiquadFilter(), gain = audio.createGain();
+    osc.type = "sawtooth";   // "mi-a-ow": pitch rises then falls, and a band-pass filter moves like an opening mouth
+    osc.frequency.setValueAtTime(480, t); osc.frequency.linearRampToValueAtTime(760, t + 0.18); osc.frequency.exponentialRampToValueAtTime(390, t + 0.7);
+    mouth.type = "bandpass"; mouth.Q.value = 4;
+    mouth.frequency.setValueAtTime(900, t); mouth.frequency.linearRampToValueAtTime(1900, t + 0.2); mouth.frequency.linearRampToValueAtTime(800, t + 0.7);
+    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.35, t + 0.06); gain.gain.setValueAtTime(0.35, t + 0.45); gain.gain.linearRampToValueAtTime(0, t + 0.75);
+    osc.connect(mouth).connect(gain).connect(audio.destination); osc.start(t); osc.stop(t + 0.8);
+    petAt = performance.now();
+  }
 
   // The striped chair cushion in front of you.
   const stripeTex = canvasTexture(128, 128, (g, w, h) => {
@@ -1716,12 +1777,18 @@ function buildScene() {
     { obj: satchel, label: "I always try to be useful and driven by real-world impact. I hope my experiments and portfolio open more doors to impactful work for the world.", href: "/about/#experience" },
     { obj: guitar, label: "Play ♪", play: true },
     ...pillars,
+    { obj: cat, label: "Pet the cat", run: meow },
+    { obj: carved, label: "Activate the circle", outside: true, run: () => {
+      forceEvent("transmute");
+      say('<b>Equivalent exchange.</b> To gain something, you have to give something of equal value. <a href="/beyond-statutes/equivalent-exchange/">Read the note →</a>');
+    } },
+    { obj: rift, label: "???", outside: true, run: () => say("<b>You found the Garganta.</b> The way out of the desert is the same as the way in: keep building, one experiment at a time.") },
   ];
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   let hovered = null;
   function pick(ev) {
     if (ev.target !== canvas) return null;
-    const live = clickables.filter((c) => !c.outside === roomVisible());   // room objects in the room, pillars outside
+    const live = clickables.filter((c) => !c.outside === roomVisible() || (c.obj === rift && riftMat.opacity > 0.2));   // room objects in the room, the rest outside; the rift whenever it is open
     ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     for (const hit of ray.intersectObjects(live.map((c) => c.obj), true)) {
@@ -1740,6 +1807,7 @@ function buildScene() {
     const c = pick(ev);
     if (!c) return;
     if (c.play) strum();
+    else if (c.run) c.run();
     else if (c.book) openBook(c.book, c.page);
     else if (c.href.startsWith("#")) document.querySelector(c.href).scrollIntoView({ behavior: still ? "auto" : "smooth" });
     else location.href = c.href;
@@ -1894,7 +1962,9 @@ function buildScene() {
   addEventListener("resize", resize);
   resize();
 
+  let skip = false;
   function frame(t) {
+    if (small && (skip = !skip)) return requestAnimationFrame(frame);   // phones: 30 frames a second instead of 60
     progress += (target - progress) * (still ? 1 : 0.06);   // ease towards the scroll position
     camera.position.copy(path.getPoint(progress));
     if (!still) {

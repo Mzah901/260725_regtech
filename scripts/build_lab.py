@@ -93,10 +93,16 @@ def experiment_html(e):
 
 
 def plain_page(path):
-    """A content/pages/ file: header with the title, then paragraphs, lists and ## sections."""
+    """A content/pages/ file: header with the title, then paragraphs, lists and ## sections.
+    about.id.md is the Indonesian version of about.md: it goes to /id/about/ and each gets an EN · ID switch."""
     _, header, body = path.read_text(encoding="utf-8").split("---", 2)
     title = header.split("title:", 1)[1].strip()
-    out, chunk = [f'<p class="crumb"><a href="/">statuta.id</a> / {html.escape(title.lower())}</p>', f"<h1>{html.escape(title)}</h1>"], []
+    base, is_id = path.stem.removesuffix(".id"), path.stem.endswith(".id")
+    switch = ""
+    if (PAGES_DIR / f"{base}.id.md").exists():
+        switch = (f'<span class="lang"><a href="/{base}/">EN</a> · <b>ID</b></span>' if is_id
+                  else f'<span class="lang"><b>EN</b> · <a href="/id/{base}/">ID</a></span>')
+    out, chunk = [f'<p class="crumb"><a href="/">statuta.id</a> / {html.escape(title.lower())}{switch}</p>', f"<h1>{html.escape(title)}</h1>"], []
     for line in body.strip().splitlines() + ["## "]:
         if line.startswith("## "):
             out.append(blocks(chunk)); chunk = []
@@ -179,10 +185,13 @@ def build(public_dir):
     (out / "index.html").write_text(page.replace("__TITLE__", "Lab").replace("__MAIN__", main), encoding="utf-8")
     for path in sorted(PAGES_DIR.glob("*.md")):
         title, body = plain_page(path)
-        (public_dir / path.stem).mkdir(exist_ok=True)
-        (public_dir / path.stem / "index.html").write_text(
+        is_id = path.stem.endswith(".id")
+        out = public_dir / ("id" if is_id else "") / path.stem.removesuffix(".id")
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "index.html").write_text(
             TEMPLATE.read_text(encoding="utf-8").replace("__TITLE__ · Beyond Statutes", f"{title} · Regulatory AI Labs")
-            .replace("__TITLE__", html.escape(title)).replace("__MAIN__", f'<div class="page">{body}</div>'), encoding="utf-8")
+            .replace("__TITLE__", html.escape(title)).replace("__MAIN__", f'<div class="page">{body}</div>')
+            .replace('<html lang="en">', f'<html lang="{"id" if is_id else "en"}">'), encoding="utf-8")
     print(f"Lab: {len(experiments)} experiments; pages: {', '.join(p.stem for p in PAGES_DIR.glob('*.md'))}")
 
 

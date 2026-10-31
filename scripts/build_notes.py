@@ -23,6 +23,15 @@ ROOT = Path(__file__).resolve().parent.parent
 NOTES_DIR = ROOT / "content" / "beyond-statutes"
 NOTE_TEMPLATE = ROOT / "site" / "note.html"
 URL_BASE = "/beyond-statutes/"
+LANG = "en"   # build() switches these three to the Indonesian notes in content/beyond-statutes/id/, then back
+WORDS = {
+    "en": {"out": "Links to", "in": "Linked from", "none": "None yet.", "graph": "How the notes connect. Red is this note.",
+           "intro": "Notes from my journal, written as a small web of ideas. Each note links to the others it leans on.",
+           "click": "Click a number to open that note.", "counts": "{} links out · {} links in"},
+    "id": {"out": "Tautan keluar", "in": "Ditautkan dari", "none": "Belum ada.", "graph": "Bagaimana catatan saling terhubung. Merah adalah catatan ini.",
+           "intro": "Catatan dari jurnal saya, ditulis sebagai jejaring kecil gagasan. Setiap catatan menaut ke catatan lain yang menjadi sandarannya.",
+           "click": "Klik angka untuk membuka catatannya.", "counts": "{} tautan keluar · {} tautan masuk"},
+}
 
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 
@@ -106,14 +115,25 @@ def graph_svg(notes, current=None, size=320):
 
 def link_list(notes):
     if not notes:
-        return '<p class="muted">None yet.</p>'
+        return f'<p class="muted">{WORDS[LANG]["none"]}</p>'
     items = "".join(f'<li><a href="{URL_BASE}{n["slug"]}/">{n["rank"]}. {html.escape(n["title"])}</a></li>' for n in notes)
     return f'<ul class="refs">{items}</ul>'
 
 
+def lang_switch(path):
+    """EN · ID links to the same page in the other language; the current one in bold."""
+    en = "<b>EN</b>" if LANG == "en" else f'<a href="/beyond-statutes/{path}">EN</a>'
+    id_ = "<b>ID</b>" if LANG == "id" else f'<a href="/id/beyond-statutes/{path}">ID</a>'
+    return f'<span class="lang">{en} · {id_}</span>'
+
+
+def localise(page):
+    return page.replace('<html lang="en">', f'<html lang="{LANG}">')
+
+
 def note_page(n, notes, by_title, template):
     main = f"""
-<p class="crumb"><a href="/">statuta.id</a> / <a href="{URL_BASE}">beyond statutes</a></p>
+<p class="crumb"><a href="/">statuta.id</a> / <a href="{URL_BASE}">beyond statutes</a>{lang_switch(n["slug"] + "/")}</p>
 <article>
   <span class="rank" aria-hidden="true">{n["rank"]}</span>
   <span class="ch">CH.{n["rank"]:02d} · {n["tag"]}</span>
@@ -121,28 +141,28 @@ def note_page(n, notes, by_title, template):
   {to_html(n["body"], by_title)}
 </article>
 <div class="connections">
-  <div><h2>Links to</h2>{link_list(n["links"])}</div>
-  <div><h2>Linked from</h2>{link_list(n["backlinks"])}</div>
+  <div><h2>{WORDS[LANG]["out"]}</h2>{link_list(n["links"])}</div>
+  <div><h2>{WORDS[LANG]["in"]}</h2>{link_list(n["backlinks"])}</div>
 </div>
-<figure>{graph_svg(notes, n)}<figcaption>How the notes connect. Red is this note.</figcaption></figure>
+<figure>{graph_svg(notes, n)}<figcaption>{WORDS[LANG]["graph"]}</figcaption></figure>
 """
-    return template.replace("__TITLE__", html.escape(n["title"])).replace("__MAIN__", main)
+    return localise(template.replace("__TITLE__", html.escape(n["title"])).replace("__MAIN__", main))
 
 
 def index_page(notes, template):
     items = "".join(
         f'<li><a href="{URL_BASE}{n["slug"]}/"><span class="ch">CH.{n["rank"]:02d} · {n["tag"]}</span>'
-        f'<b>{html.escape(n["title"])}</b></a><span class="muted">{len(n["links"])} links out · {len(n["backlinks"])} links in</span></li>'
+        f'<b>{html.escape(n["title"])}</b></a><span class="muted">{WORDS[LANG]["counts"].format(len(n["links"]), len(n["backlinks"]))}</span></li>'
         for n in notes
     )
     main = f"""
-<p class="crumb"><a href="/">statuta.id</a> / beyond statutes</p>
+<p class="crumb"><a href="/">statuta.id</a> / beyond statutes{lang_switch("")}</p>
 <h1>Beyond Statutes</h1>
-<p class="muted">Notes from my journal, written as a small web of ideas. Each note links to the others it leans on.</p>
-<figure>{graph_svg(notes, size=360)}<figcaption>Click a number to open that note.</figcaption></figure>
+<p class="muted">{WORDS[LANG]["intro"]}</p>
+<figure>{graph_svg(notes, size=360)}<figcaption>{WORDS[LANG]["click"]}</figcaption></figure>
 <ol class="index">{items}</ol>
 """
-    return template.replace("__TITLE__", "Beyond Statutes").replace("__MAIN__", main)
+    return localise(template.replace("__TITLE__", "Beyond Statutes").replace("__MAIN__", main))
 
 
 def home_chapters(notes):
@@ -160,7 +180,19 @@ def home_chapters(notes):
 
 
 def build(public_dir):
-    """Write the note pages into public_dir and return the home-page chapter list."""
+    """Write the note pages (English, then Indonesian under /id/) and return the home-page chapter list."""
+    global NOTES_DIR, URL_BASE, LANG
+    chapters = build_one(public_dir)
+    # ponytail: swaps module settings for the second language; pass them as arguments if a third language comes
+    NOTES_DIR, URL_BASE, LANG = NOTES_DIR / "id", "/id/beyond-statutes/", "id"
+    try:
+        build_one(public_dir / "id")
+    finally:
+        NOTES_DIR, URL_BASE, LANG = NOTES_DIR.parent, "/beyond-statutes/", "en"
+    return chapters
+
+
+def build_one(public_dir):
     notes, by_title = read_notes()
     template = NOTE_TEMPLATE.read_text(encoding="utf-8")
     out = public_dir / "beyond-statutes"
@@ -170,7 +202,7 @@ def build(public_dir):
         (out / n["slug"]).mkdir(exist_ok=True)
         (out / n["slug"] / "index.html").write_text(note_page(n, notes, by_title, template), encoding="utf-8")
     links = sum(len(n["links"]) for n in notes)
-    print(f"{len(notes)} notes, {links} links between them")
+    print(f"{len(notes)} notes ({LANG}), {links} links between them")
     return home_chapters(notes)
 
 
@@ -181,4 +213,8 @@ if __name__ == "__main__":
         'a <a class="wikilink" href="/beyond-statutes/equivalent-exchange/">value</a> &amp; b'
     assert plain("see [[Equivalent exchange.]]") == "see Equivalent exchange."
     assert all(n["backlinks"] for n in notes), "every note should be linked from at least one other"
-    print("build_notes self-check passed:", len(notes), "notes")
+    en = {n["slug"]: n["rank"] for n in notes}
+    NOTES_DIR = NOTES_DIR / "id"
+    id_notes, _ = read_notes()
+    assert {n["slug"]: n["rank"] for n in id_notes} == en, "every note has an Indonesian version with the same file name and rank"
+    print("build_notes self-check passed:", len(notes), "notes, in English and Indonesian")

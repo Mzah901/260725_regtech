@@ -126,6 +126,7 @@ footer a { color: var(--ink); text-decoration-color: var(--red); }
   width: min(520px, calc(100% - 32px)); background: rgba(11, 11, 11, .92); border: 1px solid var(--red); padding: 12px 16px; font-size: 13px; line-height: 1.6; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 .toast b { font-family: var(--display); }
+.toast .tbc { font-family: Impact, 'Arial Narrow', sans-serif; font-size: 22px; letter-spacing: .04em; color: #f6e04a; }
 /* Flipbook (Issuu-style): a cover, then two-page spreads; the turning page is a leaf with a front and a back. */
 .fb { position: fixed; inset: 0; z-index: 20; background: rgba(5, 5, 5, .88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: grid; place-items: center; padding: 56px 16px 72px; }
@@ -1608,28 +1609,54 @@ function buildScene() {
       g.fillText("B R I N G   M E   T H E", cx, 286); g.fillText("H O R I Z O N", cx, 310);
       stack(g, ["SEMPITERNAL · 2013"], cx, 340, 11, 0, "#8d8a84", "normal");
     }),
-    poster((g, w, h) => {   // Linkin Park, in the mood of Hybrid Theory: grey sketchbook paper, pencil scratches, a red mark
-      g.fillStyle = "#cfcbc2"; g.fillRect(0, 0, w, h);
-      g.strokeStyle = "rgba(40,40,40,.35)"; g.lineWidth = 1;
-      for (let k = 0; k < 260; k++) {   // loose pencil hatching, denser in the middle
-        const x = 40 + Math.random() * 176, y = 50 + Math.random() * 190, l = 6 + Math.random() * 22;
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x + l * 0.7, y - l * 0.7); g.stroke();
-      }
-      g.strokeStyle = "rgba(20,20,20,.7)"; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(128, 70); g.bezierCurveTo(70, 120, 190, 170, 120, 230); g.stroke();   // one bold gesture line
-      g.fillStyle = "#a8141c"; g.fillRect(150, 92, 54, 10);
-      g.textAlign = "left"; stack(g, ["LINKIN PARK"], 22, 292, 30, 0, "#1a1a1a");
-      stack(g, ["HYBRID THEORY · 2000"], 24, 322, 13, 0, "#a8141c", "normal");
+    poster((g, w, h) => {   // Linkin Park, in the mood of Meteora: spray paint on grey concrete, stencil letters, drips
+      g.fillStyle = "#6f6d69"; g.fillRect(0, 0, w, h);
+      for (let k = 0; k < 900; k++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? "30,30,30" : "200,198,190"},.18)`; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); }   // concrete
+      const spray = (x, y, r, c, n) => { g.fillStyle = c; for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = Math.random() * r * Math.random(); g.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d, 1.6, 1.6); } };
+      spray(90, 110, 70, "rgba(235,235,230,.55)", 2600); spray(170, 150, 60, "rgba(196,32,43,.6)", 1500); spray(120, 185, 45, "rgba(20,20,20,.6)", 1200);
+      g.strokeStyle = "rgba(240,240,235,.8)"; g.lineWidth = 5; g.lineCap = "round";   // a fast tag stroke
+      g.beginPath(); g.moveTo(40, 160); g.bezierCurveTo(90, 60, 150, 230, 215, 120); g.stroke();
+      g.fillStyle = "#f2f0eb"; g.font = "bold 38px Impact, 'Arial Narrow', sans-serif"; g.textAlign = "center";
+      g.fillText("LINKIN", w / 2, 268); g.fillText("PARK", w / 2, 306);
+      g.fillStyle = "#6f6d69"; for (let x = 30; x < w - 30; x += 22) g.fillRect(x, 254, 3, 18);   // stencil bridges cut through the letters
+      g.fillStyle = "rgba(242,240,235,.85)"; for (let x = 52; x < w - 52; x += 19) g.fillRect(x, 306, 2, 6 + ((x * 13) % 26));   // drips
+      stack(g, ["METEORA · 2003"], w / 2, 346, 13, 0, "#c4202b", "normal");
+    }),
+    poster((g, w, h) => {   // ONE OK ROCK: Tokyo, a red rising sun, bold diagonal type
+      g.fillStyle = "#0f0f0f"; g.fillRect(0, 0, w, h);
+      g.fillStyle = "#c4202b"; g.beginPath(); g.arc(w / 2, 150, 92, 0, Math.PI * 2); g.fill();
+      g.save(); g.translate(w / 2, 170); g.rotate(-0.22);
+      g.fillStyle = "#f2f0eb"; g.font = "bold 46px Impact, 'Arial Narrow', sans-serif"; g.textAlign = "center";
+      g.fillText("ONE", 0, -40); g.fillText("OK ROCK", 0, 10);
+      g.restore();
+      g.fillStyle = "#f2f0eb"; g.fillRect(28, 300, w - 56, 2);
+      g.textAlign = "center"; stack(g, ["TOKYO · 2005"], w / 2, 328, 14, 0, "#f2f0eb", "normal");
+    }),
+    poster((g, w, h) => {   // JoJo's Bizarre Adventure: loud manga colours and the "menacing" ゴゴゴ sound effect, no characters
+      const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, "#4b1d7a"); bg.addColorStop(0.55, "#a12f8c"); bg.addColorStop(1, "#f2c43a");
+      g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "rgba(255,255,255,.12)"; for (let k = 0; k < 40; k++) { g.beginPath(); g.moveTo(w / 2, 150); g.lineTo(Math.cos(k * 0.157) * 400 + w / 2, Math.sin(k * 0.157) * 400 + 150); g.stroke(); }   // speed lines
+      g.font = "900 72px 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif"; g.textAlign = "center"; g.lineJoin = "round";
+      [[62, 92, -0.3], [186, 118, 0.2], [96, 205, -0.12], [196, 238, 0.3]].forEach(([x, y, r]) => {
+        g.save(); g.translate(x, y); g.rotate(r); g.lineWidth = 8; g.strokeStyle = "#1a0b26"; g.strokeText("ゴ", 0, 0); g.fillStyle = "#f6e04a"; g.fillText("ゴ", 0, 0); g.restore();
+      });
+      g.fillStyle = "#1a0b26"; g.fillRect(0, 262, w, 70);
+      g.fillStyle = "#f6e04a"; g.font = "bold 22px Georgia, serif"; g.fillText("JOJO'S BIZARRE", w / 2, 292); g.fillText("ADVENTURE", w / 2, 318);
+      stack(g, ["ARAKI · 1987"], w / 2, 350, 12, 0, "#1a0b26", "normal");
     }),
   ];
-  posters.forEach((tex, k) => {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.5), mat(0xffffff, 0.75, { map: tex }));
-    p.rotation.set(0, -Math.PI / 2, (k - 1) * 0.04); p.position.set(ROOM_W / 2 - 0.004, RY + 1.45 + (k % 2) * 0.06, WALL_Z + 0.26 + k * 0.36); room.add(p);
-    for (const [dy, dz] of [[0.24, -0.16], [0.24, 0.16]]) {   // strips of tape at the top corners
+  // Hang a poster with two strips of tape at its top corners; rotY turns it to face out from its wall.
+  function hang(tex, x, y, z, rotY, tilt) {
+    const p = new THREE.Group(); p.position.set(x, y, z); p.rotation.y = rotY; room.add(p);
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.5), mat(0xffffff, 0.75, { map: tex })); sheet.rotation.z = tilt; p.add(sheet);
+    for (const dx of [-0.16, 0.16]) {
       const tape = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.022), mat(0xf3ecd6, 0.6, { transparent: true, opacity: 0.85 }));
-      tape.rotation.set(0, -Math.PI / 2, dz > 0 ? 0.5 : -0.5); tape.position.set(ROOM_W / 2 - 0.006, p.position.y + dy, p.position.z + dz); room.add(tape);
+      tape.rotation.z = dx > 0 ? -0.5 : 0.5; tape.position.set(dx, 0.24, 0.002); p.add(tape);
     }
-  });
+  }
+  posters.slice(0, 3).forEach((tex, k) => hang(tex, ROOM_W / 2 - 0.004, RY + 1.45 + (k % 2) * 0.06, WALL_Z + 0.26 + k * 0.36, -Math.PI / 2, (k - 1) * 0.04));   // right wall
+  hang(posters[3], -1.32, RY + 1.22, WALL_Z + 0.004, 0, 0.05);                      // window wall, left of the window
+  hang(posters[4], -ROOM_W / 2 + 0.004, RY + 1.5, WALL_Z + 0.3, Math.PI / 2, -0.04);   // left wall, by the corner
 
   // Ceiling light: a flat round fitting that glows at night.
   const ceilingLampMat = mat(0xf7f5f0, 0.4, { emissive: 0x000000 });
@@ -1813,63 +1840,73 @@ function buildScene() {
     else location.href = c.href;
   });
 
-  // Guitar: about 10 seconds of a strummed Britpop chord loop (Em7 – G – Dsus4 – A7sus4, capo on the 2nd fret, the
-  // progression Oasis made famous; chords only, no melody), ending on a ringing Em7.
-  // Each string is synthesised by the Karplus–Strong method (a burst of noise fed through a short delay loop, which
-  // rings like a plucked string), then sent through a guitar-body boost, a little brightness and a small room echo.
-  let audio = null, out = null, busyUntil = 0;
-  const ringing = [];   // what each of the 6 strings is playing, so a new strum cuts off the old note like a real string
+  // Guitar: about 30 seconds of an original piece in the style of a 70s prog-rock acoustic intro (the kind JoJo used as an
+  // ending theme): bell-like harmonics, then fast fingerpicking in E minor on a nylon-string tone, then harmonics again
+  // and a "To Be Continued" card. Original notes, no existing melody. Click again to stop.
+  // Plucked notes use the Karplus–Strong method (a burst of noise fed through a short delay loop, which rings like a string);
+  // harmonics are soft sine "bells". Everything goes through a guitar-body boost, a little brightness and a small room echo.
+  let audio = null, out = null, bus = null, busyUntil = 0, cardTimer = 0;
+  const ringing = [];   // what each string is playing, so a new note on the same string cuts off the old one
   function setupAudio() {
     audio = new (window.AudioContext || window.webkitAudioContext)();
-    const body = audio.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 190; body.Q.value = 1.2; body.gain.value = 5;
-    const air = audio.createBiquadFilter(); air.type = "highshelf"; air.frequency.value = 3200; air.gain.value = 4;
-    const room = audio.createConvolver(), len = audio.sampleRate * 1.2, ir = audio.createBuffer(2, len, audio.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let n = 0; n < len; n++) d[n] = (Math.random() * 2 - 1) * Math.pow(1 - n / len, 3.5); }
+    const body = audio.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 190; body.Q.value = 1.2; body.gain.value = 4;
+    const air = audio.createBiquadFilter(); air.type = "highshelf"; air.frequency.value = 3200; air.gain.value = 2;
+    const room = audio.createConvolver(), len = audio.sampleRate * 1.6, ir = audio.createBuffer(2, len, audio.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let n = 0; n < len; n++) d[n] = (Math.random() * 2 - 1) * Math.pow(1 - n / len, 3); }
     room.buffer = ir;
-    const wet = audio.createGain(); wet.gain.value = 0.18;
+    const wet = audio.createGain(); wet.gain.value = 0.22;
     const comp = audio.createDynamicsCompressor();
     out = audio.createGain();
     out.connect(body).connect(air).connect(comp).connect(audio.destination);
     air.connect(room).connect(wet).connect(comp);
   }
-  const pluck = (string, freq, at, vol, ring = 1.6) => {
+  const pluck = (string, freq, at, vol, ring = 1.4) => {
     const rate = audio.sampleRate, len = Math.floor(rate * ring), data = new Float32Array(len), period = Math.round(rate / freq);
     for (let n = 0; n < period; n++) data[n] = Math.random() * 2 - 1;
-    for (let n = period; n < len; n++) data[n] = 0.9985 * (0.62 * data[n - period] + 0.38 * data[n - period + 1]);   // steel strings: bright, long
+    for (let n = period; n < len; n++) data[n] = 0.997 * 0.5 * (data[n - period] + data[n - period + 1]);   // nylon: warm and round
     const buf = audio.createBuffer(1, len, rate); buf.copyToChannel(data, 0);
     const src = audio.createBufferSource(), gain = audio.createGain();
     src.buffer = buf; gain.gain.setValueAtTime(vol, at);
-    src.connect(gain).connect(out); src.start(at);
-    const prev = ringing[string];
-    if (prev) prev.gain.setTargetAtTime(0, at, 0.012);   // the old note on this string stops
+    src.connect(gain).connect(bus); src.start(at);
+    if (ringing[string]) ringing[string].gain.setTargetAtTime(0, at, 0.015);
     ringing[string] = gain;
   };
-  const CAPO = Math.pow(2, 2 / 12);   // capo on the 2nd fret raises every string two semitones
-  // Low E to high e; null = string not played. The top two strings stay on the same notes in every chord.
-  const CHORDS = { Em7: [82.41, 123.47, 164.81, 196, 293.66, 392], G: [98, 123.47, 146.83, 196, 293.66, 392],
-                   Dsus4: [null, null, 146.83, 220, 293.66, 392], A7sus4: [null, 110, 164.81, 196, 293.66, 392] };
-  const SONG = ["Em7", "G", "Dsus4", "A7sus4", "Em7", "G"];
-  const SIXTEENTH = 60 / 87 / 4;   // 87 bpm
-  // Over two beats (8 sixteenths): down on 1, down-up on the "&-a", up, down-up; the last up already plays the next chord.
-  const PATTERN = [[0, "D"], [2, "D"], [3, "U"], [5, "U"], [6, "D"], [7, "U+"]];
-  const human = (x) => x + (Math.random() - 0.5) * x * 0.25;
-  function sweep(chord, dir, at, vol, ring) {
-    const strings = CHORDS[chord].map((f, k) => [k, f]).filter(([, f]) => f);
-    const order = dir === "D" ? strings : strings.slice(-4).reverse();
-    order.forEach(([k, f], i) => pluck(k, f * CAPO, at + i * (dir === "D" ? 0.012 : 0.008), human(dir === "D" ? vol : vol * 0.55), ring));
-  }
+  const bell = (freq, at, vol = 0.09) => {   // a natural harmonic: a pure tone that rings and fades
+    const osc = audio.createOscillator(), gain = audio.createGain();
+    osc.frequency.value = freq; gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(vol, at + 0.01); gain.gain.exponentialRampToValueAtTime(0.0005, at + 2.6);
+    osc.connect(gain).connect(bus); osc.start(at); osc.stop(at + 2.7);
+  };
+  // Each bar: a bass note and three upper notes (Hz), picked in a running pattern.
+  const BARS = { Em: [82.41, [196, 246.94, 329.63]], C: [130.81, [196, 261.63, 329.63]], D: [146.83, [220, 293.66, 369.99]],
+                 Am: [110, [220, 261.63, 329.63]], B7: [123.47, [220, 246.94, 311.13]] };
+  const SONG = ["Em", "Em", "C", "D", "Em", "Am", "B7", "Em", "C", "D", "B7", "Em"];
+  const EIGHTH = 0.25;   // 120 bpm, 2 seconds a bar
+  const PICK = [-1, 0, 1, 2, 1, 0, -1, 1];   // -1 = bass, 0..2 = upper notes
+  const HARMONICS = [293.66, 392, 493.88, 659.26];   // 12th-fret harmonics on the D, G, B and high E strings
   function strum() {
     if (!audio) setupAudio();
     if (audio.state === "suspended") audio.resume();
-    const t0 = audio.currentTime + 0.08;
-    if (t0 < busyUntil) return;   // let it finish before it can start again
-    SONG.forEach((chord, c) => PATTERN.forEach(([slot, dir]) => {
-      const name = dir === "U+" ? (SONG[c + 1] || "Em7") : chord;   // anticipate the next chord on the last up-strum
-      sweep(name, dir[0], t0 + (c * 8 + slot) * SIXTEENTH + (Math.random() - 0.5) * 0.012, slot === 0 ? 0.13 : 0.1);
-    }));
-    const end = t0 + SONG.length * 8 * SIXTEENTH;
-    sweep("Em7", "D", end, 0.13, 2.8);   // last Em7, left to ring
-    busyUntil = end + 2;
+    const now = audio.currentTime;
+    if (now < busyUntil) {   // playing: a click stops it
+      bus.gain.setTargetAtTime(0, now, 0.08); busyUntil = 0; clearTimeout(cardTimer); return;
+    }
+    bus = audio.createGain(); bus.connect(out);
+    const t0 = now + 0.08;
+    for (let r = 0; r < 2; r++) HARMONICS.forEach((f, k) => bell(f, t0 + r * 1.5 + k * 0.32));
+    const start = t0 + 3.2;
+    SONG.forEach((name, bar) => {
+      const [bass, upper] = BARS[name];
+      PICK.forEach((p, k) => {
+        const at = start + (bar * 8 + k) * EIGHTH + (Math.random() - 0.5) * 0.01, gallop = k % 2 ? 0.8 : 1;
+        if (p < 0) pluck(0, bass, at, 0.2, 1.8);
+        else pluck(2 + p, upper[p], at, 0.12 * gallop);
+      });
+    });
+    const end = start + SONG.length * 8 * EIGHTH;
+    pluck(0, 82.41, end, 0.2, 3); HARMONICS.forEach((f, k) => bell(f, end + 0.25 + k * 0.32, 0.1));
+    busyUntil = end + 2.5;
+    clearTimeout(cardTimer);
+    cardTimer = setTimeout(() => say('<b class="tbc">TO BE CONTINUED ⇦</b>'), (end + 1 - now) * 1000);
   }
 
   // ---- Day to night as you scroll: afternoon sun in the room, Hueco Mundo night outside. ----

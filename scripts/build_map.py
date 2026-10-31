@@ -12,6 +12,8 @@ How it works (plain language):
      public/404.html (the "page not found" page) and public/CNAME (tells GitHub Pages which domain to use).
    - public/beyond-statutes/: one page per note, built by build_notes.py. The home page's
      chapter list is filled in from the same notes, where site/home.html says <!--CHAPTERS-->.
+   - public/lab/: experiment logs and the Python learning log, built by build_lab.py.
+   - public/og.png: the picture WhatsApp, LinkedIn etc. show when someone shares a link.
 5. Print a small summary so you can sanity-check the numbers.
 
 Run it from the repo root:  python3 scripts/build_map.py
@@ -23,6 +25,7 @@ import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import build_lab
 import build_notes
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +33,7 @@ CSV_PATH = ROOT / "data" / "legal_industry_map.csv"
 TEMPLATE_PATH = ROOT / "site" / "template.html"
 HOME_PATH = ROOT / "site" / "home.html"
 NOT_FOUND_PATH = ROOT / "site" / "404.html"
+OG_IMAGE = ROOT / "site" / "og.png"  # link-preview picture, drawn from site/og-card.html
 ARTIFACT_OUTPUT = ROOT / "site" / "legal-industry-map.html"
 PUBLIC_DIR = ROOT / "public"
 CUSTOM_DOMAIN = "statuta.id"
@@ -93,6 +97,8 @@ def main():
     (PUBLIC_DIR / "legal-industry-map").mkdir(parents=True)
     (PUBLIC_DIR / "legal-industry-map" / "index.html").write_text(full_document(fragment), encoding="utf-8")
     chapters = build_notes.build(PUBLIC_DIR)
+    build_lab.build(PUBLIC_DIR)
+    shutil.copy(OG_IMAGE, PUBLIC_DIR / "og.png")
     home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)
     (PUBLIC_DIR / "index.html").write_text(home, encoding="utf-8")
     shutil.copy(NOT_FOUND_PATH, PUBLIC_DIR / "404.html")

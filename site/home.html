@@ -1738,6 +1738,12 @@ function buildScene() {
     spot.scale.y = 0.4;
   }
   piece(new THREE.CylinderGeometry(0.003, 0.003, 0.13, 6), mat(0xffffff, 0.3, { transparent: true, opacity: 0.8 }), 0.02, 0.05, 0.01, kwetiau).rotation.set(Math.PI / 2 - 0.25, 0, 0.5);   // fork
+  // Next to it, a bottle of Scarlett Garden Whisper to cover the smell (plain bottle, no logo).
+  const perfume = new THREE.Group(); perfume.position.set(0.34, sheetY + 0.001, WALL_Z + 0.4); perfume.rotation.y = 0.3; room.add(perfume);
+  block(0.05, 0.075, 0.03, mat(0xe98aa5, 0.05, { transparent: true, opacity: 0.88 }), 0, 0.0375, 0, perfume);   // pink glass
+  block(0.042, 0.035, 0.022, mat(0xffffff, 0.8), 0, 0.035, 0.0155, perfume);                                     // label
+  piece(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.081, 0, perfume);   // neck
+  piece(new THREE.CylinderGeometry(0.014, 0.014, 0.03, 16), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.1, 0, perfume);      // gold cap
 
   // The chair gets a low backrest with a towel over it.
   block(0.44, 0.2, 0.035, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.62, 0.2, chair);
@@ -1831,6 +1837,7 @@ function buildScene() {
     { obj: guitar, label: "Play ♪", play: true },
     ...pillars,
     { obj: cat, label: "Pet the cat", run: meow },
+    { obj: perfume, label: "Scarlett Garden Whisper", run: () => say("<b>Scarlett Garden Whisper.</b> Sprayed to cover the smell of Rani's kwetiau. It's not winning.") },
     { obj: kwetiau, label: "Stale kwetiau · Rani's leftovers", run: () => say("<b>Kwetiau basi.</b> Rani's leftovers, been here since who knows when. Please don't eat it.") },
     { obj: carved, label: "Activate the circle", outside: true, run: () => {
       forceEvent("transmute");

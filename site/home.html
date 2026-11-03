@@ -1718,6 +1718,32 @@ function buildScene() {
     const half = block(0.12, 0.012, 0.17, mat(0x8b2a2a, 0.7), -0.3 + s * 0.058, DESK_Y + 0.02, WALL_Z + 0.58);
     half.rotation.z = s * 0.28;
   }
+  // Rani's leftover kwetiau, gone stale: an open styrofoam box, flat brown noodles, mould spots, a plastic fork.
+  const kwetiau = new THREE.Group(); kwetiau.position.set(0.52, sheetY + 0.001, WALL_Z + 0.41); kwetiau.rotation.y = -0.2; room.add(kwetiau);
+  const styro = mat(0xf4f2ea, 0.95);
+  block(0.15, 0.004, 0.12, styro, 0, 0.002, 0, kwetiau);                                         // bottom
+  for (const s of [-1, 1]) {
+    block(0.15, 0.04, 0.004, styro, 0, 0.02, s * 0.058, kwetiau);                                // front/back walls
+    block(0.004, 0.04, 0.12, styro, s * 0.073, 0.02, 0, kwetiau);                                // side walls
+  }
+  const boxLid = new THREE.Group(); boxLid.position.set(0, 0.04, -0.06); boxLid.rotation.x = -2.7; kwetiau.add(boxLid);   // hinged at the back, flopped open
+  block(0.15, 0.004, 0.12, styro, 0, 0, 0.06, boxLid);
+  const noodle = mat(0x8a5a2b, 0.6);
+  for (let k = 0; k < 14; k++) {
+    const r = block(0.11, 0.003, 0.012, noodle, (Math.random() - 0.5) * 0.02, 0.025 + k * 0.0015, (Math.random() - 0.5) * 0.08, kwetiau);
+    r.rotation.set(0, Math.random() * Math.PI, (Math.random() - 0.5) * 0.3);
+  }
+  for (let k = 0; k < 6; k++) {                                                                  // mould
+    const spot = piece(new THREE.SphereGeometry(0.008 + Math.random() * 0.006, 8, 6), mat(k % 2 ? 0x8f9a6b : 0xc9cfb8, 1), (Math.random() - 0.5) * 0.09, 0.047, (Math.random() - 0.5) * 0.07, kwetiau);
+    spot.scale.y = 0.4;
+  }
+  piece(new THREE.CylinderGeometry(0.003, 0.003, 0.13, 6), mat(0xffffff, 0.3, { transparent: true, opacity: 0.8 }), 0.02, 0.05, 0.01, kwetiau).rotation.set(Math.PI / 2 - 0.25, 0, 0.5);   // fork
+  // Next to it, a bottle of Scarlett Garden Whisper to cover the smell (plain bottle, no logo).
+  const perfume = new THREE.Group(); perfume.position.set(0.34, sheetY + 0.001, WALL_Z + 0.4); perfume.rotation.y = 0.3; room.add(perfume);
+  block(0.05, 0.075, 0.03, mat(0xe98aa5, 0.05, { transparent: true, opacity: 0.88 }), 0, 0.0375, 0, perfume);   // pink glass
+  block(0.042, 0.035, 0.022, mat(0xffffff, 0.8), 0, 0.035, 0.0155, perfume);                                     // label
+  piece(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.081, 0, perfume);   // neck
+  piece(new THREE.CylinderGeometry(0.014, 0.014, 0.03, 16), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.1, 0, perfume);      // gold cap
 
   // The chair gets a low backrest with a towel over it.
   block(0.44, 0.2, 0.035, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.62, 0.2, chair);
@@ -1811,6 +1837,8 @@ function buildScene() {
     { obj: guitar, label: "Play ♪", play: true },
     ...pillars,
     { obj: cat, label: "Pet the cat", run: meow },
+    { obj: perfume, label: "Scarlett Garden Whisper", run: () => say("<b>Scarlett Garden Whisper.</b> Sprayed to cover the smell of Rani's kwetiau. It's not winning.") },
+    { obj: kwetiau, label: "Stale kwetiau · Rani's leftovers", run: () => say("<b>Kwetiau basi.</b> Rani's leftovers, been here since who knows when. Please don't eat it.") },
     { obj: carved, label: "Activate the circle", outside: true, run: () => {
       forceEvent("transmute");
       say('<b>Equivalent exchange.</b> To gain something, you have to give something of equal value. <a href="/beyond-statutes/equivalent-exchange/">Read the note →</a>');

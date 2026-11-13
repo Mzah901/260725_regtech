@@ -469,6 +469,7 @@ l. memerintahkan kepada Penyelenggara Sistem Elektronik untuk melakukan pemutusa
 
 > _Riwayat:_ Diubah oleh UU 19/2016 Pasal I angka 7.  
 > _Riwayat:_ Diubah oleh UU 1/2024 Pasal I angka 15.  
+> **Catatan**: KUHAP baru berlaku 2 Januari 2026. Ketentuan kewenangan PPNS dalam undang-undang lain tetap berlaku sepanjang tidak bertentangan dengan KUHAP (Pasal 363); ketentuan acara pidana yang bertentangan tidak berlaku kecuali diatur dalam Undang-Undang (Pasal 367). Rujukan ke "Undang-Undang tentang Hukum Acara Pidana" kini menunjuk UU 20/2025. Dampak per ayat belum dianalisis. _Sumber: UU 20/2025 (KUHAP) Pasal 363 dan Pasal 367._  
 
 ### Pasal 44
 
@@ -577,6 +578,9 @@ Setiap Orang yang memenuhi unsur sebagaimana dimaksud dalam Pasal 34 ayat (1) di
 (2) Dalam hal perbuatan sebagaimana dimaksud dalam Pasal 30 sampai dengan Pasal 37 ditujukan terhadap Komputer dan/atau Sistem Elektronik serta Informasi Elektronik dan/atau Dokumen Elektronik milik Pemerintah dan/atau yang digunakan untuk layanan publik dipidana dengan pidana pokok ditambah sepertiga.  
 (3) Dalam hal perbuatan sebagaimana dimaksud dalam Pasal 30 sampai dengan Pasal 37 ditujukan terhadap Komputer dan/atau Sistem Elektronik serta Informasi Elektronik dan/atau Dokumen Elektronik milik Pemerintah dan/atau badan strategis termasuk dan tidak terbatas pada lembaga pertahanan, bank sentral, perbankan, keuangan, lembaga internasional, otoritas penerbangan diancam dengan pidana maksimal ancaman pidana pokok masing-masing Pasal ditambah dua pertiga.  
 (4) Dalam hal tindak pidana sebagaimana dimaksud dalam Pasal 27 sampai dengan Pasal 37 dilakukan oleh korporasi dipidana dengan pidana pokok ditambah dua pertiga.  
+
+> **Rujukan diganti** (ayat (1)): Rujukan ke Pasal 27 ayat (1) dalam UU ITE sendiri diganti dengan KUHP Pasal 407 sejak 2 Januari 2026. _Sumber: UU 1/2023 Pasal 622 ayat (10) huruf a._  
+> **Rujukan diganti**: Ayat (2)-(4) merujuk "Pasal 30 sampai dengan Pasal 37". Rujukan ke Pasal 30 diganti KUHP Pasal 332, ke Pasal 31 ayat (1)-(2) diganti KUHP Pasal 258 ayat (2). Pasal 36 dicabut tanpa pasal pengganti yang disebut. Bagaimana rentang ini dibaca sekarang belum dianalisis. _Sumber: UU 1/2023 Pasal 622 ayat (10) huruf d dan e._  
 
 ## BAB XII — KETENTUAN PERALIHAN
 

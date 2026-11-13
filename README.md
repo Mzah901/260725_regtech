@@ -12,6 +12,8 @@ AI applied to Indonesian regulatory compliance, using public sources only
 - `content/beyond-statutes/` — the Beyond Statutes notes, one Markdown file each. Start a file with a
   `---` header (`title`, `rank`, `tag`), write paragraphs, and link to another note with `[[Its title]]`.
   The build makes a page per note with its links and backlinks, and fills the home page's chapter list.
+- `content/column/` — the Column: dated opinion posts, one Markdown file each, with a `---` header
+  (`title`, `date` as YYYY-MM-DD, `tag`). Built to statuta.id/column/ with an RSS feed at /column/feed.xml.
 - `.github/workflows/pages.yml` — publishes the website at https://statuta.id
 
 ## Experiments

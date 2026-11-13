@@ -13,6 +13,7 @@ How it works (plain language):
    - public/beyond-statutes/: one page per note, built by build_notes.py. The home page's
      chapter list is filled in from the same notes, where site/home.html says <!--CHAPTERS-->.
    - public/lab/: experiment logs and the Python learning log, built by build_lab.py.
+   - public/column/: dated opinion posts and their RSS feed, built by build_column.py.
    - public/og.png: the picture WhatsApp, LinkedIn etc. show when someone shares a link.
 5. Print a small summary so you can sanity-check the numbers.
 
@@ -25,6 +26,7 @@ import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import build_column
 import build_lab
 import build_notes
 
@@ -98,6 +100,7 @@ def main():
     (PUBLIC_DIR / "legal-industry-map" / "index.html").write_text(full_document(fragment), encoding="utf-8")
     chapters = build_notes.build(PUBLIC_DIR)
     build_lab.build(PUBLIC_DIR)
+    build_column.build(PUBLIC_DIR)
     shutil.copy(OG_IMAGE, PUBLIC_DIR / "og.png")
     shutil.copy(ROOT / "site" / "logo.svg", PUBLIC_DIR / "logo.svg")
     home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)

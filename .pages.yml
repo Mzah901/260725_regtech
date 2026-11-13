@@ -29,3 +29,32 @@ content:
         label: Text
         type: text
         description: Blank line between paragraphs. Link another note with [[Its title.]] — a title that doesn't exist stops the publish (the old site stays up).
+  - name: column
+    label: Column
+    type: collection
+    path: content/column
+    filename: "{primary}.md"
+    view:
+      fields: [date, title, tag]
+      sort: [date]
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: date
+        label: Date
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - name: tag
+        label: Tag
+        type: select
+        required: true
+        options:
+          values: [LAW, POLICY, TECH, FINANCE, LIFE]
+      - name: body
+        label: Text
+        type: text
+        description: Blank line between paragraphs. Lists with "- " or "1. ". Links as [words](https://...).

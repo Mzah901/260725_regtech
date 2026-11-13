@@ -21,6 +21,12 @@ Full project context (goals, conventions, decisions): @docs/PROJECT_CONTEXT.md
    or internal database formats may appear in this repo.
 3. **No work systems**: never use or reference work Slack, work accounts, or files
    shared from work. Only this repo and public web sources.
+   **Work handoff (one-way only):** an idea may be marked "Work" in the idea index and
+   handed off as a generic brief (use `docs/handoff-template.md`: title, goal, public
+   method, public sources). Execution then happens only on the owner's work account.
+   Nothing from work systems (data, results, screenshots, templates, client info, progress
+   notes) may enter this repo or its sessions. Work-side outputs are employer property
+   and are never reused here; a public version must be rebuilt from public sources only.
 4. **Commercial use**: do not build anything packaged for sale to compliance clients
    without the owner confirming management disclosure first.
 5. **Human review**: every output is reviewed by the owner before it is treated as final.

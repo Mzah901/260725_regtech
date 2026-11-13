@@ -43,3 +43,8 @@ If an experiment doesn't advance at least one of these, question whether to run 
 - Public sources only; employer-independent (see CLAUDE.md guardrails).
 - GitHub is home base; Hugging Face for publishing datasets.
 - Claude Code (web) for building; planning happens in a separate claude.ai Project.
+- 2026-11-13: Ideas are tracked in the owner's personal Google Sheet "Regulatory AI Labs",
+  tab "Ideas Index" (one row per idea, fixed numbers, Repo = Public / Work / Personal).
+  The old "Main Sheet" tab is kept as the archive of detailed plans.
+- 2026-11-13: Ideas needing employer data are marked "Work" and handed off one-way to the
+  owner's work account (see guardrail 3 in CLAUDE.md and `docs/handoff-template.md`).

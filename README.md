@@ -20,6 +20,7 @@ AI applied to Indonesian regulatory compliance, using public sources only
 
 | Date | Experiment | View | Files |
 |---|---|---|---|
+| 2026-11-14 | [Rules for scraping legal sources (memo)](experiments/2026-11-14-scraping-rules-memo.md) | [Memo and checklist](docs/scraping-rules.md) | `docs/scraping-rules.md` |
 | 2026-11-14 | [Consolidated UU ITE (pilot)](experiments/2026-11-14-uu-ite-consolidation.md) | [Consolidated text](data/consolidation/uu-ite/uu-ite-konsolidasi.md) | `data/consolidation/uu-ite/`, `scripts/consolidate.py` |
 | 2026-10-11 | [Legal Industry Map (pilot)](experiments/2026-10-11-legal-industry-map.md) | [Interactive map](https://claude.ai/artifact/9iALtpMBCiDZXF4x5zytDw) | `data/legal_industry_map.csv`, `site/legal-industry-map.html` |
 

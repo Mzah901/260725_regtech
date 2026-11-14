@@ -66,10 +66,19 @@ The rule underneath every verdict: **the law text is free, the access is not unl
 - UU PDP (UU 27/2022) has **no exemption for data that is already public.** Processing must follow its principles: limited and specific collection, a clear purpose, accuracy (Pasal 16 ayat (2)), and a lawful basis (Pasal 20).
 - The research exemption is narrow. Pasal 15 ayat (1) huruf e lifts only certain data-subject rights for "statistik dan penelitian ilmiah", and only "dalam rangka pelaksanaan ketentuan Undang-Undang" (ayat (2)).
   The household exemption (Pasal 2 ayat (2)) does not cover a public research project.
-- No implementing PP PDP was found in Pasal.id's corpus. Its status is not confirmed here.
+- **Criminal records are "spesifik" personal data too** (UU PDP Pasal 4 ayat (2) huruf d). Every criminal court decision is one.
+- **The implementing regulation, PP 33/2026** (Peraturan Pelaksanaan UU 27/2022), was promulgated on 16 July 2026 (LN 2026 No. 88) and takes effect 6 months later (Pasal 225), on **16 January 2027**.
+  It is not in force yet, but it shows where the rules are going, and the lab should follow it now:
+  - **Public data is still personal data.** Combining data to identify someone "termasuk penggunaan data yang tersedia pada domain publik" (Pasal 7 ayat (3)). Names in a published court decision are covered.
+  - **The household exemption is narrow.** It covers only processing that is personal, not professional or commercial, and not meant for the public (Pasal 3 ayat (2)). A public research website is meant for the public, so it does not qualify.
+  - **Legitimate interest needs paperwork.** Before relying on it, the controller must analyse purpose, need and the balance with the data subject's rights, and assess that the processing does not harm them (Pasal 53). Both must be documented (Pasal 54).
+  - **The research exemption has five conditions** (Pasal 148 ayat (1) huruf e, Pasal 154): non-commercial; a lawful basis; a documented balancing test; results not used to judge or decide about the people in the data; and safeguards against misuse. It still lifts only certain rights, and only "dalam rangka pelaksanaan ketentuan Undang-Undang" (Pasal 148 ayat (2)).
+  - **Children:** the controller must take steps to identify children, get parental or guardian consent, and verify that consent (Pasal 38 ayat (1), (2), (4)).
+  - Retention policies must say how data used for statistics or research is de-identified (Pasal 75 ayat (2) huruf e).
 - **Rules:**
   - Regulations: no personal-data issue.
   - Court decisions: do not build datasets indexed by person. Remove party and witness names unless the project needs them, and keep only the fields the question needs.
+  - Before any dataset built from court decisions, write a short balancing note in the experiment log (purpose, why the data is needed, effect on the people named, safeguards), following PP 33/2026 Pasal 53, 54 and 154.
   - Never publish a list of named people with legal labels (the same reason idea #7 has a public alternative).
 - **Children's data is "spesifik" personal data** (UU PDP Pasal 4 ayat (2) huruf e), and processing it needs parental or guardian consent (Pasal 25 ayat (2)).
   A research lab cannot get that consent. **Rule:** never collect, keep, or publish data that identifies a child, including from court decisions involving children.
@@ -105,7 +114,7 @@ That supports reading and sharing official legal texts. It is not a licence to o
 2. Read robots.txt for your real user agent. Disallowed means no.
 3. Read the terms. A ban on automated or bulk access means no without a licence.
 4. Is there a bot challenge, CAPTCHA, login or rate limit? If yes, **stop**; do it by hand.
-5. Personal data involved? Minimise it, and do not index by person. Data that identifies a child: do not collect it at all.
+5. Personal data involved? Minimise it, do not index by person, and write the balancing note (§4). Data that identifies a child: do not collect it at all.
 6. Volume and speed: one request at a time, at least 2 seconds apart, cached, honest user agent, stop on 403 or 429.
 7. Log it in the experiment: which site, how many requests, which user agent, and on what date.
 
@@ -127,6 +136,7 @@ That supports reading and sharing official legal texts. It is not a licence to o
 
 - Foreign comparisons (for example US cases on scraping public profiles, or the EU database right). They are not needed for a lab working on Indonesian sources.
 - The JDIHN terms page (`/prasyarat`), which could not be loaded (TLS certificate error), and terms for peraturan.go.id, MA, MK and BPK, where no terms page was found.
+- The Peraturan Lembaga that PP 33/2026 delegates to (for example on combining data, Pasal 7 ayat (4), and on legitimate interest, Pasal 57). None was read, and the PDP agency's rules may add detail.
 - The Penjelasan of UU 1/2026 on why "dengan sengaja" was removed from KUHP Pasal 332 (not found on the page read). The conclusion above rests on KUHP Pasal 36 ayat (2).
 
 Independent personal research. Not affiliated with or endorsed by any employer.

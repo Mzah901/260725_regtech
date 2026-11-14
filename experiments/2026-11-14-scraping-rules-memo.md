@@ -20,6 +20,8 @@ Hypothesis: copyright is not the problem, because regulations and decisions have
    - UU ITE Pasal 32–34
    - UU PDP Pasal 2, 15, 16, 20
    - UU KIP Pasal 2 and 4
+   - UU PDP Pasal 4 and 25 (children's data)
+   - PP 17/2025 on child protection by electronic system operators, read in full from the owner's copy (Salinan, LN 2025 No. 36)
 2. Fetched robots.txt for six sources and checked for bot challenges.
 3. Read the Pasal.id terms and API pages.
 4. Wrote a verdict per site and a checklist, then audited the lab's own UU ITE consolidation against the result.
@@ -33,6 +35,7 @@ Hypothesis: copyright is not the problem, because regulations and decisions have
 - UU 11/2008: https://pasal.id/peraturan/uu/uu-no-11-tahun-2008
 - UU 27/2022: https://pasal.id/peraturan/uu/uu-no-27-tahun-2022
 - UU 14/2008: https://pasal.id/peraturan/uu/uu-no-14-tahun-2008
+- PP 17/2025: official Salinan PDF supplied by the owner; also at https://pasal.id/peraturan/pp/pp-no-17-tahun-2025
 - robots.txt: peraturan.go.id, jdihn.go.id, peraturan.bpk.go.id, putusan3.mahkamahagung.go.id, mkri.id, pasal.id (all fetched 2026-11-14)
 - Pasal.id terms: https://pasal.id/ketentuan (effective 5 October 2026); API page: https://pasal.id/api
 
@@ -49,6 +52,9 @@ Claude Code (desktop) with Claude Opus 5.5 and the Pasal.id MCP connector; `curl
   Getting past a security measure (ayat (3)) is the heaviest form, and Pasal 333 covers government systems specifically.
 - **Per-site verdicts:** go for peraturan.go.id, jdihn.go.id (except `/search-api/`) and MK decisions; by hand only for MA and BPK (bot challenges; MA also signals `ai-train=no`).
   For Pasal.id, read through MCP or the website only, because its terms ban automated bulk extraction without a licence.
+- **Children.** Children's data is "spesifik" personal data that needs parental consent (UU PDP Pasal 4, 25), so the lab never collects data that identifies a child.
+  PP 17/2025 governs services children use, not datasets about them. It probably does not cover statuta.id, which has no accounts, no personal data and no tracking.
+  But its "design attractive to children" indicator (Pasal 4 ayat (2) huruf d) sits awkwardly with the site's game-like 3D home page, so the memo flags it. The same PP was added as a note on UU ITE Pasal 16A and 16B in the consolidation.
 - **Self-audit finding.** The UU ITE consolidation parsed Pasal.id's page data for three laws. The volume was small and the text is public domain, but the method sits close to Pasal.id's extraction ban.
   The memo recommends re-sourcing those files from the official PDFs.
 
@@ -59,6 +65,8 @@ Claude Code (desktop) with Claude Opus 5.5 and the Pasal.id MCP connector; `curl
 - No implementing PP PDP was found in Pasal.id's corpus. That is not proof that none exists.
 - KUHP and UU PDP text comes from Pasal.id. KUHP and UU PDP are marked verified there; UU 28/2014 and UU KIP are not.
 - Foreign law (US scraping cases, the EU database right) is not covered.
+- PP 17/2025 text was extracted from a scanned PDF and has OCR errors (for example, the enactment date reads "27 Maret 2021"; it is 2025).
+  The Minister's decree on "likely to be used by children" indicators was not read.
 
 ## What the owner reviewed
 

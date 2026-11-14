@@ -71,23 +71,45 @@ The rule underneath every verdict: **the law text is free, the access is not unl
   - Regulations: no personal-data issue.
   - Court decisions: do not build datasets indexed by person. Remove party and witness names unless the project needs them, and keep only the fields the question needs.
   - Never publish a list of named people with legal labels (the same reason idea #7 has a public alternative).
+- **Children's data is "spesifik" personal data** (UU PDP Pasal 4 ayat (2) huruf e), and processing it needs parental or guardian consent (Pasal 25 ayat (2)).
+  A research lab cannot get that consent. **Rule:** never collect, keep, or publish data that identifies a child, including from court decisions involving children.
 
-## 5. Public information law points the same way, with limits
+## 5. Children: PP 17/2025 and the lab's own website
+
+PP 17/2025 tentang Tata Kelola Penyelenggaraan Sistem Elektronik dalam Pelindungan Anak implements UU ITE Pasal 16A ayat (5) and Pasal 16B ayat (3).
+It was promulgated on 27 March 2025 (LN 2025 No. 36), and operators must comply within 2 years of promulgation (Pasal 49), that is by 27 March 2027.
+
+- **What it governs.** Electronic system operators whose products are designed for children, or are likely to be used by them (Pasal 3 ayat (3), Pasal 4 ayat (1)).
+  It governs services children use, not datasets about children, so it does not change how the lab collects legal sources.
+- **What it requires** of an operator in scope:
+  - parental consent (Pasal 7 ayat (1) huruf a, Pasal 9);
+  - a data protection impact assessment (Pasal 7 ayat (1) huruf b);
+  - high-privacy settings by default (Pasal 10);
+  - a self-assessed risk profile reported to the Minister (Pasal 5 ayat (6)–(7));
+  - no profiling of children and no precise geolocation (Pasal 7 ayat (2), Pasal 18, Pasal 19).
+  Breaches carry administrative sanctions, up to cutting off access (Pasal 38).
+- **Does it cover statuta.id?** Probably not, but it is not a clean no.
+  - The site is a legal-research portfolio. It is not designed for children, has no accounts, collects no personal data, and its visitor counter (GoatCounter) uses no cookies.
+  - But one of the "likely to be used by children" indicators is design that is attractive to children (Pasal 4 ayat (2) huruf d).
+    The home page is a game-like 3D room with anime-inspired art, posters and easter eggs. The Minister sets the assessment indicators by decree (Pasal 4 ayat (3)), and that decree was not read here.
+  - **Rule:** keep the site free of accounts, tracking and personal data. Do not market it to children. Check the Minister's indicator decree before adding interactive features that collect anything.
+
+## 6. Public information law points the same way, with limits
 
 UU KIP (UU 14/2008) says public information is open and accessible to everyone (Pasal 2 ayat (1)), and everyone may see it and spread it "sesuai dengan peraturan perundang-undangan" (Pasal 4 ayat (2) huruf a and d).
 That supports reading and sharing official legal texts. It is not a licence to overload a server or get around its protections.
 
-## 6. Checklist before any automated collection
+## 7. Checklist before any automated collection
 
 1. Is the content regulation text or a court decision (free) or someone's compilation (protected)? Take only the free part, from an official source if possible.
 2. Read robots.txt for your real user agent. Disallowed means no.
 3. Read the terms. A ban on automated or bulk access means no without a licence.
 4. Is there a bot challenge, CAPTCHA, login or rate limit? If yes, **stop**; do it by hand.
-5. Personal data involved? Minimise it, and do not index by person.
+5. Personal data involved? Minimise it, and do not index by person. Data that identifies a child: do not collect it at all.
 6. Volume and speed: one request at a time, at least 2 seconds apart, cached, honest user agent, stop on 403 or 429.
 7. Log it in the experiment: which site, how many requests, which user agent, and on what date.
 
-## 7. Self-audit: the UU ITE consolidation (2026-11-14)
+## 8. Self-audit: the UU ITE consolidation (2026-11-14)
 
 - **What was done:** besides the Pasal.id MCP reads, about 15 Pasal.id web pages were fetched with a generic browser user agent.
   The article text inside each page's data payload was parsed out and saved as `data/consolidation/uu-ite/sources/*.txt`, covering three laws.

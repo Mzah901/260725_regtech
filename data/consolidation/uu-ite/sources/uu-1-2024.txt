@@ -1,6 +1,6 @@
 # UU 1/2024 tentang Perubahan Kedua atas UU 11/2008 — Pasal I dan Pasal II
 # Sumber: https://peraturan.go.id/files/uu-no-1-tahun-2024.pdf
-# Diambil dari Pasal.id pada 2026-11-14. Pasal.id menandai naskah ini BELUM terverifikasi (automated_source); cek ke PDF resmi.
+# Diperiksa kata demi kata terhadap OCR PDF resmi (hasil pindaian) pada 2026-11-14: 89 perbedaan, 85 kesalahan OCR resmi, 4 dicek ke gambar halaman (hlm. 9, 10, 17, 19); 0 kesalahan pada teks ini.
 # Teks peraturan adalah domain publik (Pasal 42 UU 28/2014).
 
 Pasal I

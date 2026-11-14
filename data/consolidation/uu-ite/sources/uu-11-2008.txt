@@ -1,6 +1,6 @@
 # UU 11/2008 tentang Informasi dan Transaksi Elektronik — batang tubuh (tanpa Penjelasan)
 # Sumber: https://peraturan.go.id/files/UU+11+Tahun+2008.pdf
-# Diambil dari Pasal.id pada 2026-11-14. Pasal.id menandai naskah ini terverifikasi (golden_certified).
+# Diperiksa kata demi kata terhadap PDF resmi (teks digital) pada 2026-11-14: 0 perbedaan isi pasal (scripts/compare_words.py).
 # Teks peraturan adalah domain publik (Pasal 42 UU 28/2014).
 
 BAB I

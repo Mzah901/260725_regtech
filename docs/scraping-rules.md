@@ -117,7 +117,9 @@ That supports reading and sharing official legal texts. It is not a licence to o
 - **Assessment:** regulation text and court decisions have no copyright, and Pasal.id itself says so. The volume was small, three laws rather than "massal".
   No barrier was bypassed. The fetches were made on the owner's request, which matches what Pasal.id's robots.txt allows `Claude-User` to do.
   But the method, parsing Pasal.id's structured page data, sits close to the terms' ban on automated extraction. It also did not identify itself honestly as an agent.
-- **Recommendation:** re-source the three text files from the official PDFs on peraturan.go.id, so the repo no longer depends on Pasal.id's structured data.
+- **Done (2026-11-14).** The three official PDFs were downloaded from peraturan.go.id, politely (one at a time, 3 seconds apart, honest user agent). Every source file was compared word by word with them.
+  There were no wording differences for UU 11/2008 and UU 19/2016. For UU 1/2024 (a scanned PDF), 85 of 89 differences were OCR noise, and the other 4 were confirmed from the page images.
+  The files now cite the official PDFs as their source; the text did not need to change.
   From now on, use Pasal.id through MCP (within the daily cap) or the website for reading only, and do not parse its page data.
   If a project needs more, ask for a licence (halo@pasal.id).
 

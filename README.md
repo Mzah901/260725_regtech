@@ -44,7 +44,8 @@ Setup checklist:
 4. After DNS has updated (up to 24 hours): Settings → Pages → tick **Enforce HTTPS**.
 5. GitHub account Settings → Pages → **Verify** statuta.id, so no one else can claim the domain on GitHub.
 
-Outputs are research artifacts, not legal advice.
+**Experimental. Unverified unless marked as reviewed. Not legal advice, and not legal research to rely on.**
+Each experiment log says whether the owner has checked it. Outputs show whether an approach works, not that its results are accurate.
 
 Source regulation text is public domain under Pasal 42 UU No. 28 Tahun 2014 tentang Hak Cipta.
 

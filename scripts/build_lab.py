@@ -175,7 +175,7 @@ def build(public_dir):
     main = f"""
 <p class="crumb"><a href="/">statuta.id</a> / lab</p>
 <h1>Lab</h1>
-<p class="muted">What I tried, what came out, and what is still wrong with it. Every result is a draft until I have checked it by hand.</p>
+<p class="muted">What I tried, what came out, and what is still wrong with it. Results go up as experiments before I have checked them; each one says whether I have.</p>
 <h2 id="experiments">Experiments</h2>
 {"".join(experiment_html(e) for e in experiments)}
 """

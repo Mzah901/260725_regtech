@@ -28,13 +28,23 @@ UU 11/2008 (UU ITE) is a hard test case. It was amended twice (UU 19/2016, UU 1/
 7. The date everything turns on: KUHP Pasal 624 says it takes effect 3 years after promulgation. It was promulgated on 2 January 2023 (LN 2023 No. 1), so it took effect on 2 January 2026.
    KUHAP Pasal 369 and UU 1/2026 take effect on the same day.
 
-Besides the Pasal.id connector, about 15 public Pasal.id web pages were fetched directly, to save article text to files. Idea #6 (rules for scraping legal sources) is still open; nothing was crawled in bulk.
+Besides the Pasal.id connector, about 15 public Pasal.id web pages were fetched directly, to save article text to files. Nothing was crawled in bulk.
+Memo #6 (`docs/scraping-rules.md`) later found that this method sits close to Pasal.id's terms on automated extraction.
+
+**Re-sourcing (2026-11-14).** The three official PDFs were downloaded from peraturan.go.id. Their text was extracted, and every source file was compared word by word with it (`scripts/compare_words.py`):
+- **UU 11/2008** (digital PDF): no differences in article wording.
+- **UU 19/2016** (digital PDF): no differences in wording.
+- **UU 1/2024** (scanned PDF, poor OCR): 89 differences. 85 are misreadings in the official OCR, such as "danlatau", "Sertilikasi", or O for 0 in amounts.
+  The other 4 were checked against the official page images (pages 9, 10, 17, 19): "mendistribusikan" in Pasal 28(1), "mengirimkan" in Pasal 29, "memengaruhi" in Pasal 45A(2), and "Rp10.000.000.000,00" in Pasal 45(3). Our text was right each time.
+
+So the text is unchanged, and every word of it is now confirmed by the official source. The source files cite the official PDFs, not Pasal.id.
+The official PDFs could not simply be converted instead. UU 19/2016 stores its numbering labels apart from the text, and UU 1/2024 is a scan.
 
 ## Sources used
 
-- UU 11/2008: https://peraturan.go.id/files/UU+11+Tahun+2008.pdf, via https://pasal.id/peraturan/uu/uu-no-11-tahun-2008 (Pasal.id: verified)
-- UU 19/2016: https://peraturan.go.id/files/UU+19+Tahun+2016.pdf, via https://pasal.id/peraturan/uu/uu-no-19-tahun-2016 (Pasal.id: _not_ verified)
-- UU 1/2024: https://peraturan.go.id/files/uu-no-1-tahun-2024.pdf, via https://pasal.id/peraturan/uu/uu-no-1-tahun-2024 (Pasal.id: _not_ verified)
+- UU 11/2008: https://peraturan.go.id/files/UU+11+Tahun+2008.pdf (first read via Pasal.id; checked word by word against this PDF)
+- UU 19/2016: https://peraturan.go.id/files/UU+19+Tahun+2016.pdf (same)
+- UU 1/2024: https://peraturan.go.id/files/uu-no-1-tahun-2024.pdf (same; scanned PDF, so the disputed words were checked against page images)
 - UU 1/2023 (KUHP) Pasal 441, 622: https://pasal.id/peraturan/uu/uu-no-1-tahun-2023
 - UU 1/2026 (Penyesuaian Pidana) Pasal I–III and Pasal VII angka 55: https://pasal.id/peraturan/uu/uu-no-1-tahun-2026
 - UU 20/2025 (KUHAP) Pasal 361–369: https://pasal.id/peraturan/uu/uu-no-20-tahun-2025
@@ -65,7 +75,8 @@ Besides the Pasal.id connector, about 15 public Pasal.id web pages were fetched 
 
 ## Known limitations and error notes
 
-- The text of UU 19/2016 and UU 1/2024 comes from Pasal.id copies that Pasal.id itself marks as unverified. It has not yet been checked against the PDFs.
+- The source text has been checked word by word against the official PDFs (see Re-sourcing above). That check is automated plus four image checks; it is not your hand review.
+  BAB IV's "Bagian Kesatu/Kedua" subheadings are in the official text but not in the consolidated output.
 - Penjelasan is not consolidated.
 - UU 1/2026 converts the fines in Bab XI into fine categories (Lampiran I). The text shows the original rupiah amounts with one general note.
   The category for each article has not been checked against Lampiran I.

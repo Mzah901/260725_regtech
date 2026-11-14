@@ -7,6 +7,7 @@ Rebuild with `python3 scripts/consolidate.py`. Method and limits: `experiments/2
 |---|---|
 | `sources/uu-11-2008.txt` | Base law, body only, with BAB headings |
 | `sources/uu-19-2016.txt`, `sources/uu-1-2024.txt` | Pasal I (change points, labelled "Angka N") and Pasal II of each amending law |
+| | All three source files are checked word by word against the official PDFs on peraturan.go.id (`scripts/compare_words.py`); each file's header gives the result |
 | `changes.csv` | Ledger: one row per article touched by each change point |
 | `status.csv` | Later events kept as notes: expiry, revocation, MK rulings, open questions |
 | `uu-ite-konsolidasi.md` | Generated output. Do not edit by hand |

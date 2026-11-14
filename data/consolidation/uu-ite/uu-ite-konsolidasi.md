@@ -186,6 +186,7 @@ c. mekanisme pelaporan penyalahgunaan produk, layanan, dan fitur yang melanggar 
 (5) Ketentuan lebih lanjut mengenai pelindungan sebagaimana dimaksud pada ayat (1) sampai dengan ayat (4) diatur dalam Peraturan Pemerintah.  
 
 > _Riwayat:_ Disisipkan oleh UU 1/2024 Pasal I angka 5.  
+> **Peraturan pelaksana**: Ayat (5) dilaksanakan oleh PP 17/2025 tentang Tata Kelola Penyelenggaraan Sistem Elektronik dalam Pelindungan Anak. Penyelenggara Sistem Elektronik wajib menyesuaikan paling lama 2 tahun sejak diundangkan (PP 17/2025 Pasal 49), yaitu 27 Maret 2027. _Sumber: PP 17/2025 (LN 2025 No. 36; diundangkan 27 Maret 2025)._  
 
 ### Pasal 16B
 
@@ -198,6 +199,7 @@ d. pemutusan Akses.
 (3) Ketentuan lebih lanjut mengenai pengenaan sanksi administratif sebagaimana dimaksud pada ayat (1) dan ayat (2) diatur dalam Peraturan Pemerintah.  
 
 > _Riwayat:_ Disisipkan oleh UU 1/2024 Pasal I angka 5.  
+> **Peraturan pelaksana**: Ayat (3) dilaksanakan oleh PP 17/2025; jenis sanksi administratif dan pengenaannya diatur dalam PP 17/2025 Pasal 38-40. _Sumber: PP 17/2025 (LN 2025 No. 36; diundangkan 27 Maret 2025)._  
 
 ## BAB V — TRANSAKSI ELEKTRONIK
 

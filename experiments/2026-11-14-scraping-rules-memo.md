@@ -22,6 +22,7 @@ Hypothesis: copyright is not the problem, because regulations and decisions have
    - UU KIP Pasal 2 and 4
    - UU PDP Pasal 4 and 25 (children's data)
    - PP 17/2025 on child protection by electronic system operators, read in full from the owner's copy (Salinan, LN 2025 No. 36)
+   - PP 33/2026, the implementing regulation of UU PDP, read from the owner's copy (Salinan, LN 2026 No. 88), added after the owner pointed out it was missing
 2. Fetched robots.txt for six sources and checked for bot challenges.
 3. Read the Pasal.id terms and API pages.
 4. Wrote a verdict per site and a checklist, then audited the lab's own UU ITE consolidation against the result.
@@ -36,6 +37,7 @@ Hypothesis: copyright is not the problem, because regulations and decisions have
 - UU 27/2022: https://pasal.id/peraturan/uu/uu-no-27-tahun-2022
 - UU 14/2008: https://pasal.id/peraturan/uu/uu-no-14-tahun-2008
 - PP 17/2025: official Salinan PDF supplied by the owner; also at https://pasal.id/peraturan/pp/pp-no-17-tahun-2025
+- PP 33/2026: official Salinan PDF supplied by the owner (not in Pasal.id's corpus as of 2026-11-14)
 - robots.txt: peraturan.go.id, jdihn.go.id, peraturan.bpk.go.id, putusan3.mahkamahagung.go.id, mkri.id, pasal.id (all fetched 2026-11-14)
 - Pasal.id terms: https://pasal.id/ketentuan (effective 5 October 2026); API page: https://pasal.id/api
 
@@ -57,12 +59,17 @@ Claude Code (desktop) with Claude Opus 5.5 and the Pasal.id MCP connector; `curl
   But its "design attractive to children" indicator (Pasal 4 ayat (2) huruf d) sits awkwardly with the site's game-like 3D home page, so the memo flags it. The same PP was added as a note on UU ITE Pasal 16A and 16B in the consolidation.
 - **Self-audit finding.** The UU ITE consolidation parsed Pasal.id's page data for three laws. The volume was small and the text is public domain, but the method sits close to Pasal.id's extraction ban.
   The memo recommends re-sourcing those files from the official PDFs.
+- **PP 33/2026 (added later).** The UU PDP implementing regulation, in force from 16 January 2027, says public-domain data still counts when combined to identify someone (Pasal 7 ayat (3)), and sets five conditions for the research exemption (Pasal 154).
+  The memo now asks for a written balancing note before any dataset built from court decisions.
 
 ## Known limitations and error notes
 
 - Legal analysis by an AI model, not checked by the owner yet. What "tanpa hak" means for automated access to a public site is not settled law.
 - The JDIHN terms page could not be loaded (TLS certificate error). No terms pages were found for peraturan.go.id, MA, MK or BPK.
-- No implementing PP PDP was found in Pasal.id's corpus. That is not proof that none exists.
+- **Missed source, now fixed.** The first version said no implementing PP PDP was found. That was wrong: PP 33/2026 exists but is not in Pasal.id's corpus, and the search relied on Pasal.id alone. The owner supplied it.
+  PP 33/2026 takes effect on 16 January 2027 (Pasal 225). It confirms the memo's direction (no exemption for public data, a narrow household exemption) and adds one rule: a written balancing note before any dataset built from court decisions.
+  It implements UU PDP only, so it adds nothing to the UU ITE consolidation. Lesson: for a recent regulation, check peraturan.go.id or JDIH too, not just one database.
+- PP 33/2026 text was extracted from the scanned Salinan; only the provisions cited in the memo were read closely, not all 225 articles.
 - KUHP and UU PDP text comes from Pasal.id. KUHP and UU PDP are marked verified there; UU 28/2014 and UU KIP are not.
 - Foreign law (US scraping cases, the EU database right) is not covered.
 - PP 17/2025 text was extracted from a scanned PDF and has OCR errors (for example, the enactment date reads "27 Maret 2021"; it is 2025).

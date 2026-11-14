@@ -59,7 +59,7 @@ Besides the Pasal.id connector, about 15 public Pasal.id web pages were fetched 
   Read literally, the gambling penalty would be revoked; read by intent, it stays. The text marks this as open and does not treat Pasal 45(3) as revoked.
 - **Database error found.** Pasal.id lists MK 50/PUU-XXIV/2026 as "inkonstitusional bersyarat" and quotes a long list of conditional meanings for UU ITE Pasal 27A, 28(2), 32(1) and 35.
   That text is the applicants' petitum. The Court's real ruling is "Menyatakan permohonan para Pemohon tidak dapat diterima" (the petition was unclear).
-  Relying on the summary would have added four false annotations. 78/PUU-XXI/2023 was granted only on UU 1/1946 and KUHP Pasal 310, not on UU ITE.
+  Relying on the summary would have added four false annotations. Reported to Pasal.id on 2026-11-14 (report #122). 78/PUU-XXI/2023 was granted only on UU 1/1946 and KUHP Pasal 310, not on UU ITE.
 - Only one conditional MK ruling still bites on text that is in force: 311/PUU-XXIV/2026 on Pasal 40(2b), which requires notice before access is cut.
   The rulings on 27A, 28(2)–(3), 45(4) and 45A(2)–(3) concern provisions that expired on 2 January 2026. They are kept as history.
 
@@ -74,7 +74,7 @@ Besides the Pasal.id connector, about 15 public Pasal.id web pages were fetched 
   Pasal 52(1)'s reference to Pasal 27(1) now points to KUHP Pasal 407, and this is noted. Pasal 52(2)–(4) refer to the range "Pasal 30 sampai dengan Pasal 37".
   Part of that range is replaced (30, 31) and Pasal 36 is revoked with no named replacement, so how the range reads now is not analysed. Other references are not checked.
 - The new KUHAP keeps PPNS powers and coercive measures in other laws "sepanjang tidak bertentangan". Pasal 43 carries a note, but no ayat-by-ayat analysis was done.
-- Pasal.id lists UU 19/2016 as enacted on 25 December 2016, one month _after_ its promulgation on 25 November 2016. This is probably a database error; it is not yet checked against the PDF.
+- Pasal.id lists UU 19/2016 as enacted on 25 December 2016, one month _after_ its promulgation on 25 November 2016. This is probably a database error; it is not yet checked against the PDF. Reported to Pasal.id on 2026-11-14 (report #123).
 - Three base-law articles (Pasal 1, 12, 43) came back truncated from the website. They were filled from the Pasal.id connector text, and the ayat (5) list of Pasal 43 in UU 19/2016 was filled the same way.
 
 ## Conflict-of-interest disclosure

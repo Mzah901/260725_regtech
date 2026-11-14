@@ -23,6 +23,8 @@ Hypothesis: copyright is not the problem, because regulations and decisions have
 2. Fetched robots.txt for six sources and checked for bot challenges.
 3. Read the Pasal.id terms and API pages.
 4. Wrote a verdict per site and a checklist, then audited the lab's own UU ITE consolidation against the result.
+5. Checked every quoted phrase from the Pasal.id terms and API pages against the raw page HTML, not a summary.
+   All matched verbatim. One clause of UU 28/2014 (Pasal 40 ayat (1) huruf p) is OCR-garbled in Pasal.id, so it is paraphrased, not quoted.
 
 ## Sources used
 
@@ -42,7 +44,8 @@ Claude Code (desktop) with Claude Opus 5.5 and the Pasal.id MCP connector; `curl
 
 - **Hypothesis supported.** Copyright is not the limit for the law text itself (Pasal 42), but databases and data compilations are protected works (Pasal 40 ayat (1) huruf n and p).
   So a private site's structure and annotations are off-limits, while the text from official sources is free.
-- **The access offence got wider.** UU 1/2026 rewrote KUHP Pasal 332 and removed "dengan sengaja". Access "tanpa hak atau melawan hukum" is enough on its face.
+- **The access offence is about what makes access "tanpa hak", not about intent.** UU 1/2026 rewrote KUHP Pasal 332 and removed the words "dengan sengaja".
+  But KUHP Pasal 36 ayat (2) makes intent the default for every offence, so this is drafting clean-up, not a wider offence (an early draft of this memo got that wrong).
   Getting past a security measure (ayat (3)) is the heaviest form, and Pasal 333 covers government systems specifically.
 - **Per-site verdicts:** go for peraturan.go.id, jdihn.go.id (except `/search-api/`) and MK decisions; by hand only for MA and BPK (bot challenges; MA also signals `ai-train=no`).
   For Pasal.id, read through MCP or the website only, because its terms ban automated bulk extraction without a licence.

@@ -10,7 +10,7 @@ Experimental. Unverified unless marked as reviewed. Not legal advice, and not le
 |---|---|---|
 | peraturan.go.id | **Go, politely** | robots.txt allows everything; no bot wall seen. |
 | jdihn.go.id | **Go, except `/search-api/`** | robots.txt allows all bots, AI bots named, except the search API. Terms page not read. |
-| mkri.id / s.mkri.id (MK decisions) | **Go, politely, one document at a time** | No robots.txt; decisions are public PDFs. Watch personal data. |
+| mkri.id / s.mkri.id (MK decisions) | **Go, politely, one document at a time** | mkri.id has no robots.txt; s.mkri.id disallows only old sections (e.g. `/bak/`, `/pilkada2017/`). Decisions are public PDFs. Watch personal data. |
 | putusan3.mahkamahagung.go.id (MA decisions) | **Limited: by hand only** | robots.txt says `search=yes, ai-train=no, use=reference`, and the site sits behind a bot challenge. Heavy personal data. |
 | peraturan.bpk.go.id | **Limited: by hand only** | Parts of the site sit behind a bot challenge. Never automate past it. |
 | pasal.id | **Limited: read through MCP or the website, no scraping** | Terms ban automated bulk extraction without a written licence and claim the structured data as Pasal.id's work. |
@@ -22,7 +22,7 @@ The rule underneath every verdict: **the law text is free, the access is not unl
 - **No copyright** in "peraturan perundang-undangan" and "putusan pengadilan atau penetapan hakim" (UU 28/2014 Pasal 42 huruf b and d).
   Ideas, methods, and data are not protected either (Pasal 41 huruf b).
 - **But databases and data compilations are protected works:** "basis data" (Pasal 40 ayat (1) huruf n) and
-  "kompilasi Ciptaan atau data … yang dapat dibaca dengan Program Komputer" (huruf p).
+  compilations of works or data, whether readable by a computer program or other media (huruf p; Pasal.id's text of this clause is garbled by OCR, so the wording is not quoted here).
   A site's own structure, summaries, tags, relationships and annotations can be protected even when the regulation inside is not.
 - Government publications are generally free to reproduce unless declared protected (Pasal 43 huruf b).
 - **Rule:** take regulation text from **official sources** (peraturan.go.id, JDIH, official PDFs). Do not republish a private site's structure, summaries or relationship data.
@@ -30,7 +30,9 @@ The rule underneath every verdict: **the law text is free, the access is not unl
 ## 2. Access: the real risk
 
 - **Illegal access, KUHP Pasal 332** (as rewritten by UU 1/2026 Pasal VII angka 35, in force since 2 January 2026):
-  accessing a computer or electronic system "tanpa hak atau melawan hukum". The rewrite **dropped "dengan sengaja"**, so no intent element is written in.
+  accessing a computer or electronic system "tanpa hak atau melawan hukum".
+  The rewrite dropped the words "dengan sengaja", but intent is still required. Under KUHP Pasal 36 ayat (2), an offence is intentional unless a provision expressly covers negligence.
+  So this is drafting clean-up, not a wider offence.
   Ayat (3) is the heaviest (up to 8 years): access "dengan melanggar, menerobos, melampaui, atau menjebol sistem pengamanan".
 - **Government systems, KUHP Pasal 333:** huruf d covers using or accessing a government computer system "tanpa hak"; huruf g covers disrupting one (up to 7 years).
   Every official legal portal is a government system.
@@ -53,7 +55,8 @@ The rule underneath every verdict: **the law text is free, the access is not unl
   - MCP full-text reads are capped at 300 per account per day. The API (`/api/v1`) gives metadata and links only, needs a free token, and is rate-limited.
   - Pasal.id itself confirms regulation text has no copyright (Pasal 42 huruf b).
 - **Pasal.id robots.txt** separates bots: `ClaudeBot` (training) is blocked; `Claude-User` (fetches a person asks for) and `Claude-SearchBot` (crawl-delay 2) may read law pages.
-  `/api/laws/`, `/api/pdf/`, search, and correction pages are off-limits for these bots.
+  Search, correction, account and `/api/laws/` paths are off-limits for all of them; `/api/pdf/` is also off-limits for `Claude-SearchBot` (not for `Claude-User`).
+  The memo quotes Pasal.id's terms verbatim; every quoted phrase was checked against the raw page on 2026-11-14.
 - **MA Direktori Putusan robots.txt** sets content signals "as a condition of accessing this website": `search=yes, ai-train=no, use=reference`.
   So: no training models on MA decisions collected from that site.
 - **Rule:** read the terms before any automated collection, and treat them as binding.
@@ -100,6 +103,6 @@ That supports reading and sharing official legal texts. It is not a licence to o
 
 - Foreign comparisons (for example US cases on scraping public profiles, or the EU database right). They are not needed for a lab working on Indonesian sources.
 - The JDIHN terms page (`/prasyarat`), which could not be loaded (TLS certificate error), and terms for peraturan.go.id, MA, MK and BPK, where no terms page was found.
-- Whether the UU 1/2026 rewrite of KUHP Pasal 332 changes how intent is proven in practice.
+- The Penjelasan of UU 1/2026 on why "dengan sengaja" was removed from KUHP Pasal 332 (not found on the page read). The conclusion above rests on KUHP Pasal 36 ayat (2).
 
 Independent personal research. Not affiliated with or endorsed by any employer.

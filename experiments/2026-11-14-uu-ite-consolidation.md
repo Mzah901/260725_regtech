@@ -58,7 +58,7 @@ The official PDFs could not simply be converted instead. UU 19/2016 stores its n
 
 ## Result
 
-- **Read it:** [consolidated text as PDF](/lab/uu-ite-konsolidasi.pdf) (22 pages, made by `scripts/build_pdf.py` from the Markdown output).
+- **Read it:** [consolidated text as PDF](https://statuta.id/lab/uu-ite-konsolidasi.pdf) (22 pages, made by `scripts/build_pdf.py` from the Markdown output).
 - 63 articles in the consolidated text: 54 original, plus 45A and 45B (UU 19/2016), plus 13A, 16A, 16B, 18A, 27A, 27B and 40A (UU 1/2024).
   22 articles were changed or inserted. Pasal 5, 15 and 27 also had Penjelasan-only changes, which are recorded but not consolidated.
 - The ledger matched the sources on the first full run: 8 angka in UU 19/2016 and 18 in UU 1/2024, all covered once.

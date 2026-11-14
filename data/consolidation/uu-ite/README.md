@@ -11,6 +11,7 @@ Rebuild with `python3 scripts/consolidate.py`. Method and limits: `experiments/2
 | `changes.csv` | Ledger: one row per article touched by each change point |
 | `status.csv` | Later events kept as notes: expiry, revocation, MK rulings, open questions |
 | `uu-ite-konsolidasi.md` | Generated output. Do not edit by hand |
+| `uu-ite-konsolidasi.pdf` | The same text as a PDF. Rebuild with `python3 scripts/build_pdf.py` (needs Microsoft Edge) after the Markdown changes |
 
 `changes.csv`: `law` (amending law), `angka` (change point number in its Pasal I), `action` (`replace`, `insert`, or `penjelasan` = only the Penjelasan changed),
 `target` (Pasal number), `anchor` (for `insert`: the Pasal it goes after), `note` (plain description).

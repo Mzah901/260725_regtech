@@ -15,6 +15,7 @@ Only a small part of Markdown is supported: paragraphs, "- " and "1. " lists, **
 import html
 import json
 import re
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -183,6 +184,8 @@ def build(public_dir):
     out = public_dir / "lab"
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(page.replace("__TITLE__", "Lab").replace("__MAIN__", main), encoding="utf-8")
+    for pdf in (ROOT / "data").rglob("*.pdf"):   # downloadable outputs (made by build_pdf.py) go to statuta.id/lab/
+        shutil.copy(pdf, out / pdf.name)
     for path in sorted(PAGES_DIR.glob("*.md")):
         title, body = plain_page(path)
         is_id = path.stem.endswith(".id")

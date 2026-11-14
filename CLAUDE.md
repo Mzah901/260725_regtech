@@ -23,7 +23,9 @@ Full project context (goals, conventions, decisions): @docs/PROJECT_CONTEXT.md
    shared from work. Only this repo and public web sources.
 4. **Commercial use**: do not build anything packaged for sale to compliance clients
    without the owner confirming management disclosure first.
-5. **Human review**: every output is reviewed by the owner before it is treated as final.
+5. **Review status**: outputs may be published as experiments before the owner has verified them.
+   Every output says whether it has been reviewed, and unverified outputs carry the disclaimer below.
+   Never present an unverified output as accurate, complete, or fit to rely on as legal advice or legal research.
 6. **Collaborators**: anyone contributing works with public data only, under written
    IP-assignment and confidentiality terms.
 
@@ -41,4 +43,6 @@ Every experiment gets a file in `/experiments/` named `YYYY-MM-DD-short-name.md`
 ## Publishing
 Any README, dataset card, or published output must include:
 "Independent personal research. Not affiliated with or endorsed by any employer."
+and the experimental disclaimer:
+"Experimental. Unverified unless marked as reviewed. Not legal advice, and not legal research to rely on."
 Source regulation text is public domain under Pasal 42 UU 28/2014 (Hak Cipta).

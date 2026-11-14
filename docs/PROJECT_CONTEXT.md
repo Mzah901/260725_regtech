@@ -15,7 +15,7 @@ datasets/tools for Indonesian legal-tech.
 1. **Domain depth** — real Indonesian regulatory problems (obligation extraction,
    amendment tracking, cross-reference mapping, regulation hierarchy).
 2. **Applied AI skill** — working code, evaluated results, honest failure analysis.
-3. **Responsible AI** — documented sources, human review, limitations, bias/error notes,
+3. **Responsible AI** — documented sources, a visible review status on every output, limitations, bias/error notes,
    and the guardrails in CLAUDE.md as an explicit governance design.
 
 If an experiment doesn't advance at least one of these, question whether to run it.
@@ -41,5 +41,7 @@ If an experiment doesn't advance at least one of these, question whether to run 
 
 ## Decisions log
 - Public sources only; employer-independent (see CLAUDE.md guardrails).
+- 2026-11-14: experiments may be published before the owner verifies them, labelled as unverified (guardrail 5 amended).
+  The lab tests whether an approach works; it does not promise accuracy.
 - GitHub is home base; Hugging Face for publishing datasets.
 - Claude Code (web) for building; planning happens in a separate claude.ai Project.

@@ -12,7 +12,7 @@ How it works (plain language):
      public/404.html (the "page not found" page) and public/CNAME (tells GitHub Pages which domain to use).
    - public/beyond-statutes/: one page per note, built by build_notes.py. The home page's
      chapter list is filled in from the same notes, where site/home.html says <!--CHAPTERS-->.
-   - public/lab/: experiment logs and the Python learning log, built by build_lab.py.
+   - public/lab/: experiment logs, built by build_lab.py; the home page's Experiments list comes from the same logs.
    - public/column/: dated opinion posts and their RSS feed, built by build_column.py.
    - public/og.png: the picture WhatsApp, LinkedIn etc. show when someone shares a link.
 5. Print a small summary so you can sanity-check the numbers.
@@ -106,6 +106,7 @@ def main():
     home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)
     notes, by_title = build_notes.read_notes()
     home = home.replace("<!--SKY-->", build_lab.sky_json(notes)).replace("<!--BOOKS-->", build_lab.books_json(notes, by_title))
+    home = home.replace("<!--EXPERIMENTS-->", build_lab.home_experiments_html())
     (PUBLIC_DIR / "index.html").write_text(home, encoding="utf-8")
     shutil.copy(NOT_FOUND_PATH, PUBLIC_DIR / "404.html")
     (PUBLIC_DIR / "CNAME").write_text(CUSTOM_DOMAIN + "\n", encoding="utf-8")

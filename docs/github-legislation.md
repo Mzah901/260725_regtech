@@ -62,17 +62,6 @@ So a repository would have two maintainer roles, Baleg and the Ministry of Law, 
 2. **A single merger is a single gatekeeper.** Branch protection should require approval from more than one fraction, or at least make every rejected pull request public with its reason. Otherwise the repository simply moves the backroom into a new room.
 3. **The real negotiation (lobbying, the DIM list in the working committee, Panja) happens off the record.** A branch per fraction makes each fraction's position attributable. That is precisely why fractions may refuse to use it. The value is accountability, and that is also where the resistance will come from.
 
-## 3. How other countries do it
-
-| Example | Status | Mechanism | Lesson for Indonesia |
-|---|---|---|---|
-| **Washington DC** (DC Council, with Open Law Library) | **Official.** The GitHub copy is the authoritative digital code. | Enacted laws are codified as XML in `DCCouncil` repositories and published within about a week of enactment. In 2018 a citizen's pull request fixing a codification typo was merged. | The PR fixed **codification**, not substance. Substance still changes only through Council legislation. That is the right separation for Indonesia: Git for the text, the legislature for validity. |
-| **EU** (LEOS / "EdiT", European Commission) | **Official**, used internally | Open-source drafting editor; texts in Akoma Ntoso XML; code hosted on the EU's **own** `code.europa.eu`, not github.com. | The sovereignty answer: governments use Git principles on infrastructure they control. Indonesia could do the same (self-hosted Git on national data centres). |
-| **US House** (Comparative Print Suite) | **Official**, required by House Rule XXI clause 12 | Generates prints showing how a bill would change current law, and how two versions differ. | Diffs as a **procedural duty**, not a nicety. An Indonesian equivalent would be a mandatory comparison matrix attached to every bill. |
-| **Spain** (`legalize-es`, 2026) | Civic, unofficial | Pulls the BOE's official consolidated-legislation API into Markdown; each reform is a commit. | It only worked because the state already publishes consolidated text through an open API. Indonesia doesn't yet (P7), so that's the first public good to ask for. |
-| **Germany** (`bundestag/gesetze`) | Civic, unofficial; reported unmaintained | Federal laws converted to Markdown from the official XML. | Without an institutional owner, mirrors die. Ownership matters more than tooling. |
-| **France** (La Fabrique de la Loi) | Academic or civic | Visualises amendments at every legislative stage; selected bills in Git (GitLab). | Legislative history becomes readable for non-lawyers. That is a participation tool in itself. |
-
 ### 2b. The owner's RIA+ article: what Git adds
 
 The owner's 2024 article ([De Jure 24(2)](https://doi.org/10.30641/dejure.2024.V24.175-198)) argues that the Naskah Akademik is treated as a formal requirement that justifies a bill already decided on, and proposes **RIA+**: Regulatory Impact Assessment with an extra first step, an inventory of affected communities. Its five recommendations map onto a repository like this:
@@ -86,6 +75,66 @@ The owner's 2024 article ([De Jure 24(2)](https://doi.org/10.30641/dejure.2024.V
 | 5. Spell out the cost-benefit analysis | A structured CBA file (costs, benefits, who bears them) reviewed in the same pull request as the bill. | Reviewers can see the cost-benefit claim next to the Pasal it justifies. |
 
 The same limit applies as for the rest of this note: Git makes a missing analysis visible but cannot force a good one. The article's own finding is that the law only *offers* RIA; a repository would only bite if the template and checks were made mandatory.
+
+### 2c. Folder structure for one bill
+
+One repository per bill (RUU). The six folders follow the life of a bill, from the first draft to the politics around it. The `main` branch only ever holds the promulgated law; everything below lives on the `rancangan` branch and the fraction branches until then.
+
+```text
+ruu-<short-name>/
+├── README.md                         status, current stage, maintainers, key dates
+├── 01-ruu/                           a. RUU drafts
+│   ├── ruu.md                        the bill text: ONE file, versions live in Git history
+│   ├── penjelasan.md
+│   └── dim/                          Daftar Inventarisasi Masalah, one file per fraction
+├── 02-naskah-akademik/               b. Naskah Akademik, as submitted by the initiator
+│   ├── naskah-akademik.md
+│   ├── affected-groups.md            RIA+ step 1: the five groups and who was reached
+│   ├── alternatives/                 RIA+: do-nothing.md, implementation.md, partial-change.md, new-norm.md
+│   ├── cost-benefit.md
+│   └── data/                         primary data, survey results, FGD notes
+├── 03-penyelarasan-pengharmonisasian/  c. review of the NA and harmonisation of the RUU
+│   ├── penyelarasan-na/              findings + surat keterangan penyelarasan
+│   └── pengharmonisasian-ruu/        meeting records, issues raised, how each was resolved
+├── 04-partisipasi/                   d. documentation of meaningful participation
+│   ├── inputs/                       every input, with a number (mirrors the Issues)
+│   ├── hearings/                     RDPU, public consultations, regional visits
+│   └── responses.md                  input → decision → reason
+├── 05-proses/                        e. the legislation process
+│   ├── timeline.md                   Prolegnas → drafting → deliberation → approval → promulgation
+│   ├── risalah/                      session minutes, per stage
+│   └── tingkat-i-ii/                 committee (tingkat I) and plenary (tingkat II) decisions, fraction views
+└── 06-catatan-politik/               f. political setbacks
+    └── log.md                        date · event · stage · actor · public source
+```
+
+What goes where, and why:
+
+| Folder | What it records | Legal hook | Why it matters |
+|---|---|---|---|
+| **01-ruu** | The bill and the DIM. Each fraction edits on its own branch; the merge into `rancangan` is the agreed text. | Pasal 46 ayat (2) and Pasal 47 ayat (3) UU 12/2011 (the latter as amended by UU 15/2019): who coordinates harmonisation, i.e. the maintainer. | One file with history beats `RUU_final_v7_fix2.docx`. `git blame` shows who proposed each line. |
+| **02-naskah-akademik** | The NA **as the initiator wrote it**, plus the RIA+ files from section 2b. | UU 13/2022 offers RIA and ROCCIPI as methods but doesn't require them. | The owner's study found no NA that weighed alternatives; here an empty `alternatives/` folder is visible to everyone. |
+| **03-penyelarasan-pengharmonisasian** | Two different reviews: **penyelarasan** of the NA (its structure and content) and **pengharmonisasian** of the RUU. | Penyelarasan of a government NA: Pasal 9 Perpres 87/2014 (the Minister checks "sistematika dan materi muatan", in a meeting that includes stakeholders). The NA, the surat keterangan penyelarasan and the surat keterangan that harmonisation is complete are listed together as "dokumen kesiapan teknis", e.g. Pasal 23 ayat (2) and Pasal 25 ayat (4) Perpres 87/2014. Harmonisation of the RUU: Pasal 46–47 UU 12/2011. (Perpres 87/2014 was amended by Perpres 76/2021; only the original text was checked.) | Today these reviews are invisible. Here every finding is a numbered item with its outcome. |
+| **04-partisipasi** | Every input, every hearing, and the answer given to each. | Pasal 96 UU 12/2011 as amended by UU 13/2022; Putusan MK 91/PUU-XVIII/2020 (right to be heard, considered, and given an explanation). | `responses.md` is the proof of the third right. Without it, participation is a photo of a meeting. |
+| **05-proses** | Where the bill is, and the official record of each stage. | The stages of law-making in UU 12/2011: planning, drafting, deliberation, approval, promulgation. | Answers "what stage is this bill at?" without a press search. |
+| **06-catatan-politik** | Delays, carry-overs between Prolegnas years, withdrawn positions, rejected pull requests, judicial review after enactment. | None: this is the political record, not a legal step. | Section 2 rates planning (P4) as something Git **doesn't touch**. Git can't fix the politics, but it can keep a dated, sourced record of it. |
+
+Three design points:
+
+1. **"Before" and "after" are tags, not folders.** Point b (NA before penyelarasan) and point c (NA after review) are the same file at two moments. Git keeps both: tag the commit as `na-diajukan` when submitted and `na-diselaraskan` when the surat keterangan is issued, and `git diff na-diajukan na-diselaraskan` shows exactly what the review changed. Folder 03 holds the *record* of the review (who asked for what, and why), not a second copy of the NA.
+2. **Penyelarasan and pengharmonisasian are different steps.** In current law, penyelarasan applies to the **Naskah Akademik** and pengharmonisasian to the **RUU**. Folder 03 keeps them as two subfolders so the two don't get mixed up.
+3. **The political log needs a source rule.** Every line in `06-catatan-politik/log.md` must link to a public source (minutes, an official statement, a news report). No anonymous claims. That keeps it a record, not an accusation, and keeps the repository defensible.
+
+## 3. How other countries do it
+
+| Example | Status | Mechanism | Lesson for Indonesia |
+|---|---|---|---|
+| **Washington DC** (DC Council, with Open Law Library) | **Official.** The GitHub copy is the authoritative digital code. | Enacted laws are codified as XML in `DCCouncil` repositories and published within about a week of enactment. In 2018 a citizen's pull request fixing a codification typo was merged. | The PR fixed **codification**, not substance. Substance still changes only through Council legislation. That is the right separation for Indonesia: Git for the text, the legislature for validity. |
+| **EU** (LEOS / "EdiT", European Commission) | **Official**, used internally | Open-source drafting editor; texts in Akoma Ntoso XML; code hosted on the EU's **own** `code.europa.eu`, not github.com. | The sovereignty answer: governments use Git principles on infrastructure they control. Indonesia could do the same (self-hosted Git on national data centres). |
+| **US House** (Comparative Print Suite) | **Official**, required by House Rule XXI clause 12 | Generates prints showing how a bill would change current law, and how two versions differ. | Diffs as a **procedural duty**, not a nicety. An Indonesian equivalent would be a mandatory comparison matrix attached to every bill. |
+| **Spain** (`legalize-es`, 2026) | Civic, unofficial | Pulls the BOE's official consolidated-legislation API into Markdown; each reform is a commit. | It only worked because the state already publishes consolidated text through an open API. Indonesia doesn't yet (P7), so that's the first public good to ask for. |
+| **Germany** (`bundestag/gesetze`) | Civic, unofficial; reported unmaintained | Federal laws converted to Markdown from the official XML. | Without an institutional owner, mirrors die. Ownership matters more than tooling. |
+| **France** (La Fabrique de la Loi) | Academic or civic | Visualises amendments at every legislative stage; selected bills in Git (GitLab). | Legislative history becomes readable for non-lawyers. That is a participation tool in itself. |
 
 ## 4. Diagram (bagan)
 
@@ -159,6 +208,7 @@ How to read it: solid arrows are the workflow. Dotted arrows show which document
 **01 Official (primary)**
 - UU 12/2011 Pasal 46–47: https://pasal.id/peraturan/uu/uu-no-12-tahun-2011 (official: https://peraturan.bpk.go.id/Details/39188/uu-no-12-tahun-2011)
 - UU 15/2019 Pasal I angka 6 (new wording of Pasal 47): https://peraturan.go.id/id/uu-no-15-tahun-2019
+- Perpres 87/2014 Pasal 9, 23 and 25 (penyelarasan of the NA, technical readiness documents): https://peraturan.go.id/id/perpres-no-87-tahun-2014
 - UU 13/2022 (Pasal 96, meaningful participation): https://peraturan.go.id/id/uu-no-13-tahun-2022
 - PP 71/2019 Pasal 20–21: https://peraturan.go.id/id/pp-no-71-tahun-2019
 - Permenkum 7/2026 (e-Harmonisasi): https://peraturan.go.id/files/permenkum-no-7-tahun-2026.pdf

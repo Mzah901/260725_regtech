@@ -40,6 +40,8 @@ Every experiment gets a file in `/experiments/` named `YYYY-MM-DD-short-name.md`
 - Result
 - What the owner reviewed and approved
 
+The site's home page and /lab/ are built from these files, so they stay in sync on their own. Also add a row to the README's Experiments table in the same change: the build fails if the table and `/experiments/` disagree.
+
 ## Publishing
 Any README, dataset card, or published output must include:
 "Independent personal research. Not affiliated with or endorsed by any employer."

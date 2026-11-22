@@ -25,6 +25,7 @@ TEMPLATE = ROOT / "site" / "note.html"
 LOG_URL = "https://github.com/Mzah901/260725_regtech/blob/claude/new-session-euryc2/experiments/"
 
 # Which sections of a log appear on the page, and the heading they get there.
+MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 SHOWN = {"question": "Question", "result": "Result", "known limitations": "Known limits",
          "what the owner reviewed": "Human review"}
 
@@ -81,12 +82,13 @@ def read_experiment(path):
         for key, label in SHOWN.items():
             if heading.lower().startswith(key):
                 sections[label] = blocks(body.strip().splitlines())
-    return {"file": path.name, "title": title, "date": field("Date"), "status": field("Status"), "sections": sections}
+    question = (re.search(r"^## Question[^\n]*\n+(.+)$", text, re.M) or [None, ""])[1].strip()
+    return {"file": path.name, "title": title, "question": question, "date": field("Date"), "status": field("Status"), "sections": sections}
 
 
 def experiment_html(e):
     parts = "".join(f"<h2>{label}</h2>\n{body}\n" for label, body in e["sections"].items())
-    return f"""<article class="exp">
+    return f"""<article class="exp" id="{e["file"].removesuffix(".md")}">
   <span class="ch">{html.escape(e["date"])} · {inline(e["status"])}</span>
   <h1 class="small">{html.escape(e["title"])}</h1>
   {parts}<p class="muted"><a href="{LOG_URL}{e["file"]}">Full log: method, sources, tools →</a></p>
@@ -171,8 +173,35 @@ def books_json(notes, by_title):
     return json.dumps(books, ensure_ascii=False).replace("</", "<\\/")
 
 
+def read_experiments():
+    return sorted((read_experiment(p) for p in EXPERIMENTS_DIR.glob("*.md")), key=lambda e: e["file"], reverse=True)
+
+
+def check_readme(experiments):
+    """Fail the build (and so the publish) when the README's Experiments table and experiments/ disagree."""
+    listed = set(re.findall(r"\(experiments/([^)]+\.md)\)", (ROOT / "README.md").read_text(encoding="utf-8")))
+    files = {e["file"] for e in experiments}
+    if listed != files:
+        raise SystemExit(f"README Experiments table out of sync with experiments/: missing {sorted(files - listed)}, extra {sorted(listed - files)}")
+
+
+def home_experiments_html(experiments=None):
+    """The home page's Experiments list: one line per log in experiments/, newest first, linking to its card on /lab/."""
+    out = []
+    for e in experiments or read_experiments():
+        y, mo, d = e["date"].split("-")
+        day = f"{int(d)} {MONTHS[int(mo) - 1]} {y}"
+        title = re.sub(r"\s*\([^)]*\)$", "", e["title"])
+        out.append(f'''      <li class="exp">
+        <time datetime="{e["date"]}">{day}</time>
+        <span><a href="/lab/#{e["file"].removesuffix(".md")}">{html.escape(title)}</a> <span class="muted">— {html.escape(e["question"])}</span></span>
+      </li>''')
+    return "\n".join(out)
+
+
 def build(public_dir):
-    experiments = sorted((read_experiment(p) for p in EXPERIMENTS_DIR.glob("*.md")), key=lambda e: e["file"], reverse=True)
+    experiments = read_experiments()
+    check_readme(experiments)
     main = f"""
 <p class="crumb"><a href="/">statuta.id</a> / lab</p>
 <h1>Lab</h1>
@@ -209,6 +238,10 @@ if __name__ == "__main__":
     assert inline("[Lab](/lab/)") == '<a href="/lab/">Lab</a>'
     e = read_experiment(EXPERIMENTS_DIR / "2026-10-11-legal-industry-map.md")
     assert list(e["sections"]) == ["Question", "Result", "Known limits", "Human review"], list(e["sections"])
+    check_readme(read_experiments())
+    li = home_experiments_html([dict(e, date="2026-10-11")])
+    assert '<time datetime="2026-10-11">11 Oct 2026</time>' in li and 'href="/lab/#2026-10-11-legal-industry-map">Legal Industry Map</a>' in li, li
+    assert "legal-tech market" in li, li
     title, body = plain_page(PAGES_DIR / "about.md")
     assert '<h2 id="awards">Awards</h2>' in body and "<i>Jurnal Konstitusi</i>" in body, body[:400]
     import build_notes

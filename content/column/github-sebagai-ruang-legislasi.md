@@ -29,4 +29,4 @@ Two critiques I take seriously:
 1. **Data sovereignty.** PP 71/2019 Pasal 20 requires public-scope systems to store their data in Indonesia. So if this is ever official, it has to be self-hosted Git on national infrastructure, like the EU's own code.europa.eu, not github.com.
 2. **Authenticity.** The authoritative text today is what's in the Lembaran Negara. A repository becomes authoritative only if a legal instrument says so and every release is signed with a certificate the state recognises.
 
-So my answer to the opening question: not GitHub as the lawmaker, but Git as the public notebook of the lawmakers. The full analysis, including a diagram of how it would work and which problems it can and can't solve, is in the [lab research note](https://github.com/Mzah901/260725_regtech/blob/main/docs/github-legislation.md).
+So my answer to the opening question: not GitHub as the lawmaker, but Git as the public notebook of the lawmakers. The full analysis, including a diagram of how it would work and which problems it can and can't solve, is in the [lab research note](https://github.com/Mzah901/260725_regtech/blob/HEAD/docs/github-legislation.md).

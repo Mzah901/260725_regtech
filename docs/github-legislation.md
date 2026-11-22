@@ -30,6 +30,7 @@ The same limit applies to the earlier TAP MPR idea. Since the constitutional ame
 | P5 | **Meaningful participation in form only** | Putusan MK 91/PUU-XVIII/2020 led to Pasal 96 UU 13/2022 on meaningful participation. A 2026 MK case (78/PUU-XXIV/2026) still uses both as its yardstick. The law does not clearly require drafts to be published. | The court decision and statute are primary sources. The interpretive point is secondary. |
 | P6 | **Harmonisation bottleneck** | In 2025 the Ministry of Law received 11,392 harmonisation requests and completed 11,191. The e-Harmonisasi application launched in February 2025 and became the main channel under Permenkum 7/2026. The Riau regional office reports too few legislative drafters (perancang) for the volume of requests. | Ministry performance reports, via press. |
 | P7 | **No official consolidated text** | Official portals publish the original texts. Consolidations (the law "as amended") are made privately or unofficially. Pasal.id labels its own as "Konsolidasi tidak resmi". This lab had to build one by hand for UU ITE. | Primary: the portals themselves, plus this lab's [UU ITE experiment](../experiments/2026-11-14-uu-ite-consolidation.md). |
+| P9 | **The Naskah Akademik is a justification, not an analysis** | The owner's own study of 39 Naskah Akademik (2018–2022, from the DPR Expertise Body and BPHN): all used normative legal research, only 5% used RIA and 13% a cost-benefit analysis, 77% used qualitative analysis only, and **none** identified policy alternatives (not even "do nothing") or systematically mapped the affected groups. UU 13/2022 mentions RIA and ROCCIPI as options but doesn't require them. | Peer-reviewed: Al Faruq, Ruhpinesthi & Ismaya, *Jurnal Penelitian Hukum De Jure* 24(2), 2024, pp. 175–198. The data predates 2023, so it needs re-checking against newer Naskah Akademik. |
 | P8 | **Weak regulatory-quality perception** | World Bank WGI Regulatory Quality for Indonesia: estimate 0.12 in 2024, down from 0.34 in 2023 (scale −2.5 to +2.5). | **Secondary aggregator.** The World Bank revised the whole series in December 2025, so check against govindicators.org before citing. |
 
 ## 2. Which problems Git can solve
@@ -44,6 +45,7 @@ Rating: **Solves** = Git provides the mechanism directly. **Supports** = Git hel
 | P2 | Disharmony and overlap | **Supports** | One corpus in a single repository, searchable across sectors. CI can flag a new draft that touches the same subject or Pasal as an existing rule. | It makes overlap visible **before** enactment. It can't resolve ego sektoral, but it removes the excuse of "we didn't know". |
 | P5 | Participation in form only | **Supports** | Issues as a public, numbered intake for input. Each issue is closed with a written reason or linked to the commit that took it on. | It maps onto the three rights in Putusan MK 91/PUU-XVIII/2020: to be heard (the issue is filed), to be considered (it's linked to a review), to be given an explanation (the closing comment). It also acts as a **live database**: the public sees the current text, not a stale PDF. |
 | P1 | Hyper-regulation | **Supports (indirectly)** | A full inventory with status labels; "archiving" spent rules; a dashboard of rules with no recent activity. | Simplification starts with a count. TAP MPR I/2003 and the Permenkum 195→34 cut were done by hand. A repository makes that kind of stock-take continuous. |
+| P9 | Naskah Akademik as justification | **Supports** | The Naskah Akademik lives in the same repository as the bill, so each Pasal can link to the analysis behind it. Policy alternatives become competing branches. A CI check flags a Naskah Akademik with no alternatives section or no affected-groups map. | It makes the gap the owner's study found visible on every bill. It can't make drafters do real research, but an empty section becomes a failed check in public. See [2b](#2b-the-owners-ria-article-what-git-adds). |
 | P4 | Planning that doesn't hold | **Doesn't touch** | A Projects board could track the Prolegnas publicly. | Missing targets is a political choice. Visibility helps outside monitors (like PSHK) but doesn't change incentives. |
 | P8 | Regulatory-quality perception | **Doesn't touch** (directly) | None. | It's an outcome indicator and would move only if P2, P3, P6 and P7 improve. |
 
@@ -52,7 +54,7 @@ Rating: **Solves** = Git provides the mechanism directly. **Supports** = Git hel
 The owner's proposal is that each fraction (fraksi) submits its changes as its own branch and pull request, which the head of the legislation body (Baleg) merges. The current law supports the "maintainer" idea:
 
 - Pasal 46 ayat (2) UU 12/2011: harmonisation of bills **from the DPR** is coordinated by the DPR body that handles legislation (Baleg).
-- Pasal 47 ayat (3) UU 12/2011: harmonisation of bills **from the President** is coordinated by the minister for law.
+- Pasal 47 ayat (3) UU 12/2011 as amended by UU 15/2019: harmonisation of bills **from the President** is coordinated by the minister or head of the agency responsible for law-making (pembentukan peraturan perundang-undangan). In practice today that is the Ministry of Law.
 
 So a repository would have two maintainer roles, Baleg and the Ministry of Law, depending on where the bill comes from. Three design corrections:
 
@@ -71,6 +73,20 @@ So a repository would have two maintainer roles, Baleg and the Ministry of Law, 
 | **Germany** (`bundestag/gesetze`) | Civic, unofficial; reported unmaintained | Federal laws converted to Markdown from the official XML. | Without an institutional owner, mirrors die. Ownership matters more than tooling. |
 | **France** (La Fabrique de la Loi) | Academic or civic | Visualises amendments at every legislative stage; selected bills in Git (GitLab). | Legislative history becomes readable for non-lawyers. That is a participation tool in itself. |
 
+### 2b. The owner's RIA+ article: what Git adds
+
+The owner's 2024 article ([De Jure 24(2)](https://doi.org/10.30641/dejure.2024.V24.175-198)) argues that the Naskah Akademik is treated as a formal requirement that justifies a bill already decided on, and proposes **RIA+**: Regulatory Impact Assessment with an extra first step, an inventory of affected communities. Its five recommendations map onto a repository like this:
+
+| RIA+ recommendation (2024 article) | Git mechanism | What it changes |
+|---|---|---|
+| 1. Move RIA to the start of law-making, as the method for the whole Naskah Akademik, not one sub-chapter | The Naskah Akademik is the first commit of the repository, **before** any bill text. The bill branch can only open once the analysis is in. | Order becomes checkable: the history shows whether the analysis came before or after the text. |
+| 2. Inventory of affected communities (directly affected, indirectly affected, unrelated, experts, practitioners) | A required `affected-groups` file, and an issue label for each of the five groups. Input from each group is counted per label. | "Who was consulted" stops being a sentence in Bab I and becomes a public count, which is also what Putusan MK 91/PUU-XVIII/2020 asks for. The article proposes keeping the map as a data bank for later Naskah Akademik; a repository is exactly that. |
+| 3. Detailed instructions for the research behind the Naskah Akademik | A Naskah Akademik template in the repository, with required sections and a data folder for primary data. | Missing method or data shows up as an empty folder, not a vague paragraph. |
+| 4. Restructure Bab II to hold policy alternatives (do nothing, better implementation, partial change, new norm) | One branch per alternative. The chosen branch is merged; the rejected ones stay in history with the reason. | The article found **no** Naskah Akademik that weighed alternatives. Branches make "we considered option B and rejected it because…" a visible record rather than a claim. |
+| 5. Spell out the cost-benefit analysis | A structured CBA file (costs, benefits, who bears them) reviewed in the same pull request as the bill. | Reviewers can see the cost-benefit claim next to the Pasal it justifies. |
+
+The same limit applies as for the rest of this note: Git makes a missing analysis visible but cannot force a good one. The article's own finding is that the law only *offers* RIA; a repository would only bite if the template and checks were made mandatory.
+
 ## 4. Diagram (bagan)
 
 ```mermaid
@@ -81,12 +97,13 @@ flowchart TD
     end
 
     subgraph DRAFT["Drafting, inside the repository"]
+        NA["Naskah Akademik (RIA+)<br/>affected-groups map + alternatives<br/>first commit, before bill text"]
         B1["Branch: Fraksi A"]
         B2["Branch: Fraksi B"]
         B3["Branch: Kementerian X<br/>(government bill)"]
         PR["Pull request to the<br/>'rancangan' branch"]
         CI["Automated checks (CI)<br/>- Lampiran II structure<br/>- broken cross-references<br/>- hierarchy conflict<br/>- overlap with existing rules"]
-        REV["Mandatory review (CODEOWNERS)<br/>Baleg (DPR bill, Pasal 46(2))<br/>Kemenkum (Presiden bill, Pasal 47(3))<br/>+ affected ministries"]
+        REV["Mandatory review (CODEOWNERS)<br/>Baleg (DPR bill, Pasal 46(2))<br/>Kemenkum (Presiden bill, Pasal 47(3), as amended 2019)<br/>+ affected ministries"]
         R["'rancangan' branch<br/>agreed draft"]
     end
 
@@ -97,6 +114,9 @@ flowchart TD
     MAIN["'main' branch: law in force<br/>signed release tag, e.g. uu-2026-xx"]
 
     I -->|"heard"| PR
+    NA --> B1
+    NA --> B2
+    NA --> B3
     B1 --> PR
     B2 --> PR
     B3 --> PR
@@ -112,6 +132,7 @@ flowchart TD
     P6["P6 Harmonisation bottleneck"] -.-> CI
     P2["P2 Disharmony"] -.-> CI
     P7["P7 No consolidation"] -.-> MAIN
+    P9["P9 NA as justification"] -.-> NA
     P1["P1 Hyper-regulation"] -.-> LIVE
 ```
 
@@ -131,12 +152,13 @@ How to read it: solid arrows are the workflow. Dotted arrows show which document
 - pshk.or.id and kompas.id could not be reached from the build environment. PSHK 2025 figures come from search-engine summaries of press coverage and must be checked against the PSHK PDF.
 - The newest PSHK regulation count found dates from around 2019–2020.
 - The WGI figures are from a secondary site.
-- The owner's own journal in the local "Regulatory Making" folder was **not** read (the folder isn't reachable from the cloud session). Its findings still need merging in.
+- The owner's 2024 De Jure article is now included (P9 and section 2b). Its data covers Naskah Akademik from 2018–2022 and hasn't been updated for later ones.
 
 ## Sources
 
 **01 Official (primary)**
 - UU 12/2011 Pasal 46–47: https://pasal.id/peraturan/uu/uu-no-12-tahun-2011 (official: https://peraturan.bpk.go.id/Details/39188/uu-no-12-tahun-2011)
+- UU 15/2019 Pasal I angka 6 (new wording of Pasal 47): https://peraturan.go.id/id/uu-no-15-tahun-2019
 - UU 13/2022 (Pasal 96, meaningful participation): https://peraturan.go.id/id/uu-no-13-tahun-2022
 - PP 71/2019 Pasal 20–21: https://peraturan.go.id/id/pp-no-71-tahun-2019
 - Permenkum 7/2026 (e-Harmonisasi): https://peraturan.go.id/files/permenkum-no-7-tahun-2026.pdf
@@ -154,6 +176,8 @@ How to read it: solid arrows are the workflow. Dotted arrows show which document
 - Metro TV, Ministry of Law performance (harmonisation figures): https://www.metrotvnews.com/read/KXyCQgJv-1-tahun-kinerja-moncer-kementerian-hukum-pilar-kuat-mendukung-visi-prabowo-gibran
 - RRI, HARMONITAS Riau (drafter shortage): https://rri.co.id/pekanbaru/regional/2627877/harmonitas-siap-hadir-kemenkum-riau-satukan-proses-harmonisasi-ranperda
 - World Bank WGI: https://www.worldbank.org/en/publication/worldwide-governance-indicators ; secondary: https://www.theglobaleconomy.com/Indonesia/wb_regulatory_quality/
+
+- Al Faruq, M.H., Ruhpinesthi, G.E. & Ismaya, A.S. (2024), "Transplantasi Regulatory Impact Assessment+: Reposisi Naskah Akademik dalam Pembentukan Undang-Undang", *Jurnal Penelitian Hukum De Jure* 24(2): 175–198: https://doi.org/10.30641/dejure.2024.V24.175-198
 
 **03 Foreign examples**
 - DC Council GitHub: https://github.com/DCCouncil ; Ars Technica (2018, archived): https://webcf.waybackmachine.org/web/20211001074126/https://arstechnica.com/tech-policy/2018/11/how-i-changed-the-law-with-a-github-pull-request ; DCist: https://dcist.com/story/18/11/28/github-is-a-programming-website-so-what-is-d-c-s-legal-code-doing-on-there

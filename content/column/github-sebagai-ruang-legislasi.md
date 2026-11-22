@@ -11,12 +11,15 @@ But the question behind it is better than the question itself. Our problem was n
 
 Look at the data. PSHK found that in 2025, 87.5% of the Prolegnas Prioritas bills had no draft or Naskah Akademik on the DPR website. Of the 9 bills passed that year (out of a target of 52), only one had both online. Meanwhile the Ministry of Law handled 11,392 harmonisation requests in one year with too few legislative drafters. And there is still no official consolidated text. If you want to know what UU ITE says today, you have to stitch the amendments together yourself. I did exactly that in this lab.
 
+There is a deeper problem too, one I wrote about in 2024. When my co-authors and I read 39 Naskah Akademik from 2018–2022, only 5% used Regulatory Impact Assessment and not one weighed policy alternatives, not even "do nothing". The Naskah Akademik is supposed to be the analysis behind a bill. In practice it justifies a bill already decided on.
+
 That is where GitHub, or more precisely Git, becomes relevant. Not as a place where laws are "made", but as infrastructure:
 
 - **Commit = one change, with a name and a reason.** No more "RUU_final_v7_REVISI_fix2.docx".
 - **Branch per fraction (fraksi).** Each fraction proposes its own version, so its position can be traced.
-- **Pull request + mandatory review.** Baleg acts as maintainer for DPR bills (Pasal 46 ayat (2) UU 12/2011) and the Ministry of Law for government bills (Pasal 47 ayat (3)).
+- **Pull request + mandatory review.** Baleg acts as maintainer for DPR bills (Pasal 46 ayat (2) UU 12/2011) and the Ministry of Law for government bills (Pasal 47 ayat (3), as amended by UU 15/2019).
 - **Automated checks.** Lampiran II structure, broken cross-references and overlap with existing rules get checked by machine, so drafters can focus on substance.
+- **The Naskah Akademik as the first commit.** The analysis goes into the repository before any bill text, with one branch per policy alternative. The rejected options stay in history with the reason. That is the RIA+ idea from my article, made visible.
 - **Issues as participation.** Every input gets a number, is linked to the decision on it, and is closed with a reason. That is the right to be heard, to be considered and to be given an explanation from Putusan MK 91/PUU-XVIII/2020, made concrete.
 - **A live database.** The `main` branch is the law in force, updated every time a law is promulgated. Not a stale PDF.
 

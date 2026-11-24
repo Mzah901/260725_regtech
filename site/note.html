@@ -7,6 +7,8 @@
 <!-- Visitor counter (GoatCounter: no cookies, no personal data). Stats: https://mzahmzah.goatcounter.com -->
 <script data-goatcounter="https://mzahmzah.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/fx.css">
+<script src="/fx.js" defer></script>
 <meta property="og:site_name" content="statuta.id">
 <meta property="og:title" content="__TITLE__">
 <meta property="og:description" content="Independent research applying AI to Indonesian regulation, using public sources only.">
@@ -57,6 +59,10 @@ figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .index a { display: grid; text-decoration: none; }
 .index b { font-family: var(--display); font-size: 19px; }
 .index a:hover b { color: #fff; text-decoration: underline; text-decoration-color: var(--red); }
+.index a { transition: translate .25s cubic-bezier(.2, .8, .2, 1); } .index a:hover { translate: 6px 0; }
+.rank { transition: transform .5s cubic-bezier(.2, .8, .2, 1.3), -webkit-text-stroke-color .3s, text-shadow .3s; }
+article:hover > .rank { transform: rotate(0deg) scale(1.06); -webkit-text-stroke-color: var(--red); text-shadow: 0 0 24px rgba(200, 38, 46, .4); }
+@media (prefers-reduced-motion: reduce) { .index a, .rank { transition: none; } }
 .index .muted { font-size: 12px; }
 .exp { padding-right: 0; margin: 24px 0 40px; padding-top: 24px; border-top: 1px solid var(--line); }
 h1.small { font-size: clamp(22px, 4vw, 28px); margin-bottom: 20px; }

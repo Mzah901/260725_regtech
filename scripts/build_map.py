@@ -103,6 +103,8 @@ def main():
     build_column.build(PUBLIC_DIR)
     shutil.copy(OG_IMAGE, PUBLIC_DIR / "og.png")
     shutil.copy(ROOT / "site" / "logo.svg", PUBLIC_DIR / "logo.svg")
+    for name in ("fx.css", "fx.js"):   # shared motion, linked from every page
+        shutil.copy(ROOT / "site" / name, PUBLIC_DIR / name)
     home = HOME_PATH.read_text(encoding="utf-8").replace("<!--CHAPTERS-->", chapters)
     notes, by_title = build_notes.read_notes()
     home = home.replace("<!--SKY-->", build_lab.sky_json(notes)).replace("<!--BOOKS-->", build_lab.books_json(notes, by_title))

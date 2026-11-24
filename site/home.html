@@ -220,6 +220,14 @@ footer a { color: var(--ink); text-decoration-color: var(--red); }
   .fb-right { border-radius: 4px; } .fb-leaf { width: 100%; } .fb-leaf.fwd { left: 0; } .fb-brand { display: none; }
   .fb-prev, .fb-next { top: auto; bottom: 74px; transform: none; height: 44px; }
 }
+/* Phones and tablets: glass blur over a moving 3D scene is redrawn every frame and is the main cause of lag there.
+   Use near-solid panels instead. */
+@media (max-width: 700px), (pointer: coarse) {
+  nav, .poem, .intro, section, footer, .fb { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  nav { background: rgba(24, 24, 23, .92); } .poem { background: rgba(11, 11, 11, .82); }
+  :root { --panel: rgba(11, 11, 11, .9); } .fb { background: rgba(5, 5, 5, .96); }
+  section:hover { box-shadow: none; }
+}
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor, .star .core { animation: none; } .fb-book, .fb-leaf { transition: none; } .fb, .fb .fb-stage, .obj-tip, nav .name img { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -535,7 +543,7 @@ function buildScene() {
   const RED = 0xE0242E, SPIRIT = 0xBFE9FF, LAB = 0x7FE3FF;
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, powerPreference: small ? "low-power" : "default" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.25 : 2));   // phones draw fewer pixels
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1 : 2));   // phones draw fewer pixels (and fewer still if they fall behind, see adapt)
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;   // film-like contrast and colour
   renderer.toneMappingExposure = 0.9;
@@ -1313,7 +1321,7 @@ function buildScene() {
   let termShown = 0, termNext = 0;
   function drawScreen(t) {
     if (t < termNext) return;
-    termNext = t + 450 + Math.random() * 500;
+    termNext = t + (small ? 1500 : 450) + Math.random() * 500;   // each redraw re-sends a big picture to the GPU; phones do it less
     termShown = (termShown + 1) % (termLines.length + 8);
     const g = screenCanvas.getContext("2d");
     g.drawImage(desktop, 0, 0);
@@ -2174,12 +2182,15 @@ function buildScene() {
     // Blinds tilt open first, then lift out of the way as you walk to the window.
     setBlinds(0.35 + smooth(0.04, 0.16, p) * 1.15, smooth(0.16, 0.26, p));
     // Dust drifts slowly in the beam.
-    if (t !== undefined) for (let k = 0; k < MOTES; k++) {
-      motePos[k * 3 + 1] += Math.sin(t * 0.0005 + k) * 0.0004;
-      motePos[k * 3] += 0.0002;
-      if (motePos[k * 3] > 0.9) motePos[k * 3] = -0.9;
+    if (p > 0.3) return;   // the room is behind you: don't spend time on its dust and laptop screen
+    if (t !== undefined) {
+      for (let k = 0; k < MOTES; k++) {
+        motePos[k * 3 + 1] += Math.sin(t * 0.0005 + k) * 0.0004;
+        motePos[k * 3] += 0.0002;
+        if (motePos[k * 3] > 0.9) motePos[k * 3] = -0.9;
+      }
+      moteGeo.attributes.position.needsUpdate = true;
     }
-    moteGeo.attributes.position.needsUpdate = true;
     drawScreen(t || 0);
   }
 
@@ -2229,8 +2240,27 @@ function buildScene() {
   resize();
 
   let skip = false;
+  const fbEl = document.getElementById("fb");
+  // Adaptive resolution: if frames keep arriving late, draw fewer pixels (down to 0.6 per screen pixel) until it keeps up.
+  let lastT = 0, avgDt = 0, checkAt = 3000, ratio = renderer.getPixelRatio();
+  const budget = small ? 1000 / 30 : 1000 / 60;
+  function adapt(t) {
+    const dt = t - lastT; lastT = t;
+    if (dt <= 0 || dt > 250) return;   // ignore the gap after a hidden tab or a pause
+    avgDt = avgDt ? avgDt * 0.92 + dt * 0.08 : dt;
+    if (t < checkAt) return;
+    checkAt = t + 1500;
+    if (avgDt > budget * 1.3 && ratio > 0.6) { ratio = Math.max(0.6, ratio - 0.15); renderer.setPixelRatio(ratio); resize(); }
+  }
   function frame(t) {
     if (small && (skip = !skip)) return requestAnimationFrame(frame);   // phones: 30 frames a second instead of 60
+    // Something covers the whole scene (the flipbook, or you're fully inside the laptop or tablet): skip drawing it.
+    if (!fbEl.hidden || (dev.on && !dev.on.closing && performance.now() - dev.on.at > DEV_MS)) {
+      if (dev.on) { deviceK(); if (!dev.on.el.classList.contains("full")) pinDevice(1); }
+      lastT = 0;
+      return requestAnimationFrame(frame);
+    }
+    adapt(t);
     progress += (target - progress) * (still ? 1 : 0.06);   // ease towards the scroll position
     camera.position.copy(path.getPoint(progress));
     if (!still) {

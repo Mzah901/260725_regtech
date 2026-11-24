@@ -43,6 +43,23 @@ a:hover, a:focus-visible { text-decoration-color: var(--red); color: #fff; outli
 .obj-tip { position: fixed; z-index: 5; pointer-events: none; background: rgba(11,11,11,.85); border: 1px solid var(--red); padding: 4px 10px; font-size: 12px; max-width: 320px; line-height: 1.5;
   opacity: 0; transform: translateY(6px) scale(.96); transform-origin: 0 0; transition: opacity .16s ease, transform .2s cubic-bezier(.2, .8, .2, 1.2); }
 .obj-tip.on { opacity: 1; transform: none; }
+/* A page shown on the laptop or tablet screen (positioned every frame by pinDevice). */
+.dev { position: fixed; left: 0; top: 0; z-index: 12; transform-origin: 0 0; opacity: 0; display: flex; flex-direction: column;
+  background: #0b0b0b; overflow: hidden; border-radius: 6px; will-change: transform, opacity; pointer-events: none; }
+.dev iframe { flex: 1; width: 100%; border: 0; background: #0b0b0b; }
+.dev-bar { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; background: #202124; color: #c9cdd2; font-size: 13px; flex: none; }
+.dev-dots { display: flex; gap: 7px; } .dev-dots > * { width: 12px; height: 12px; border-radius: 50%; padding: 0; border: 0; display: block; }
+.dev-x { background: #ff5f57; cursor: pointer; } .dev-x:hover { box-shadow: 0 0 0 3px rgba(255, 95, 87, .35); }
+.dev-dots i:nth-child(2) { background: #febc2e; } .dev-dots i:nth-child(3) { background: #28c840; }
+.dev-back { background: none; border: 0; color: inherit; font: inherit; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.dev-back[disabled] { opacity: .3; cursor: default; }
+.dev-addr { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; background: #303134; border-radius: 999px; padding: 4px 14px; font-size: 12px; }
+.dev-open { color: inherit; text-decoration: none; font-size: 16px; } .dev-open:hover { color: #fff; }
+.dev.full { transform: none !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; border-radius: 0; animation: dev-full .3s ease both; }
+main, nav, footer { transition: opacity .4s; }
+.in-dev main, .in-dev nav, .in-dev footer, .in-dev .fx-bar { opacity: 0; }
+.in-dev main *, .in-dev nav *, .in-dev footer * { pointer-events: none !important; }
+@keyframes dev-full { from { opacity: .6; transform: scale(.96); } }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
 
 nav { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); z-index: 3;
@@ -1336,9 +1353,11 @@ function buildScene() {
   // Mug, glasses, earbuds case.
   const mug = new THREE.Group(); mug.position.set(-0.55, DESK_Y, WALL_Z + 0.42); room.add(mug);
   const mugLabel = canvasTexture(256, 64, (g, w, h) => { g.fillStyle = "#f4f2ed"; g.fillRect(0, 0, w, h); g.fillStyle = "#3b3b3b"; g.fillRect(96, 10, 40, 44); g.fillStyle = "#c33"; g.font = "bold 10px sans-serif"; g.fillText("TETAP SEMANGAT", 140, 36); });
-  piece(new THREE.CylinderGeometry(0.042, 0.04, 0.1, 24, 1, true), mat(0xffffff, 0.3, { map: mugLabel, side: THREE.DoubleSide }), 0, 0.05, 0, mug);
-  piece(new THREE.CircleGeometry(0.04, 24), mat(0x3a2414, 0.2), 0, 0.085, 0, mug).rotation.x = -Math.PI / 2;   // coffee
-  piece(new THREE.TorusGeometry(0.026, 0.007, 8, 16, Math.PI), mat(0xf4f2ed, 0.3), -0.045, 0.05, 0, mug).rotation.z = Math.PI / 2;
+  const mugBody = new THREE.Group(); mug.add(mugBody);   // what a sip lifts and tips (the hover spring moves `mug` itself)
+  piece(new THREE.CylinderGeometry(0.042, 0.04, 0.1, 24, 1, true), mat(0xffffff, 0.3, { map: mugLabel, side: THREE.DoubleSide }), 0, 0.05, 0, mugBody);
+  piece(new THREE.CircleGeometry(0.035, 24), mat(0x6b5a49, 0.8), 0, 0.004, 0, mugBody).rotation.x = -Math.PI / 2;   // inside bottom, seen when it's empty
+  const coffee = piece(new THREE.CircleGeometry(0.04, 24), mat(0x3a2414, 0.2), 0, 0.085, 0, mugBody); coffee.rotation.x = -Math.PI / 2;
+  piece(new THREE.TorusGeometry(0.026, 0.007, 8, 16, Math.PI), mat(0xf4f2ed, 0.3), -0.045, 0.05, 0, mugBody).rotation.z = Math.PI / 2;
   const glasses = new THREE.Group(); glasses.position.set(-0.62, DESK_Y + 0.012, WALL_Z + 0.2); glasses.rotation.set(-Math.PI / 2 + 0.15, 0, 0.3); room.add(glasses);
   const frameRed = mat(0xb3121b, 0.4), frameBlack = mat(0x111111, 0.4);
   for (const x of [-0.034, 0.034]) piece(new THREE.TorusGeometry(0.024, 0.0035, 6, 20), frameBlack, x, 0, 0, glasses).scale.set(1.2, 0.85, 1);
@@ -1869,8 +1888,9 @@ function buildScene() {
   const clickables = [
     { obj: memoir, label: "Open Beyond Statutes", book: "statutes" },   // before books: the memoir sits inside that group
     { obj: books, label: "Lessons learned →", href: "/lessons/" },
-    { obj: laptop, label: "Lab →", href: "/lab/" },
-    { obj: tablet, label: "House rules ↓", href: "#rules" },
+    { obj: laptop, label: "Open the Lab · on the laptop", run: () => openDevice(screen, "/lab/", 1200, 780) },
+    { obj: tablet, label: "Read Beyond Statutes · on the tablet", run: () => openDevice(tabScreen, "/beyond-statutes/", 960, 640) },
+    { obj: mug, label: "Coffee · take a sip", run: sip },
     { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", book: "awards", page: 1 },
     { obj: cups[1], label: "1st + best presentation · Paper, Universitas Internasional Batam", book: "awards", page: 2 },
     { obj: cups[2], label: "1st + best paper · Pancasila Festival, Universitas Jember 2021", book: "awards", page: 3 },
@@ -1904,7 +1924,7 @@ function buildScene() {
     return null;
   }
   addEventListener("pointermove", (ev) => {
-    hovered = pick(ev);
+    hovered = dev.on ? null : pick(ev);
     canvas.style.cursor = hovered ? "pointer" : "";
     tip.classList.toggle("on", !!hovered);
     if (hovered) {
@@ -1916,6 +1936,7 @@ function buildScene() {
     }
   });
   addEventListener("click", (ev) => {
+    if (dev.on) { if (ev.target === canvas) closeDevice(); return; }
     const c = pick(ev);
     if (!c) return;
     if (!still && !c.still) popOf(c).v -= 0.14;   // squash, then spring back
@@ -1956,6 +1977,142 @@ function buildScene() {
   }
   let dive = null;   // set while the camera leans into a clicked object
   addEventListener("pageshow", () => { dive = null; });   // coming back with the Back button: stand where you were
+
+  // ---- Inside a device: the laptop and the tablet open real pages on their screens. ----
+  // The page is an ordinary <iframe>. Every frame its four corners are pinned to the 3D screen's corners as the camera
+  // sees them (a CSS matrix3d), so it sits in the scene in perspective while the camera flies up to it. You can scroll,
+  // hover and click inside it like a browser. On phones it fills the screen once the camera arrives, so text stays readable.
+  const dev = { on: null };
+  const DEV_MS = still ? 1 : 950;
+  const devPts = [0, 1, 2, 3].map(() => new THREE.Vector3()), devN = new THREE.Vector3();
+  // CSS transform that maps a W×H box onto four screen points (top-left, top-right, bottom-right, bottom-left).
+  // This is a "homography": the standard square-to-quadrilateral formula (Heckbert, 1989), scaled to the box size.
+  function quadMatrix(W, H, p) {
+    const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
+    const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+    const den = dx1 * dy2 - dx2 * dy1, g = (sx * dy2 - dx2 * sy) / den, h = (dx1 * sy - sx * dy1) / den;
+    const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+    return `matrix3d(${a / W},${d / W},0,${g / W},${b / H},${e / H},0,${h / H},0,0,1,0,${x0},${y0},0,1)`;
+  }
+  const phoneView = () => innerWidth < 700 || innerHeight > innerWidth;
+  function openDevice(mesh, url, W, H) {
+    if (dev.on) return;
+    const el = document.createElement("div");
+    el.className = "dev"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Page on the " + (mesh === screen ? "laptop" : "tablet"));
+    el.style.width = W + "px"; el.style.height = H + "px";
+    el.innerHTML = `<div class="dev-bar"><span class="dev-dots"><button type="button" class="dev-x" aria-label="Back to the room" title="Back to the room (Esc)"></button><i></i><i></i></span>
+      <button type="button" class="dev-back" aria-label="Previous page" disabled>‹</button>
+      <span class="dev-addr">statuta.id${url}</span><a class="dev-open" href="${url}" target="_top" title="Open as a full page">↗</a></div>
+      <iframe title="statuta.id" src="${url}"></iframe>`;
+    document.body.append(el);
+    const frame = el.querySelector("iframe"), backBtn = el.querySelector(".dev-back");
+    let depth = 0;   // pages visited inside this device, so Back never steps out of it
+    el.querySelector(".dev-x").onclick = closeDevice;
+    backBtn.onclick = () => { if (depth > 1) { depth -= 2; frame.contentWindow.history.back(); } };
+    frame.onload = () => {
+      let w; try { w = frame.contentWindow; void w.location.pathname; } catch { return; }   // another site's page: leave it alone
+      if (w.location.pathname === "/") return closeDevice();   // the home link: step back into the room instead of nesting the room inside itself
+      depth++; backBtn.disabled = depth < 2;
+      el.querySelector(".dev-addr").textContent = "statuta.id" + w.location.pathname;
+      el.querySelector(".dev-open").href = w.location.href;
+      w.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeDevice(); });
+      for (const a of w.document.querySelectorAll("a[href]")) {
+        if (a.pathname === "/" && (a.origin === location.origin || a.hostname === "statuta.id")) a.onclick = (ev) => { ev.preventDefault(); closeDevice(); };
+        else if (a.origin !== location.origin) a.target = "_blank";   // other sites open in a new tab (many refuse to load in a frame)
+      }
+    };
+    dev.on = { mesh, el, W, H, at: performance.now(), closing: false, eye: new THREE.Vector3(), c: new THREE.Vector3() };
+    document.documentElement.style.overflow = "hidden";   // the page under the device must not scroll the camera away
+    document.documentElement.classList.add("in-dev");
+    tip.classList.remove("on"); hovered = null;   // let the hover swell settle so the screen holds still
+    say("You're inside. Scroll and click as usual. <b>Esc</b>, the red dot, or a click outside the screen takes you back to the room.");
+    setTimeout(() => frame.focus(), DEV_MS);
+  }
+  function closeDevice() {
+    const o = dev.on;
+    if (!o || o.closing) return;
+    const raw = Math.min(1, (performance.now() - o.at) / DEV_MS);
+    o.closing = true; o.at = performance.now() - (1 - raw) * DEV_MS;   // reverse from wherever it is now
+    document.documentElement.classList.remove("in-dev");
+    o.el.classList.remove("full");
+  }
+  addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeDevice(); });
+  // How far into the device the camera is (0 = in the room, 1 = at the screen); also refreshes where it is heading.
+  function deviceK() {
+    const o = dev.on, raw = Math.min(1, (performance.now() - o.at) / DEV_MS), k = smooth(0, 1, o.closing ? 1 - raw : raw);
+    o.mesh.updateWorldMatrix(true, false);
+    o.mesh.getWorldPosition(o.c);
+    const sc = o.mesh.getWorldScale(devN), tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);   // the room is scaled, so measure the screen in world units
+    const w = o.mesh.geometry.parameters.width * sc.x, h = o.mesh.geometry.parameters.height * sc.y;
+    devN.set(0, 0, 1).transformDirection(o.mesh.matrixWorld);   // the way the screen faces
+    const dist = Math.max(h / 2 / tanH, w / 2 / (tanH * camera.aspect)) * (phoneView() ? 1.02 : 1.1);
+    o.eye.copy(o.c).addScaledVector(devN, dist);
+    if (o.closing && raw >= 1) {   // fully back in the room
+      o.el.remove(); dev.on = null; document.documentElement.style.overflow = ""; readScroll();
+    } else if (!o.closing && raw >= 1 && phoneView()) o.el.classList.add("full");
+    return k;
+  }
+  function pinDevice(k) {
+    const o = dev.on;
+    if (!o) return;
+    camera.updateMatrixWorld();
+    const { width: w, height: h } = o.mesh.geometry.parameters, px = [];
+    [[-w / 2, h / 2], [w / 2, h / 2], [w / 2, -h / 2], [-w / 2, -h / 2]].forEach(([x, y], i) => {
+      const v = o.mesh.localToWorld(devPts[i].set(x, y, 0)).project(camera);
+      px.push([(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight, v.z]);
+    });
+    const ok = px.every((q) => q[2] < 1);   // all corners in front of the camera
+    o.el.style.transform = ok ? quadMatrix(o.W, o.H, px) : "scale(0)";
+    o.el.style.opacity = ok ? smooth(0.08, 0.45, k) : 0;
+    o.el.style.pointerEvents = k > 0.9 && !o.closing ? "auto" : "none";
+  }
+
+  // ---- Coffee: each click is a sip (the mug lifts and tips, with a slurp); four sips empty it, then it refills. ----
+  // A few soft puffs of steam rise while it's hot.
+  const steam = [0, 1, 2, 3, 4].map(() => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+    mugBody.add(sp); return sp;
+  });
+  let sips = 0, level = 1, levelGoal = 1, heat = 0.5, sipAt = -1e9, sipBusy = false;
+  const sipLines = ["<b>Sluuurp.</b> Still warm.", "<b>Sip two.</b> The Pasal starts making sense.", "<b>Sip three.</b> Precision up, patience down."];
+  function slurp() {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    // Noise that flutters (air pulled through liquid) through a band-pass filter that rises like a slurp.
+    const t = audio.currentTime, len = 0.6, rate = audio.sampleRate, buf = audio.createBuffer(1, Math.floor(rate * len), rate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (0.55 + 0.45 * Math.sin(i / rate * Math.PI * 2 * 26));
+    const src = audio.createBufferSource(), bp = audio.createBiquadFilter(), gain = audio.createGain();
+    src.buffer = buf; bp.type = "bandpass"; bp.Q.value = 5;
+    bp.frequency.setValueAtTime(600, t); bp.frequency.exponentialRampToValueAtTime(2600, t + len);
+    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.28, t + 0.05); gain.gain.linearRampToValueAtTime(0.16, t + 0.45); gain.gain.linearRampToValueAtTime(0, t + len);
+    src.connect(bp).connect(gain).connect(audio.destination); src.start(t);
+  }
+  function sip() {
+    if (sipBusy) return;
+    if (level <= 0.01) return say("<b>Empty.</b> Wait for the refill.");
+    sipBusy = true; sipAt = performance.now();
+    setTimeout(slurp, still ? 0 : 380);   // the slurp lands when the mug reaches your mouth
+    setTimeout(() => {
+      sips++; levelGoal = Math.max(0, 1 - sips / 4);
+      if (sips < 4) { say(sipLines[sips - 1]); sipBusy = false; return; }
+      say("<b>Empty.</b> Refilling… ☕");
+      setTimeout(() => { sips = 0; levelGoal = 1; heat = 1; say("<b>Refilled.</b> Tetap semangat."); sipBusy = false; }, 1800);
+    }, still ? 0 : 900);
+  }
+  function coffeeTick(now) {
+    const u = Math.min(1, (now - sipAt) / 1400), lift = Math.sin(u * Math.PI);   // up, hold at the mouth, down
+    mugBody.position.set(0, lift * 0.1, lift * 0.07);
+    mugBody.rotation.x = Math.sin(Math.min(1, u * 1.3) * Math.PI) * 0.55;   // tips toward you
+    level += (levelGoal - level) * 0.05;
+    coffee.position.y = 0.012 + level * 0.073; coffee.visible = level > 0.02;
+    heat = Math.max(0.35, heat - 0.0006);
+    steam.forEach((sp, i) => {
+      const ph = (now * 0.00035 + i / steam.length) % 1;
+      sp.position.set(Math.sin(now * 0.0016 + i * 2) * 0.012 * ph, 0.1 + ph * 0.22, 0);
+      sp.scale.setScalar(0.03 + ph * 0.07);
+      sp.material.opacity = Math.sin(ph * Math.PI) * 0.22 * heat * (level > 0.05 ? 1 : 0) * (1 - lift);
+    });
+  }
 
   // Guitar: plays a short "Roundabout" JoJo ending (To Be Continued) clip from YouTube in a small player in the corner,
   // and shows a "To Be Continued" card when it ends. Click the guitar again to stop.
@@ -2083,7 +2240,11 @@ function buildScene() {
     }
     const aim = look.getPoint(progress);
     if (dive) { const k = smooth(0, 1, (performance.now() - dive.at) / 450); camera.position.lerp(dive.to, k * 0.4); aim.lerp(dive.to, k); }
+    let devK = 0;
+    if (dev.on) { devK = deviceK(); if (dev.on) { camera.position.lerp(dev.on.eye, devK); aim.lerp(dev.on.c, devK); } }
     camera.lookAt(aim);
+    pinDevice(devK);
+    coffeeTick(performance.now());
     if (!still) {
       popTick();
       ambient(t);

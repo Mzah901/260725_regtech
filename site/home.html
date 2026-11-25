@@ -220,6 +220,14 @@ footer a { color: var(--ink); text-decoration-color: var(--red); }
   .fb-right { border-radius: 4px; } .fb-leaf { width: 100%; } .fb-leaf.fwd { left: 0; } .fb-brand { display: none; }
   .fb-prev, .fb-next { top: auto; bottom: 74px; transform: none; height: 44px; }
 }
+/* Phones and tablets: glass blur over a moving 3D scene is redrawn every frame and is the main cause of lag there.
+   Use near-solid panels instead. */
+@media (max-width: 700px), (pointer: coarse) {
+  nav, .poem, .intro, section, footer, .fb { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  nav { background: rgba(24, 24, 23, .92); } .poem { background: rgba(11, 11, 11, .82); }
+  :root { --panel: rgba(11, 11, 11, .9); } .fb { background: rgba(5, 5, 5, .96); }
+  section:hover { box-shadow: none; }
+}
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cursor, .star .core { animation: none; } .fb-book, .fb-leaf { transition: none; } .fb, .fb .fb-stage, .obj-tip, nav .name img { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -535,7 +543,7 @@ function buildScene() {
   const RED = 0xE0242E, SPIRIT = 0xBFE9FF, LAB = 0x7FE3FF;
   const canvas = document.getElementById("scene");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, powerPreference: small ? "low-power" : "default" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.25 : 2));   // phones draw fewer pixels
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1 : 2));   // phones draw fewer pixels (and fewer still if they fall behind, see adapt)
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;   // film-like contrast and colour
   renderer.toneMappingExposure = 0.9;
@@ -1235,7 +1243,9 @@ function buildScene() {
   // Shelf above the desk, crossing the window, holding trophies.
   const SHELF_Y = RY + 1.62;
   block(1.1, 0.025, 0.28, wood, 0.75, SHELF_Y, WALL_Z + 0.16);
-  for (const x of [0.23, 1.27]) piece(new THREE.CylinderGeometry(0.012, 0.012, SHELF_Y - DESK_Y, 8), steel, x, (SHELF_Y + DESK_Y) / 2, WALL_Z + 0.04);
+  // Shelf legs: the left one stands on the desk; the right one is past the desk's end, so it goes down to the floor.
+  piece(new THREE.CylinderGeometry(0.012, 0.012, SHELF_Y - DESK_Y, 8), steel, 0.23, (SHELF_Y + DESK_Y) / 2, WALL_Z + 0.04);
+  piece(new THREE.CylinderGeometry(0.012, 0.012, SHELF_Y - RY, 8), steel, 1.27, (SHELF_Y + RY) / 2, WALL_Z + 0.04);
 
   // Laptop: a dark base and an open lid whose screen shows a terminal that keeps typing.
   const laptop = new THREE.Group(); laptop.position.set(-0.08, DESK_Y + 0.001, WALL_Z + 0.33); laptop.rotation.y = 0.12; room.add(laptop);
@@ -1313,7 +1323,7 @@ function buildScene() {
   let termShown = 0, termNext = 0;
   function drawScreen(t) {
     if (t < termNext) return;
-    termNext = t + 450 + Math.random() * 500;
+    termNext = t + (small ? 1500 : 450) + Math.random() * 500;   // each redraw re-sends a big picture to the GPU; phones do it less
     termShown = (termShown + 1) % (termLines.length + 8);
     const g = screenCanvas.getContext("2d");
     g.drawImage(desktop, 0, 0);
@@ -1642,6 +1652,78 @@ function buildScene() {
   const hourPivot = handPivot(hourHand), minutePivot = handPivot(minuteHand);
   const plate = mat(0xf4f2ee, 0.5);
   block(0.012, 0.11, 0.07, plate, ROOM_W / 2 - 0.006, RY + 0.3, WALL_Z + 0.5);           // socket
+
+  // ---- The corner right of the desk: a low cabinet with a record player, a wall calendar, a tall plant. ----
+  const cabinet = new THREE.Group(); cabinet.position.set(0.98, RY, WALL_Z + 0.24); room.add(cabinet);
+  block(0.44, 0.56, 0.4, wood, 0, 0.28, 0, cabinet);
+  for (const y of [0.15, 0.41]) {   // two drawers, each with a metal handle
+    block(0.4, 0.22, 0.01, mat(0xb98a55, 0.55), 0, y, 0.2, cabinet);
+    block(0.12, 0.012, 0.014, steel, 0, y + 0.05, 0.212, cabinet);
+  }
+  const turntable = new THREE.Group(); turntable.position.y = 0.56; cabinet.add(turntable);
+  block(0.36, 0.06, 0.3, mat(0x2a2522, 0.5), 0, 0.03, 0, turntable);                                   // plinth
+  piece(new THREE.CylinderGeometry(0.12, 0.12, 0.012, 32), mat(0x9a9ca0, 0.3, { metalness: 0.6 }), -0.04, 0.066, 0, turntable);   // platter
+  const recordTex = canvasTexture(128, 128, (g, w) => {
+    g.fillStyle = "#111"; g.fillRect(0, 0, w, w);
+    g.strokeStyle = "#262626"; for (let r = 20; r < 62; r += 3) { g.beginPath(); g.arc(64, 64, r, 0, Math.PI * 2); g.stroke(); }   // grooves
+    g.fillStyle = "#c4202b"; g.beginPath(); g.arc(64, 64, 18, 0, Math.PI * 2); g.fill();                                      // label
+    g.fillStyle = "#f2f0eb"; g.fillRect(52, 60, 24, 3); g.beginPath(); g.arc(64, 64, 2, 0, Math.PI * 2); g.fill();
+  });
+  const record = new THREE.Mesh(new THREE.CircleGeometry(0.11, 40), mat(0xffffff, 0.35, { map: recordTex }));
+  record.rotation.x = -Math.PI / 2; record.position.set(-0.04, 0.073, 0); turntable.add(record);
+  const tonearm = new THREE.Group(); tonearm.position.set(0.13, 0.08, -0.1); turntable.add(tonearm);   // tonearm, pivoting at its back corner
+  piece(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 12), steel, 0, 0, 0, tonearm);
+  block(0.006, 0.006, 0.17, steel, 0, 0.012, 0.085, tonearm);
+  block(0.016, 0.01, 0.025, mat(0x2a2522, 0.5), 0, 0.006, 0.17, tonearm);   // headshell
+  tonearm.rotation.y = 0.2;   // resting off the record
+  // A wall calendar on today's real month, with today circled in red.
+  const calTex = canvasTexture(180, 240, (g, w, h) => {
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth(), first = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+    g.fillStyle = "#f4f2ed"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#1d1e22"; g.fillRect(0, 0, w, 96);                     // picture half: a night desert, like outside
+    g.fillStyle = "#c9a54a"; g.beginPath(); g.arc(140, 30, 12, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#3a3f45"; g.beginPath(); g.moveTo(0, 96); g.lineTo(50, 66); g.lineTo(95, 84); g.lineTo(140, 60); g.lineTo(w, 80); g.lineTo(w, 96); g.fill();
+    g.fillStyle = "#c4202b"; g.font = "bold 15px serif"; g.textAlign = "center";
+    g.fillText(now.toLocaleDateString("en-GB", { month: "long", year: "numeric" }).toUpperCase(), w / 2, 118);
+    g.font = "10px sans-serif"; g.fillStyle = "#777";
+    "MTWTFSS".split("").forEach((d, k) => g.fillText(d, 18 + k * 24, 136));
+    for (let d = 1; d <= days; d++) {
+      const i = first + d - 1, x = 18 + (i % 7) * 24, yy = 154 + Math.floor(i / 7) * 16;
+      g.fillStyle = i % 7 === 6 ? "#c4202b" : "#1d1e22"; g.fillText(d, x, yy);
+      if (d === now.getDate()) { g.strokeStyle = "#c4202b"; g.lineWidth = 2; g.beginPath(); g.arc(x, yy - 4, 9, 0, Math.PI * 2); g.stroke(); }
+    }
+  });
+  const calendar = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.36), mat(0xffffff, 0.8, { map: calTex }));
+  calendar.position.set(1.11, RY + 1.12, WALL_Z + 0.006); room.add(calendar);
+  piece(new THREE.CylinderGeometry(0.005, 0.005, 0.01, 8), steel, 1.11, RY + 1.31, WALL_Z + 0.01).rotation.x = Math.PI / 2;   // the nail
+  const floorPlant = new THREE.Group(); floorPlant.position.set(1.46, RY, WALL_Z + 0.3); room.add(floorPlant);
+  piece(new THREE.CylinderGeometry(0.13, 0.1, 0.32, 24), mat(0xe9e4da, 0.85), 0, 0.16, 0, floorPlant);                   // pot
+  piece(new THREE.CircleGeometry(0.12, 24), mat(0x3b2a1e, 1), 0, 0.3, 0, floorPlant).rotation.x = -Math.PI / 2;          // soil
+  const leafShape = new THREE.Shape();   // a broad leaf, tip pointing up its own y axis
+  leafShape.moveTo(0, 0); leafShape.bezierCurveTo(0.13, 0.03, 0.15, 0.22, 0, 0.32); leafShape.bezierCurveTo(-0.15, 0.22, -0.13, 0.03, 0, 0);
+  const leafGeo = new THREE.ShapeGeometry(leafShape, 10), leafMat = mat(0x2f6b3a, 0.6, { side: THREE.DoubleSide }), stemMat = mat(0x4f7a3a, 0.7);
+  const plantArms = [];
+  for (let k = 0; k < 11; k++) {
+    // Leaves only reach into the room (toward -x and +z), never through the two walls behind the pot.
+    const stem = new THREE.Group(); stem.position.y = 0.3; stem.rotation.y = -1.9 + (k / 10) * 2.2 + Math.sin(k * 7) * 0.15; floorPlant.add(stem);
+    const len = 0.4 + (k % 4) * 0.16, a = new THREE.Group(); a.rotation.x = 0.15 + (k % 3) * 0.17; stem.add(a);
+    piece(new THREE.CylinderGeometry(0.005, 0.007, len, 6), stemMat, 0, len / 2, 0, a);
+    const leaf = new THREE.Mesh(leafGeo, leafMat); leaf.position.y = len; leaf.rotation.x = 0.7 + (k % 2) * 0.35; leaf.castShadow = !small; a.add(leaf);
+    plantArms.push(a);
+  }
+  let spinning = false, spin = 0, rustle = 0;
+  function toggleRecord() {
+    spinning = !spinning;
+    say(spinning ? "<b>Needle down.</b> Imagine your favourite song. (No real audio: the guitar is the one that plays.)" : "<b>Needle up.</b> Quiet again.");
+  }
+  function waterPlant() { rustle = 1; say("<b>Watered.</b> 🌱 It keeps growing, a little every day. Like the lab."); }
+  function cornerTick(now) {
+    spin += ((spinning ? 1 : 0) - spin) * 0.04;   // spins up and down smoothly
+    record.rotation.z -= spin * 0.06;
+    tonearm.rotation.y += ((spinning ? -0.38 : 0.2) - tonearm.rotation.y) * 0.06;   // tonearm swings onto the record
+    rustle *= 0.97;
+    plantArms.forEach((a, k) => (a.rotation.z = Math.sin(now * 0.02 + k * 1.3) * 0.12 * rustle + Math.sin(now * 0.0008 + k) * 0.015));
+  }
   block(0.012, 0.11, 0.07, plate, -ROOM_W / 2 + 0.006, RY + 1.2, BACK_Z - 0.2);          // light switch
   // Band posters taped to the right wall, each in the mood of an album. Original drawings: no band logos or album art copied.
   const poster = (paint) => canvasTexture(256, 360, (g, w, h) => {
@@ -1782,32 +1864,6 @@ function buildScene() {
     const half = block(0.12, 0.012, 0.17, mat(0x8b2a2a, 0.7), -0.3 + s * 0.058, DESK_Y + 0.02, WALL_Z + 0.58);
     half.rotation.z = s * 0.28;
   }
-  // Rani's leftover kwetiau, gone stale: an open styrofoam box, flat brown noodles, mould spots, a plastic fork.
-  const kwetiau = new THREE.Group(); kwetiau.position.set(0.52, sheetY + 0.001, WALL_Z + 0.41); kwetiau.rotation.y = -0.2; room.add(kwetiau);
-  const styro = mat(0xf4f2ea, 0.95);
-  block(0.15, 0.004, 0.12, styro, 0, 0.002, 0, kwetiau);                                         // bottom
-  for (const s of [-1, 1]) {
-    block(0.15, 0.04, 0.004, styro, 0, 0.02, s * 0.058, kwetiau);                                // front/back walls
-    block(0.004, 0.04, 0.12, styro, s * 0.073, 0.02, 0, kwetiau);                                // side walls
-  }
-  const boxLid = new THREE.Group(); boxLid.position.set(0, 0.04, -0.06); boxLid.rotation.x = -2.7; kwetiau.add(boxLid);   // hinged at the back, flopped open
-  block(0.15, 0.004, 0.12, styro, 0, 0, 0.06, boxLid);
-  const noodle = mat(0x8a5a2b, 0.6);
-  for (let k = 0; k < 14; k++) {
-    const r = block(0.11, 0.003, 0.012, noodle, (Math.random() - 0.5) * 0.02, 0.025 + k * 0.0015, (Math.random() - 0.5) * 0.08, kwetiau);
-    r.rotation.set(0, Math.random() * Math.PI, (Math.random() - 0.5) * 0.3);
-  }
-  for (let k = 0; k < 6; k++) {                                                                  // mould
-    const spot = piece(new THREE.SphereGeometry(0.008 + Math.random() * 0.006, 8, 6), mat(k % 2 ? 0x8f9a6b : 0xc9cfb8, 1), (Math.random() - 0.5) * 0.09, 0.047, (Math.random() - 0.5) * 0.07, kwetiau);
-    spot.scale.y = 0.4;
-  }
-  piece(new THREE.CylinderGeometry(0.003, 0.003, 0.13, 6), mat(0xffffff, 0.3, { transparent: true, opacity: 0.8 }), 0.02, 0.05, 0.01, kwetiau).rotation.set(Math.PI / 2 - 0.25, 0, 0.5);   // fork
-  // Next to it, a bottle of Scarlett Garden Whisper to cover the smell (plain bottle, no logo).
-  const perfume = new THREE.Group(); perfume.position.set(0.34, sheetY + 0.001, WALL_Z + 0.4); perfume.rotation.y = 0.3; room.add(perfume);
-  block(0.05, 0.075, 0.03, mat(0xe98aa5, 0.05, { transparent: true, opacity: 0.88 }), 0, 0.0375, 0, perfume);   // pink glass
-  block(0.042, 0.035, 0.022, mat(0xffffff, 0.8), 0, 0.035, 0.0155, perfume);                                     // label
-  piece(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.081, 0, perfume);   // neck
-  piece(new THREE.CylinderGeometry(0.014, 0.014, 0.03, 16), mat(0xd9b46a, 0.3, { metalness: 0.7 }), 0, 0.1, 0, perfume);      // gold cap
 
   // The chair gets a low backrest with a towel over it.
   block(0.44, 0.2, 0.035, mat(0xffffff, 0.95, { map: stripeTex }), 0, 0.62, 0.2, chair);
@@ -1891,6 +1947,8 @@ function buildScene() {
     { obj: laptop, label: "Open the Lab · on the laptop", run: () => openDevice(screen, "/lab/", 1200, 780) },
     { obj: tablet, label: "Read Beyond Statutes · on the tablet", run: () => openDevice(tabScreen, "/beyond-statutes/", 960, 640) },
     { obj: mug, label: "Coffee · take a sip", run: sip },
+    { obj: turntable, label: "Record player · spin it", run: toggleRecord },
+    { obj: floorPlant, label: "Water the plant", run: waterPlant },
     { obj: cups[0], label: "1st · Legal essay, Universitas Indonesia 2021", book: "awards", page: 1 },
     { obj: cups[1], label: "1st + best presentation · Paper, Universitas Internasional Batam", book: "awards", page: 2 },
     { obj: cups[2], label: "1st + best paper · Pancasila Festival, Universitas Jember 2021", book: "awards", page: 3 },
@@ -1902,8 +1960,6 @@ function buildScene() {
     { obj: guitar, label: "Play ♪", play: true },
     ...pillars,
     { obj: cat, label: "Pet the cat", run: meow },
-    { obj: perfume, label: "Scarlett Garden Whisper", run: () => say("<b>Scarlett Garden Whisper.</b> Sprayed to cover the smell of Rani's kwetiau. It's not winning.") },
-    { obj: kwetiau, label: "Stale kwetiau · Rani's leftovers", run: () => say("<b>Kwetiau basi.</b> Rani's leftovers, been here since who knows when. Please don't eat it.") },
     { obj: carved, label: "Activate the circle", outside: true, still: true, run: () => {
       forceEvent("transmute");
       say('<b>Equivalent exchange.</b> To gain something, you have to give something of equal value. <a href="/beyond-statutes/equivalent-exchange/">Read the note →</a>');
@@ -2174,12 +2230,15 @@ function buildScene() {
     // Blinds tilt open first, then lift out of the way as you walk to the window.
     setBlinds(0.35 + smooth(0.04, 0.16, p) * 1.15, smooth(0.16, 0.26, p));
     // Dust drifts slowly in the beam.
-    if (t !== undefined) for (let k = 0; k < MOTES; k++) {
-      motePos[k * 3 + 1] += Math.sin(t * 0.0005 + k) * 0.0004;
-      motePos[k * 3] += 0.0002;
-      if (motePos[k * 3] > 0.9) motePos[k * 3] = -0.9;
+    if (p > 0.3) return;   // the room is behind you: don't spend time on its dust and laptop screen
+    if (t !== undefined) {
+      for (let k = 0; k < MOTES; k++) {
+        motePos[k * 3 + 1] += Math.sin(t * 0.0005 + k) * 0.0004;
+        motePos[k * 3] += 0.0002;
+        if (motePos[k * 3] > 0.9) motePos[k * 3] = -0.9;
+      }
+      moteGeo.attributes.position.needsUpdate = true;
     }
-    moteGeo.attributes.position.needsUpdate = true;
     drawScreen(t || 0);
   }
 
@@ -2229,8 +2288,27 @@ function buildScene() {
   resize();
 
   let skip = false;
+  const fbEl = document.getElementById("fb");
+  // Adaptive resolution: if frames keep arriving late, draw fewer pixels (down to 0.6 per screen pixel) until it keeps up.
+  let lastT = 0, avgDt = 0, checkAt = 3000, ratio = renderer.getPixelRatio();
+  const budget = small ? 1000 / 30 : 1000 / 60;
+  function adapt(t) {
+    const dt = t - lastT; lastT = t;
+    if (dt <= 0 || dt > 250) return;   // ignore the gap after a hidden tab or a pause
+    avgDt = avgDt ? avgDt * 0.92 + dt * 0.08 : dt;
+    if (t < checkAt) return;
+    checkAt = t + 1500;
+    if (avgDt > budget * 1.3 && ratio > 0.6) { ratio = Math.max(0.6, ratio - 0.15); renderer.setPixelRatio(ratio); resize(); }
+  }
   function frame(t) {
     if (small && (skip = !skip)) return requestAnimationFrame(frame);   // phones: 30 frames a second instead of 60
+    // Something covers the whole scene (the flipbook, or you're fully inside the laptop or tablet): skip drawing it.
+    if (!fbEl.hidden || (dev.on && !dev.on.closing && performance.now() - dev.on.at > DEV_MS)) {
+      if (dev.on) { deviceK(); if (!dev.on.el.classList.contains("full")) pinDevice(1); }
+      lastT = 0;
+      return requestAnimationFrame(frame);
+    }
+    adapt(t);
     progress += (target - progress) * (still ? 1 : 0.06);   // ease towards the scroll position
     camera.position.copy(path.getPoint(progress));
     if (!still) {
@@ -2245,6 +2323,7 @@ function buildScene() {
     camera.lookAt(aim);
     pinDevice(devK);
     coffeeTick(performance.now());
+    if (progress < 0.3) cornerTick(performance.now());
     if (!still) {
       popTick();
       ambient(t);
